@@ -1,0 +1,3 @@
+# snatch-exercise-validation
+
+Stub.
