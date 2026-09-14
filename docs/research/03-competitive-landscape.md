@@ -1,3 +1,150 @@
-# 03-competitive-landscape
+# 03 — Competitive landscape: direct and adjacent competitors
+Ticket: [#3](https://github.com/jirigrill/snatch-exercise-validation/issues/3) · Status: resolved · Date: 2026-09-14
 
-Stub — not yet researched.
+## Headline
+
+The exact concept — AI snatch fault detection plus narrative coaching plus corrective programming — is **effectively unoccupied, and it is unexplored rather than vacated**. But that is bad news, not good news. The barbell-video-analysis niche has been continuously served since 2016 by cheap or free tools, and the single most-adopted product in the category (WL Analysis) has **100K+ Android installs, 1.13K Android reviews and only 46 iOS ratings** for a **one-time $8.99** unlock — that is the revealed price ceiling and demand ceiling for "analyse my barbell lift from video." **VERIFIED** ([Play](https://play.google.com/store/apps/details?id=com.karolsmolak.wlanalysis), [iOS](https://apps.apple.com/us/app/wl-analysis/id1541855037)) Meanwhile at least eight AI-form-check apps shipped in the last 18 months and every one of them has under 20 ratings, including one — Olympic Lifting AI: Coach — that is a near-exact clone of the product under test and has **too few ratings for Apple to display an average**. **VERIFIED** ([App Store](https://apps.apple.com/us/app/olympic-lifting-ai-coach/id6760505961)) The money in this space is in *programming* subscriptions (JuggernautAI, $34.99/mo, 5,654 ratings), not in form analysis.
+
+## Method and evidence quality
+
+All rating counts and prices below marked **VERIFIED** were pulled directly from Apple's iTunes lookup/search API and Google Play listing pages on 2026-09-14, and from vendors' own public pricing pages. Review-sentiment quotes come from Apple's public customer-review RSS feed (`itunes.apple.com/us/rss/customerreviews/id=<APPID>`).
+
+One material limitation: general web search was unavailable for this run (the WebSearch backend returned validation errors on every call, and DuckDuckGo/Mojeek/Bing/Brave all served CAPTCHAs or junk). **Funding figures could therefore not be independently confirmed for any private company below and are marked NO EVIDENCE FOUND rather than guessed.** This does not weaken the core finding, which rests on app-store traction data — the strongest public demand proxy — not on funding.
+
+## DIRECT competitors — barbell / lift-specific video analysis
+
+### Tier 1: the incumbents that actually have users
+
+| Product | Category | Pricing | Traction (ratings/users) | Funding | What it does badly | Source |
+|---|---|---|---|---|---|---|
+| **WL Analysis** (Karol Smolak) | Bar-path + velocity/power video analysis, weightlifting-first | **Free download, one-time $8.99** "Extra features" IAP. No subscription. **VERIFIED** | **100K+ Play installs, 1.13K Play reviews @4.3; 46 iOS ratings @4.3. VERIFIED** Solo indie dev, still updated Aug 2026 | None known — indie. **NO EVIDENCE FOUND** | Pure measurement, **no fault detection, no narrative coaching, no programming**. iOS 15 update broke weight registration; crashes on launch reported; can't save video descriptions for comparison. **VERIFIED** (review RSS) | [Play](https://play.google.com/store/apps/details?id=com.karolsmolak.wlanalysis), [iOS](https://apps.apple.com/us/app/wl-analysis/id1541855037) |
+| **BarPath** (David Nugent) | Bar-path tracing only | **Completely free**, no IAP, no ads. **VERIFIED** | **10K+ Play installs, 545 reviews @4.5. VERIFIED** Abandoned — last updated **Sep 2020** | None. **NO EVIDENCE FOUND** | Manual plate-region selection; abandoned 6 years; bar path only | [Play](https://play.google.com/store/apps/details?id=com.davidnugent.barpath) |
+| **Onform** | Video analysis + remote coaching, all sports (not barbell-specific) | Coach $19.99–$59.99/mo; Individual free / $9.99 / $14.99/mo. **VERIFIED** | **8,616 iOS ratings @4.8. VERIFIED** — the largest ratings base of any form-analysis app found | **NO EVIDENCE FOUND** | Generic drawing/slowmo tool, **no AI fault detection for the snatch**. Reviews: uploads fail or don't save "1/2 the time", huge memory use, slow imports, support can't fix issues, a 2026 update "ruined a good thing". **VERIFIED** | [Pricing](https://www.onform.com/pricing) |
+| **Qwik VBT** | Video-based velocity + bar path, no hardware | Free + IAP (amount not captured). **VERIFIED** free download | 39 iOS ratings @4.8. **VERIFIED** | **NO EVIDENCE FOUND** | Metrics only, no coaching/programming; tiny base | [iOS](https://apps.apple.com/us/app/id1660094818) |
+| **RepSpeed** | Video bar path, ROM, velocity, power | Free + IAP. **VERIFIED** | 17 iOS ratings @4.5. **VERIFIED** | **NO EVIDENCE FOUND** | Measurement only; last update Dec 2025 | Apple lookup API |
+| **Metric — Strength Training** (Core Advantage) | Log + video VBT, "no expensive hardware" | Free + IAP. **VERIFIED** | 45 iOS ratings @4.0. **VERIFIED** | **NO EVIDENCE FOUND** | Weak rating (4.0 is low for fitness); measurement not coaching | Apple lookup API |
+| **Bar Path** (Insilico Sports) | Bar path, ROM, power, "weakest point in lift" | **$4.99 one-time. VERIFIED** | **5 ratings @3.0. VERIFIED** Dead — last update **Jul 2018** | None. **NO EVIDENCE FOUND** | Release notes admit it has **"difficulty locking onto fast lifts like the snatch"**, workaround = film in slow motion. Directly relevant technical warning for our product. **VERIFIED** | [iOS](https://apps.apple.com/us/app/bar-path/id1097402002) |
+| **Iron Path** | Bar path (the app lifters cite as the popular competitor) | **NO EVIDENCE FOUND** — could not resolve a live listing; the current App Store "IronPath" (Kyunghyun Han, Aug 2026) is an unrelated **workout logger** with 0 ratings. **VERIFIED** that the name is now occupied by a non-analysis app | A WL Analysis reviewer calls Iron Path "the most popular competitor app" but rates it worse. **SECONDARY** | Likely delisted or renamed — **INFERRED**, treat as unconfirmed | Apple search API; WL Analysis review RSS |
+
+### Tier 2: the AI-form-check cohort — the direct clones, all with near-zero traction
+
+This is the most important table in this document. Every one of these does some version of "film your lift, AI scores your form, get a fix." All are recent. **None has traction.**
+
+| Product | Released / updated | Pricing | Traction | What it does badly | Source |
+|---|---|---|---|---|---|
+| **Olympic Lifting AI: Coach** — subtitle literally "Snatch & Clean Form Coach" | v1.4.4 Apr 2026 → v2.3.3 Aug 2026 | Weekly $7.99; 3mo $29.99; Yearly $49.99 (intro $29.99); **Lifetime $119.99**. **VERIFIED** | **"Hasn't received enough ratings or reviews to display an overview"** — i.e. under ~5. **VERIFIED** | **This is our product, already shipped.** Claims feedback on pull timing, catch position, bar trajectory, turnover speed, plus AI chat coach and peaking cycles. Its failure to gain any ratings in ~5 months is the single strongest negative signal in this research. | [iOS](https://apps.apple.com/us/app/olympic-lifting-ai-coach/id6760505961) |
+| **Brad: Lifting Form Coach** (Seraphim Labs) | Jun 2026 | **$9.99/mo, $79.99/yr**, 7-day trial. **VERIFIED** | **18 ratings @4.8. VERIFIED** | Live on-device pose cues for bench/squat/push-up/pull-up/curl; **upload analysis only for curl and squat — no Olympic lifts** | [iOS](https://apps.apple.com/us/app/brad-lifting-form-coach/id6774051569) |
+| **BarPath: Lift Form Coach** (Mitaanshu Agarwal) | Jul 2026 | Not captured | **0 ratings. VERIFIED** | Pitch is nearly identical to ours: "film a set from the side… scores every rep, flags the one thing to fix, gives the exact drill… then adjusts your next session" | Apple lookup API |
+| **FormVision: Bar Path & Speed** | Aug 2026, upd Sep 2026 | First analysis free, then paid. **VERIFIED** | **0 ratings. VERIFIED** | "Film your lift, see what your eye can't" + one concrete fix. On-device | Apple lookup API |
+| **FormCheck: AI Gym Coach** | Jul 2026 | Not captured | **0 ratings. VERIFIED** | Live skeleton, voice cues "keep the bar close" | Apple lookup API |
+| **FormLens: AI Form Check Coach** | Dec 2025, upd Sep 2026 | Pro annual w/ 7-day trial. **VERIFIED** | **1 rating. VERIFIED** | Sends joint positions not video; form score + weak-point plan | Apple lookup API |
+| **Form Fix: AI Form Check Coach** | May 2025, upd Nov 2025 | Not captured | **0 ratings. VERIFIED** | "AI pose estimation, real-time form correction, biomechanical movement analysis" | Apple lookup API |
+| **FormWise: Gym Technique** | Jun 2025, upd Jan 2026 | Not captured | **1 rating. VERIFIED** | Scoped to powerlifting "Big 3" only | Apple lookup API |
+| **Lift Vision** (Vir Reality Labs) | Dec 2025, never updated | Not captured | **2 ratings. VERIFIED** | Record lift → instant AI feedback, "deadlifts to squats to bench". Apparently abandoned after launch | Apple lookup API |
+| **Lift App — AI Barbell Tracker** (Athletic AI) | Mar 2026, upd Sep 2026 | Not captured | **2 ratings @1.5 — the worst rating found. VERIFIED** | Review: "Super buggy app. Doesn't even let me choose which workout… Cool idea though, bad execution" **VERIFIED** | Apple lookup API |
+| **AI Barbell Lifting** (Masiso.AI) | Oct 2021, last upd **Aug 2022** | Free | **12 ratings @4.3. VERIFIED** | Squat/deadlift AI feedback from phone camera. **Abandoned 4 years ago** — an earlier attempt at this exact idea that stopped | Apple lookup API |
+| **Yogger: Movement Analysis** | upd Sep 2026 | Free + IAP | 129 iOS ratings @4.7. **VERIFIED** | Joint angles/ROM/movement screens — general, not snatch-specific | Apple lookup API |
+
+**Read this table as a cohort, not as individuals:** 12 products attacking the same idea, combined lifetime ratings under ~60. **VERIFIED**
+
+### Tier 3: hardware VBT (adjacent-direct — same buyer, different mechanism)
+
+These matter because they compete for the same "measure my lift objectively" budget, and their app reviews show what happens to retention when measurement is unreliable.
+
+| Product | Category | Pricing | Traction | Funding | What it does badly | Source |
+|---|---|---|---|---|---|---|
+| **Vitruve** (Speed4Lifts SL) | Tethered encoder + app | Hardware pay-once, "**no mandatory subscription… nothing switches off, ever**" — exact price not on site. **VERIFIED** (model), **NO EVIDENCE FOUND** (amount) | New app **13 ratings @2.2**; legacy Speed4Lifts app 70 ratings @4.4. **VERIFIED** | **NO EVIDENCE FOUND** | Catastrophic app rewrite. Reviews: "App constantly crashes… Avoid Vitruve for velocity meters. No longer viable"; "New app is unusable"; missed reps captured by the device but lost in the app; verification codes never send; "Old App > New App". **VERIFIED** | [Site](https://vitruve.fit/), Apple lookup API |
+| **Enode** (BM Sports Technology) | Sensor + app, VBT | Hardware + app | **Enode 2 ratings @3.0; Enode Pro 0 ratings. VERIFIED** | **NO EVIDENCE FOUND** | Same rewrite-regression story: "Worst relative to the old app", "Almost useless for Enode Sensor exercise tracking… Save button not working". **VERIFIED** | Apple lookup API |
+| **RepOne** (Squats & Science Labs) | Encoder + app | **~$400 buy-in per reviewer. SECONDARY** | **RepOne Personal 16 ratings @3.6; RepOne Athlete 2 @3.0. VERIFIED** | **NO EVIDENCE FOUND** | "High buy in w lack of updates — 400 dollars to get in… haven't updated the app in 3 months… promised athlete app has not been worked on… 2024 release looks like an empty promise". **VERIFIED** | Apple lookup API |
+| **Perch** | Gym-installed 3D camera VBT (racks) | Enterprise, quote-only; no public price. **VERIFIED** (no price published) | No public customer counts. **NO EVIDENCE FOUND** | **Acquired / absorbed by Catapult** — perch.fit now 301-redirects to catapult.com/perch and Perch ships as the Perch P2 Catapult product line. **VERIFIED** (redirect + product page). Deal date/value **NO EVIDENCE FOUND** | Consumer-irrelevant: institutional weight rooms, tablet + rack mount, priced for university/pro teams | [catapult.com/perch](https://www.catapult.com/perch) |
+| **Output Sports** | Sensor, team/lab testing | Enterprise | **Output Capture app 12 ratings @4.9. VERIFIED** | **NO EVIDENCE FOUND** | B2B only | Apple lookup API |
+| **Kinetic Performance (FLEX)** | Encoder, elite S&C | Enterprise | **FLEX Stronger 8 ratings @4.4. VERIFIED** | **NO EVIDENCE FOUND** | B2B only | Apple lookup API |
+| **PUSH Band** | Wearable VBT | — | **No live consumer iOS app surfaced in Apple search. VERIFIED** (absence) | **NO EVIDENCE FOUND** | Appears to have exited consumer channel — **INFERRED** | Apple search API |
+| **Dartfish** | Desktop/mobile video analysis, pro sport | Licence (not captured) | **myDartfish Express 29 ratings @2.8. VERIFIED** | **NO EVIDENCE FOUND** | 2.8 stars; legacy pro tool, no AI faults | Apple lookup API |
+
+**Kinovea** (free desktop video analysis) — no App Store presence by design; it is the free tool serious coaches already use for frame-by-frame lift review. Traction **NO EVIDENCE FOUND** (open-source, no telemetry). This is a genuine zero-price substitute for the *overlay* half of our product. **INFERRED** significance.
+
+**Coach's Eye** — the historically dominant video-analysis app (TechSmith) is **not on the App Store under TechSmith any more**; the only "Coach's Eye" listing found is by an unrelated developer ("Gym Art Inc.", 17 ratings @4.4). **VERIFIED** (absence of the TechSmith listing). Shutdown date/details **NO EVIDENCE FOUND** this run — a separate graveyard ticket (#4) should confirm. The relevant point: **the biggest brand in manual lift-video review left the market.**
+
+## ADJACENT — general pose-estimation / AI-coaching fitness apps
+
+| Product | Category | Pricing | Traction | Funding | What it does badly | Source |
+|---|---|---|---|---|---|---|
+| **Tempo** | Home gym w/ 3D sensor + form feedback | **Now "Virtual Personal Training from $39/mo", home-gym hardware demoted to a "+$20/mo" add-on. VERIFIED** | **NO EVIDENCE FOUND** on units/subs | **NO EVIDENCE FOUND** (search unavailable) | **The pivot is the finding.** A company built on a 3D depth sensor for form correction now leads with a **human** virtual trainer and rents the hardware. Strong evidence that sensor-based form feedback did not retain paying users on its own. **INFERRED** from pricing-page positioning | [tempo.fit](https://tempo.fit/) |
+| **Tonal** | Smart strength trainer | Hardware + membership (not captured) | **10,648 iOS ratings @4.9. VERIFIED** | **NO EVIDENCE FOUND** | Form feedback is a secondary feature to the machine; irrelevant to barbell snatch | Apple lookup API |
+| **Zing Coach** | AI workout planner, some pose features | Subscription (not captured) | **30,750 iOS ratings @4.8. VERIFIED** | **NO EVIDENCE FOUND** | Broad consumer fitness; no Olympic-lift fault detection. Shows what *real* consumer scale looks like — 1,700× the ratings of the AI-form-check cohort | Apple lookup API |
+| **Fitbod** | AI programming, no vision | Subscription (not captured) | **284,294 iOS ratings @4.8. VERIFIED** | **NO EVIDENCE FOUND** | No form analysis at all — and it is by far the most successful app in this document. **The market pays for programming, not for seeing itself.** | Apple lookup API |
+| **Gravl: AI Personal Trainer** | AI coaching | Subscription (not captured) | **5,230 iOS ratings @4.9. VERIFIED** | **NO EVIDENCE FOUND** | General strength, not weightlifting technique | Apple lookup API |
+| **Kemtai** | Markerless CV exercise/PT, 111 body points | **B2B, quote-only — no public pricing. VERIFIED** | Clinical claims (72% adherence, ALYN motion-lab validation Mar 2025). No consumer traction | **NO EVIDENCE FOUND** | Pivoted fully to **digital physical therapy / payers** (FDA-listed, HIPAA). The best-funded-looking CV form company in the space **chose not to sell to consumers.** **INFERRED** | [kemtai.com](https://www.kemtai.com/) |
+| **Exer Health** (Exer Labs) | Phone-camera movement AI | Not captured | **14 ratings @3.5. VERIFIED** | **NO EVIDENCE FOUND** | 3.5 stars, negligible adoption — another CV-form company with no consumer pull | Apple lookup API |
+| **Asensei** | Coached-form via sensors (rowing) | Not captured | **asensei rowing 4,106 ratings @4.8; ASENSEI Spark 0 ratings. VERIFIED** | **NO EVIDENCE FOUND** | Its traction is in **rowing on a connected erg**, i.e. a constrained machine with a fixed camera/sensor geometry — the easy case. Newer product has no adoption | Apple lookup API |
+| **Whoop** | Recovery wearable | Subscription | **76,304 iOS ratings @4.8. VERIFIED** | **NO EVIDENCE FOUND** | No form analysis | Apple lookup API |
+| **Sency AI / Vay Sports** | CV movement-assessment SDKs | B2B SDK | **No meaningful consumer app found (Sency Care: 0 ratings). VERIFIED** | **NO EVIDENCE FOUND** | Both are **infrastructure vendors, not consumer apps** — they sell pose analysis to app builders. Relevant as potential suppliers, not competitors | Apple lookup API |
+| **Runna** (pricing benchmark, now Strava-owned) | Niche endurance coaching subscription | **$19.99/mo or $119.99/yr ($9.99/mo effective). VERIFIED** | **33,948 iOS ratings @4.85; site claims 76,000+ Apple ratings and 17,000+ Play ratings. VERIFIED** | Acquired by Strava (listed as seller on App Store). **VERIFIED** (seller = "Strava Inc."); price/date **NO EVIDENCE FOUND** | Nothing — this is the *success* benchmark. It proves a niche coaching subscription can reach ~$20/mo and tens of thousands of ratings — **but it sells a training plan, not video fault detection** | [Pricing](https://www.runna.com/pricing) |
+
+**Peloton Guide, Kaia Health, Aiko, Pivot AI** — no relevant live consumer listing surfaced in Apple search for barbell/Olympic-lift form analysis. **NO EVIDENCE FOUND**; none of them target the snatch.
+
+## REMOTE COACHING & PROGRAMMING PLATFORMS — where the money actually is
+
+| Product | Category | Pricing | Traction | Funding | What it does badly | Source |
+|---|---|---|---|---|---|---|
+| **JuggernautAI** — *the closest business analogue* | AI-adaptive powerlifting programming | **$34.99/mo or $349.99/yr**, 2-week free trial. **VERIFIED** | **5,654 iOS ratings @4.85. VERIFIED** | **NO EVIDENCE FOUND** | **No video/form analysis whatsoever.** Complaints: crashes mid-workout at "$30+ a month"; prescribes high-bar squats when the user set low-bar; "you need to pick from a range of workouts… SCAM"; thin exercise explanations. **VERIFIED** Proves a $35/mo niche strength subscription works *on programming alone* — and that at that price users are unforgiving of bugs | [juggernautai.app](https://juggernautai.app/) |
+| **Weightlifting.ai** (Max Aita) | Olympic-lifting adaptive programming | **$49.99/mo. VERIFIED** | **46 iOS ratings @3.8. VERIFIED** | **NO EVIDENCE FOUND** | **The most instructive competitor in this report.** It is the snatch-specific programming app — and it **explicitly refuses to build technique analysis**, saying it "aims to fill that gap in technique direction with our Discord Community", i.e. humans. A reviewer warns that if you don't already know your technical errors "the app won't help you." Complaints: paid but locked out at the subscription page, absent customer service, infrequent updates, accessories without progressive overload. **VERIFIED** | [iOS](https://apps.apple.com/us/app/weightlifting-ai/id1602877760) |
+| **TrueCoach** | Coach↔client platform | **$26.34 / $57.99 / $136.99 per month by client count. VERIFIED** | **35,247 iOS ratings @4.86. VERIFIED** — largest coaching-platform base found | **NO EVIDENCE FOUND** | Video review is manual and human; no AI faults. Companion "TrueCoach Connect" app rates **1.8 @84 ratings. VERIFIED** | [Pricing](https://truecoach.co/pricing/) |
+| **TrainHeroic** | Coach platform + plan marketplace | **$9.99–$399.99/mo by roster size; assistant coach +$9.99. VERIFIED** | **1,831 iOS ratings @4.26. VERIFIED** (notably low rating) | **NO EVIDENCE FOUND** | 4.26 stars; athletes buy plans in a marketplace — again, programming is the sold good | [Pricing](https://www.trainheroic.com/pricing/) |
+| **Everfit** | Coach platform | **Free ≤5 clients; Pro $19–$290/mo; Studio $105–$430/mo. VERIFIED** | **2,692 iOS ratings @4.73 (client app); coach app 175 @4.5. VERIFIED** | **NO EVIDENCE FOUND** | Human-in-the-loop only | [Pricing](https://everfit.io/pricing) |
+| **CoachRx** (OPEX) | Coach platform | Not captured | **78 iOS ratings @3.65. VERIFIED** | **NO EVIDENCE FOUND** | 3.65 stars | Apple lookup API |
+| **BridgeAthletic** | Team programming | Enterprise | **3,136 iOS ratings @4.78. VERIFIED** | **NO EVIDENCE FOUND** | Team/institutional | Apple lookup API |
+| **Mayhem Athlete** (Rich Froning) | CrossFit programming, brand-led | Subscription (not captured) | **1,548 iOS ratings @4.94. VERIFIED** | **NO EVIDENCE FOUND** | Programming + community; no form AI. Shows **athlete brand** is the moat in this persona | Apple lookup API |
+| **HWPO Training** (Mat Fraser) | CrossFit programming | Subscription (not captured) | **3,249 iOS ratings @4.87. VERIFIED** | **NO EVIDENCE FOUND** | Same — brand, not technology | Apple lookup API |
+| **PRVN Fitness** (Shane Orr / Tia-Clair Toomey) | CrossFit programming | Subscription (not captured) | **38 iOS ratings @4.29. VERIFIED** | **NO EVIDENCE FOUND** | Even a top CrossFit brand's own app has only 38 ratings — **the CrossFit app market is smaller than it looks** | Apple lookup API |
+| **Peak Strength** (Garage Strength) | Athlete strength programming | Subscription (not captured) | **1,454 iOS ratings @4.79. VERIFIED** | **NO EVIDENCE FOUND** | No form AI | Apple lookup API |
+| **Weightlifting House** | Weightlifting media/streaming | Subscription (not captured) | **WLHOUSE TV 60 iOS ratings @4.8. VERIFIED** | **NO EVIDENCE FOUND** | Media, not analysis. **60 ratings for the best-known weightlifting media brand's app is a direct measure of how small the Olympic-weightlifting app audience is.** | Apple lookup API |
+| **Catalyst Athletics, Squat University** | Weightlifting education brands | — | **No first-party app found in Apple search. VERIFIED** (absence) | **NO EVIDENCE FOUND** | Both monetise via content/courses/books, **not apps** — a deliberate choice by the two most credible technique-education brands in the niche. **INFERRED** | Apple search API |
+
+## The void: is the exact concept unoccupied?
+
+**Partly — and the answer is worse than "occupied".**
+
+**What is genuinely unoccupied.** No product with meaningful traction combines all three of our pillars for the snatch. The measurement apps (WL Analysis, Qwik, RepSpeed, Metric) do overlay-and-metrics with **zero** fault classification, narrative coaching, or programming. **VERIFIED** The programming apps (JuggernautAI, Weightlifting.ai, Peak Strength) do adaptive programming with **zero** vision. **VERIFIED** The coaching platforms (TrueCoach, Onform, Everfit) put a **human** in the middle. **VERIFIED** The integrated triple is, in traction terms, empty.
+
+**Is it unexplored or vacated? Both, in the worst possible combination.**
+
+- **Unexplored at the top:** no funded, competent team has taken a real run at snatch-specific AI fault detection. Kemtai had the CV capability and went to **healthcare payers** instead. **VERIFIED** Sency and Vay sell pose SDKs to other builders rather than building this. **VERIFIED** That is a repeated revealed preference by the people best placed to build it.
+- **Explored and failed at the bottom, repeatedly:** twelve indie apps have attempted approximately this product. **Olympic Lifting AI: Coach is a near-exact clone of the product under test — snatch-specific, video fault feedback, AI chat coach, corrective programming, subscription with a $119.99 lifetime tier — and after ~5 months of shipping it has too few ratings for Apple to compute an average.** **VERIFIED** Masiso.AI's "AI Barbell Lifting" tried in 2021 and was abandoned in 2022 with 12 ratings. **VERIFIED**
+- **Vacated at the adjacent edges:** Coach's Eye is gone from the App Store under TechSmith **VERIFIED**; Perch was absorbed into Catapult **VERIFIED**; Tempo pivoted from 3D-sensor form feedback to a $39/mo **human** virtual trainer **VERIFIED**; BarPath was abandoned in 2020 with 10K+ installs still live **VERIFIED**.
+
+**The void is not a gap in the market. It is the shape of a market that has been tested and did not pay.** The honest reading: the overlay+metrics half is commoditised at **$0–$8.99 one-time** by an incumbent with 100K+ installs, and the coaching half is where money exists but is dominated by **programming subscriptions and athlete brands**, where our AI has no advantage over JuggernautAI's and no brand at all.
+
+### Competitive threats specific to our design
+
+1. **Price anchor.** WL Analysis set the reference price for "analyse my barbell lift" at **$8.99 forever**. **VERIFIED** A monthly subscription must clear that anchor plus JuggernautAI-grade programming value to be defensible.
+2. **The snatch is the hardest case, admitted in public.** Insilico's Bar Path release notes concede **"difficulty locking onto fast lifts like the snatch"** and recommend filming in slow motion. **VERIFIED** The snatch is ~1 second, heavily occluded, with fast rotation — the worst input for pose estimation, and the movement our whole product depends on.
+3. **Camera-angle fragility is already the top complaint category** across this cohort (WL Analysis praised specifically *because* it "can handle slightly angled shots" — implying rivals cannot). **VERIFIED** A "prescribed angle" requirement is a known conversion killer.
+4. **Bug intolerance at subscription prices.** Every paid product here with >$30/mo pricing has 1-star reviews about crashes and billing lockouts (JuggernautAI, Weightlifting.ai, Vitruve, Enode, RepOne, Onform). **VERIFIED** Subscription resentment is explicit and immediate.
+5. **The persona is the problem.** Our persona "already knows the movement". Weightlifting.ai's own reviewers say you can self-programme "for free" and that the app can't help if you don't already know your errors. **VERIFIED** Knowledgeable lifters are the segment least likely to pay monthly for fault labelling.
+
+## Review sentiment: what users actually complain about
+
+Grouped from Apple review RSS (all **VERIFIED**, quotes verbatim):
+
+- **Accuracy / missed reps:** Vitruve — "Routinely missing reps on the app that are captured on the device"; RepOne — persistent iOS layout bug, "bugs out quite frequently".
+- **Crashes and data loss:** WL Analysis — "Crashes immediately"; Vitruve — "App constantly crashes. Doesn't record any data due to the crashes"; JuggernautAI — "Can't even finish a workout without this app crashing and it cost 30+ a month"; Onform — videos fail to submit or save "1/2 the time".
+- **Billing lockouts / subscription resentment:** Weightlifting.ai — "Takes your money and never lets you get past subscription page… I've been charged. Still can't get in and customer service is no where to be found!!"; JuggernautAI — "SCAM"; Onform — "Just another pay to unlock app".
+- **Abandonment / broken updates:** RepOne — "haven't updated the app in 3 months… promised 2024 release looks like an empty promise"; Onform — "they updated and ruined a good thing"; Enode & Vitruve — new apps rated far below the versions they replaced.
+- **Value scepticism (most relevant to us):** Weightlifting.ai — "you can do most of the things the program does by yourself for free"; JuggernautAI — "I was doing that to begin with so what's the point of paying for it".
+- **The one positive pattern worth copying:** WL Analysis's best reviews praise **automatic plate detection with no manual setup** and tolerance of imperfect camera angles — "Automatically detects plates and can handle slightly angled shots… Much better for me than Iron Path". Frictionless capture, not richer analysis, is what earns 5 stars here.
+
+No review found in this cohort complained that fault detection was *missing*. **VERIFIED** (absence across the samples read.) Users complain about reliability and price, not about lacking AI coaching — weak evidence of latent demand for our differentiator.
+
+## Verdict impact
+
+**Supports NO-GO.** Reasons, in order of weight:
+
+1. **The exact product already exists and has failed to gain users.** Olympic Lifting AI: Coach ships snatch fault feedback + AI coach + corrective programming with a lifetime tier and cannot accumulate five ratings. **VERIFIED** Eleven further clones share the same fate. This is not an unexplored void; it is a tested one.
+2. **Ceiling maths against the $1–3k/month bar.** The category leader with **100K+ installs** monetises at **$8.99 once**. **VERIFIED** The most credible Olympic-weightlifting apps top out at **46–133 iOS ratings** (Weightlifting.ai 46, Super Weightlifting 133, WLHOUSE TV 60). **VERIFIED** At typical single-digit ratings-to-installs ratios (**ASSUMPTION**, not measured) the addressable paying audience for a snatch-specific app looks like low thousands of people globally, split across a dozen incumbents. Reaching net $1–3k/month means capturing a large share of a niche that has never paid monthly for this.
+3. **The willingness-to-pay is in programming, not vision.** Fitbod (284K ratings), JuggernautAI ($34.99/mo, 5.6K ratings) and Runna ($19.99/mo, 34K ratings) all sell plans with **no form analysis**. **VERIFIED** Our two AI pillars that *are* monetisable are the two where we have no advantage and no brand.
+4. **The technical risk is documented by a competitor, not merely feared.** A shipped bar-path app publicly concedes it cannot lock onto the snatch at normal speed. **VERIFIED**
+5. **Serious players routed around this market.** Kemtai → healthcare; Sency/Vay → B2B SDKs; Tempo → human trainers; Weightlifting.ai → explicitly delegates technique to a Discord of humans. **VERIFIED**
+
+**What would change the verdict (falsifiers).** Evidence that any single snatch-focused form-analysis app has ever exceeded ~1,000 paying subscribers; or a validated accuracy result showing reliable snatch fault detection from one uncontrolled phone angle; or a distribution asset (an existing weightlifting audience) that removes the customer-acquisition problem, which is what actually powers Mayhem, HWPO and Peak Strength. Absent one of those, the landscape argues against building.
