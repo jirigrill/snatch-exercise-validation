@@ -1,0 +1,27 @@
+# Clip log — repeatability prototype (#11)
+
+Originals in `vids/` (gitignored, never edited). All: HEVC, 1920x1080, 240 fps, rotation tag -90 (portrait). Camera on lifter's right side. Load for plate clips: bar + 5 kg plate each side.
+
+| Clip | View | Reps | Load | Frames | Duration | Session* | Role |
+|---|---|---|---|---|---|---|---|
+| IMG_4578 | side | 1 | bar only | 2943 | 12.3 s | hoodie | baseline (no occlusion); contains standing hold (static-pose proxy) |
+| IMG_4579 | side | 0 (pull to standing hold, no snatch) | bar + 5 kg | 2553 | 10.6 s | hoodie | **static-pose clip**: standing hold, bar at hips, plates (same occlusion as main set) |
+| IMG_4581 | side | 1 | bar + 5 kg | 2498 | 10.4 s | hoodie | main set |
+| IMG_4583 | side | 1 | bar + 5 kg | 2644 | 11.0 s | hoodie | main set |
+| IMG_4584 | side | 2 | bar + 5 kg | 3953 | 16.5 s | hoodie | main set |
+| IMG_4587 | side | 2 | bar + 5 kg | 3837 | 16.0 s | grey tee | main set |
+| IMG_4585 | off-axis (right-back) | 1 | bar + 5 kg | 2455 | 10.2 s | hoodie | degraded |
+| IMG_4586 | off-axis (right-back) | 2 | bar + 5 kg | 4180 | 17.4 s | grey tee | degraded |
+
+\*Session inferred from clothing/lighting (hoodie vs grey tee; 4586/4585 skylight lighting, exposure shift mid-4586). Confirm.
+
+Pooled reps: main set 6 side-on plate reps; degraded 3 off-axis plate reps; baseline 1 bar-only rep.
+
+## Model scope
+All candidate pose models are run on these clips to compare performance, including ones whose licences block commercial use (see `research/09-pose-model-licensing.md`). Blocked-model results are research-only and must be labelled as such.
+
+## Known limits
+- No dedicated static standing clip. Best proxy: standing hold in 4579 (plates, same session; hold length to be measured). Secondary: 4578 (bar only), overhead lockout holds (quasi-static, includes real sway).
+- Main set mixes two sessions (hoodie / grey tee).
+- n = 6 reps: clear pass/fail only, not close calls.
+- Near plate occludes lower legs at setup/pull in side-on plate clips.
