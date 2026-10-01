@@ -3,6 +3,65 @@ Status: draft · Date: 2026-10-01
 
 Tags: **VERIFIED** (read in primary source this session), **SECONDARY** (seen only in a search-engine summary or abstract, not re-read in full text), **INFERRED** (my arithmetic/reasoning from tagged facts), **ASSUMPTION**, **NO EVIDENCE FOUND**.
 
+## In plain English (read this first)
+
+**The question.** The app would tell a lifter "this rep is X degrees more closed than your reference reps". What size of X is worth saying, and how quiet must the measurement be so the app is not reporting noise?
+
+**Words used below**
+
+| Term | Plain meaning |
+|---|---|
+| SD (standard deviation) | How much a set of numbers spreads around its average. Small SD = reps look alike. |
+| Typical error / noise | The SD you get when the *same* thing is measured again and again. It is the wobble you cannot avoid. |
+| Between-lifter SD | Spread across *different* people. Says nothing about how much one person varies. |
+| Within-lifter SD | Spread across one person's reps. This is the number the app needs. |
+| RMSD / RMSE | Average size of the error against a reference system. Measures *accuracy*, not repeatability. |
+| MDC (minimal detectable change) | The smallest change you can trust is real, not noise. About 2.77 × the typical error when comparing two single reps. |
+| SWC (smallest worthwhile change) | The smallest change that matters in practice (a convention: 0.2 × the between-person SD). |
+| Bias | An error that is the same every time. It cancels when you compare your own reps, so it does not hurt this app. |
+
+**What we found (the short version)**
+1. **Nobody has ever measured how much one lifter's snatch joint angles vary from rep to rep.** Not in papers (checked in two passes), not in coaching books, not in any app. Your own clips will be the first rough measurement.
+2. **Closest stand-ins (walking, jumping, squatting) say the natural wobble is small:** knee about 1.5–3°, hip about 2–4°, trunk about 2.5–3.5°. Nothing exists for the elbow. This is an assumption for the snatch, not a measurement.
+3. **Differences that matter depend on the comparison.**
+   - The same lifter, successful vs failed lift at the same weight: only about **3–7°**, and often not statistically significant.
+   - Elite vs less-skilled lifters: **8–17°**. That is a different question from "this rep vs my other reps".
+4. **Coaching gives no number for X.**
+   - Western coaches (Catalyst, CrossFit, Pendlay, British Weightlifting) teach with cues ("keep the same back angle"), not degrees.
+   - Soviet-school texts do give angles, but as wide ranges that describe how good lifters look (start knee 45–90°, end of first pull 145–155°). They are not tolerances for repeating a rep.
+   - The only coach-style rep-vs-rep comparison found is a single lifter's knee re-bend: 16–17° in made lifts, 20° in a miss. That is n = 1 and below phone error.
+5. **How big must a change be before the app can trust it?** Roughly 2.77 × the total noise (your natural wobble plus the app's measurement error):
+
+| App measurement noise | Total rep-to-rep noise | Smallest change the app can honestly report |
+|---|---|---|
+| 0° (perfect) | 2.5° | about 7° |
+| 2° | 3.2° | about 9° |
+| 3° | 3.9° | about 11° |
+| 5° (a realistic single phone at the hip) | 5.6° | about 15° |
+
+6. **Phone and camera errors are mostly constant bias.** The big accuracy errors in the literature (8–22° at hip and knee) exaggerate the problem here, because a constant error cancels when you compare your own reps. What matters is repeatability, which is what test #11 measures.
+
+**What this means**
+- **10° is a noise limit, not a "size that matters".** It is reportable only if the app's own measurement noise stays at about 2° or less. That is exactly what #11 checks.
+- **The 3–7° differences linked to success cannot be seen in a single rep comparison, even with a perfect sensor.** Seeing them needs the average of several reps (roughly 4–9).
+- **"Compared with your best rep" is a weak design.** The best rep is partly luck, so later reps look worse for chance reasons alone. Compare with the average of several reference reps instead.
+- **The pass/fail rule for #11 does not change:** noise 3° or less across reps = pass, 3–5° = marginal, over 5° = fail, with the standing hold in 4579 as the model-only noise floor (about 2° or less).
+- **Biggest caveat:** every "natural wobble" figure is borrowed from other movements. A heavy fast lift may wobble more. Only your own reps can settle it.
+
+**Where the detail is**
+- This file: the first pass, with corrections applied below.
+- `10a-pass2-literature.md`: source-by-source re-check, new within-lifter numbers, reliability standards.
+- `10b-pass2-coaching.md`: Soviet, Hungarian and Western coaching sources and apps.
+
+**Pass-2 corrections to the first pass**
+- The elite vs sub-elite study is Liu et al. 2018 (not "Zhang"). Its hip differences were tested and were not significant.
+- Mastalerz 2019 does have degree values (read off a chart): successful lifts end the second pull with the knee about 4.6° and hip about 3.3° more extended.
+- Harbili & Alptekin 2014 does report angles: the same lifters' two heaviest lifts differ by 0.4–3.7° (not significant).
+- Soviet-school texts do give numeric angles (the first pass found none).
+- The phase RMSDs from Thiele 2024 pool all lower-limb joint movements, not only sagittal ones.
+
+---
+
 ## Headline
 
 The literature does **not** support a specific "smallest worthwhile change" in degrees for snatch hip/knee/elbow/trunk angles. No snatch study found reports (a) within-lifter rep-to-rep SD of joint angles, (b) test-retest SEM/MDC of snatch joint angles, or (c) a Hopkins SWC computed on snatch joint angles. The only quantitative anchors are indirect:
