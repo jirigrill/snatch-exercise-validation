@@ -76,21 +76,43 @@ def load_models(pose_device: str = "mps") -> tuple[YOLOX, RTMPose]:
     return det, pose
 
 
+def resume_state(part: dict[str, np.ndarray], done: int):
+    """(prev box, prev keypoints, prev scores) to continue after `done` frames."""
+    if done == 0:
+        return None, None, None
+    seen = ~np.isnan(part["bbox"][:done]).any(1)
+    prev = part["bbox"][:done][seen][-1] if seen.any() else None
+    return prev, part["keypoints"][done - 1], part["scores"][done - 1]
+
+
 def run(images: Iterable[np.ndarray], n_frames: int, pose_device: str = "mps",
-        det_boxes: np.ndarray | None = None, progress=None
+        det_boxes: np.ndarray | None = None, progress=None,
+        resume: dict[str, np.ndarray] | None = None, done: int = 0,
+        checkpoint=None, checkpoint_every: int = 500
         ) -> dict[str, np.ndarray]:
-    """Detect (unless det_boxes are given), pick the lifter, track, pose."""
+    """Detect (unless det_boxes are given), pick the lifter, track, pose.
+
+    resume/done: continue from a partial result holding `done` finished frames.
+    checkpoint(result, frames_done) is called every `checkpoint_every` frames.
+    """
     det, pose = load_models(pose_device)
     kps = np.full((n_frames, 17, 2), np.nan, np.float32)
     scores = np.zeros((n_frames, 17), np.float32)
     det_bbox = np.full((n_frames, 4), np.nan, np.float32)
     pose_bbox = np.full((n_frames, 4), np.nan, np.float32)
     n_people = np.zeros(n_frames, np.int16)
-    prev = None
-    prev_kps = prev_scores = None
+    out = {"keypoints": kps, "scores": scores, "bbox": det_bbox,
+           "pose_bbox": pose_bbox, "n_people": n_people}
+    prev = prev_kps = prev_scores = None
+    if resume is not None:
+        for k, v in out.items():
+            v[:done] = resume[k][:done]
+        prev, prev_kps, prev_scores = resume_state(out, done)
     for i, img in enumerate(images):
         if i >= n_frames:
             break
+        if i < done:
+            continue
         if det_boxes is None:
             boxes = np.asarray(det(img)).reshape(-1, 4)
             n_people[i] = len(boxes)
@@ -106,5 +128,6 @@ def run(images: Iterable[np.ndarray], n_frames: int, pose_device: str = "mps",
             det_bbox[i], prev = box, box
         if progress:
             progress(i)
-    return {"keypoints": kps, "scores": scores, "bbox": det_bbox,
-            "pose_bbox": pose_bbox, "n_people": n_people}
+        if checkpoint and (i + 1) % checkpoint_every == 0:
+            checkpoint(out, i + 1)
+    return out

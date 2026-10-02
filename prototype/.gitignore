@@ -4,3 +4,4 @@ __pycache__/
 .pytest_cache/
 out/**/overlay.mp4
 out/**/raw_pose_tmp*
+out/**/raw_pose_partial.npz

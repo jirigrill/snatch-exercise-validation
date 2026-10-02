@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from snatch.pose import pick_lifter, sparse_detections, track_box
+from snatch.pose import pick_lifter, resume_state, sparse_detections, track_box
 
 
 def test_track_box_extends_a_truncated_detection_to_last_frames_keypoints():
@@ -46,3 +46,17 @@ def test_sparse_detection_mask_keeps_every_nth_box():
     kept = ~np.isnan(out).any(1)
     assert np.flatnonzero(kept).tolist() == [0, 4, 8]
     assert out[4] == pytest.approx(boxes[4])
+
+
+def test_resume_state_takes_last_seen_box_and_last_frames_keypoints():
+    bbox = np.full((5, 4), np.nan)
+    bbox[1] = [1, 2, 3, 4]
+    kps = np.arange(5 * 2 * 2, dtype=float).reshape(5, 2, 2)
+    scores = np.arange(10, dtype=float).reshape(5, 2)
+    prev, pk, ps = resume_state({"bbox": bbox, "keypoints": kps, "scores": scores}, 3)
+    assert prev == pytest.approx([1, 2, 3, 4])
+    assert pk == pytest.approx(kps[2]) and ps == pytest.approx(scores[2])
+
+
+def test_resume_state_from_scratch_is_empty():
+    assert resume_state({}, 0) == (None, None, None)
