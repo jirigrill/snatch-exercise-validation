@@ -31,6 +31,9 @@ the hub passes the knees count. The hub is lower than the wrists, so it can
 pass the knees after the knee's local maximum, and a window starting there
 cuts off the re-bend's left shoulder. Everything else as v1: same events,
 thresholds and order. Clips without a plate (4578, bar only) keep v1.
+
+#13 (2026-10-02): the developer accepted all v2 marks on 6 side-on reps.
+v2 is final; do not change it (docs/results/13-phase-check.md).
 """
 
 from dataclasses import dataclass
