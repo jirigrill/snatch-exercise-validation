@@ -1,8 +1,9 @@
 """Track the near plate per frame; bar path and check images.
 
-usage: uv run python scripts/track_plate.py ../vids/IMG_4584.MOV out/4584
+usage: uv run python scripts/track_plate.py ../vids/IMG_4584.MOV out/4584 [ellipse]
+       (ellipse: outline model for off-axis clips, 4585 and 4586)
 writes plate.npz (per-frame arrays, indexed like raw_pose.npz), plate.csv,
-       plate_check.jpg (outline + hub at a few frames), bar_path.png
+       plate_check.jpg (outline + hub, zoomed, at ~18 frames), bar_path.png
 """
 
 import csv
@@ -21,6 +22,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 clip, out = sys.argv[1], Path(sys.argv[2])
+model = sys.argv[3] if len(sys.argv) > 3 else "circle"
 out.mkdir(parents=True, exist_ok=True)
 info = probe(clip)
 t0 = time.time()
@@ -31,7 +33,8 @@ def progress(stage, i):
         print(f"{stage} {i}/{info.n_frames} {time.time() - t0:.0f}s", flush=True)
 
 
-res = plate.detect(lambda: frames(clip, info), info.n_frames, progress=progress)
+res = plate.detect(lambda: frames(clip, info), info.n_frames, progress=progress,
+                   model=model)
 n, fps = info.n_frames, info.fps
 found = res["found"]
 print(f"found {found.sum()}/{n} frames ({found.mean():.1%}), ellipse fit "
@@ -58,7 +61,7 @@ if len(jumps):
 status = "ok" if not reasons else "check: " + "; ".join(reasons)
 print(f"status {status} (vertical travel {travel_m:.2f} m)", flush=True)
 meta = dict(fps=fps, width=info.width, height=info.height, clip=Path(clip).name,
-            plate_diameter_m=plate.PLATE_DIAMETER_M, status=status,
+            plate_diameter_m=plate.PLATE_DIAMETER_M, status=status, model=model,
             travel_m=travel_m, jumps=jumps)
 arrays: dict[str, np.ndarray] = res | {k: np.asarray(v) for k, v in meta.items()}
 np.savez_compressed(out / "plate.npz", allow_pickle=False, **arrays)
@@ -72,16 +75,19 @@ with open(out / "plate.csv", "w", newline="") as f:
             ("" if np.isnan(res[k][i]) else f"{res[k][i]:.2f}")
             for k in plate.FIELDS])
 
-# --- check image: outline + hub at evenly spaced found frames, plus the
-# highest and lowest hub positions -----------------------------------------
+# --- check image: zoomed on the plate at full resolution, so a fit that is
+# off the rim by a few px is visible (thumbnails hid this). Evenly spaced
+# found frames, the highest and lowest hub, up to 2 missed frames ---------
 picks = set()
 if len(idx):
-    picks = {int(idx[k]) for k in np.linspace(0, len(idx) - 1, 6).round().astype(int)}
+    picks = {int(idx[k]) for k in np.linspace(0, len(idx) - 1, 14).round().astype(int)}
     picks |= {int(idx[np.nanargmin(res["hub_y"][idx])]),
               int(idx[np.nanargmax(res["hub_y"][idx])])}
 missing = np.flatnonzero(~found)
 picks |= {int(missing[k]) for k in
           np.linspace(0, len(missing) - 1, min(2, len(missing))).round().astype(int)}
+half = int(1.45 * float(res["r0"]))  # crop half-size around the hub
+tile = 360
 tiles, background = {}, None
 for i, img in enumerate(frames(clip, info)):
     if i == 0:
@@ -94,20 +100,27 @@ for i, img in enumerate(frames(clip, info)):
     if found[i]:
         cx, cy, a, b, ang = (res[k][i] for k in ("hub_x", "hub_y", "a", "b", "angle"))
         col = (0, 255, 0) if res["ellipse_fit"][i] else (0, 255, 255)
-        cv2.ellipse(o, ((cx, cy), (2 * a, 2 * b), ang), col, 4)
-        cv2.circle(o, (int(cx), int(cy)), 8, (0, 0, 255), -1)
-        label = f"f{i} hub ({cx:.0f},{cy:.0f}) {res['px_per_m'][i]:.0f} px/m"
-    else:
+        cv2.ellipse(o, ((cx, cy), (2 * a, 2 * b), ang), col, 2)
+        cv2.circle(o, (int(cx), int(cy)), 4, (0, 0, 255), -1)
+        label = f"f{i} a{a:.0f} b{b:.0f}"
+    else:  # centre on the nearest found frame's hub
+        k = int(idx[np.argmin(np.abs(idx - i))]) if len(idx) else 0
+        cx, cy = (res["hub_x"][k], res["hub_y"][k]) if len(idx) else (
+            info.width / 2, info.height / 2)
         label = f"f{i} NOT FOUND"
-    for th, c in ((8, (0, 0, 0)), (3, (255, 255, 255))):
-        cv2.putText(o, label, (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 1.3, c, th)
-    tiles[i] = cv2.resize(o, (360, 640))
+    x0, y0 = int(cx) - half, int(cy) - half
+    crop = cv2.copyMakeBorder(o, half, half, half, half, cv2.BORDER_CONSTANT)[
+        y0 + half:y0 + 3 * half, x0 + half:x0 + 3 * half]
+    crop = cv2.resize(crop, (tile, tile))
+    for th, c in ((5, (0, 0, 0)), (2, (255, 255, 255))):
+        cv2.putText(crop, label, (6, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.7, c, th)
+    tiles[i] = crop
 row = [tiles[i] for i in sorted(tiles)]
-while len(row) % 5:
-    row.append(np.zeros((640, 360, 3), np.uint8))
+while len(row) % 6:
+    row.append(np.zeros((tile, tile, 3), np.uint8))
 cv2.imwrite(str(out / "plate_check.jpg"),
-            np.vstack([np.hstack(row[k:k + 5]) for k in range(0, len(row), 5)]),
-            [cv2.IMWRITE_JPEG_QUALITY, 80])
+            np.vstack([np.hstack(row[k:k + 6]) for k in range(0, len(row), 6)]),
+            [cv2.IMWRITE_JPEG_QUALITY, 85])
 
 # --- bar path ----------------------------------------------------------------
 t = np.arange(n) / fps

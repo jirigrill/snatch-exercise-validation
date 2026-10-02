@@ -135,12 +135,12 @@ def track(cands: list[np.ndarray], r0: float, max_step_px: float,
     return chosen
 
 
-def fit_outline(gray: np.ndarray, x: float, y: float, r: float,
-                band: float = 0.25, min_cover: float = 0.3) -> Outline | None:
-    """Ellipse through the plate's rim edges near a seed circle, or None.
+def rim_points(gray: np.ndarray, x: float, y: float, r: float,
+               band: float) -> np.ndarray:
+    """Edge pixels within band * r of a circle whose gradient is radial.
 
-    Uses edge pixels whose gradient points along the radius (the rim, not the
-    lifter's legs or the bar) and refits while shrinking the inlier band.
+    Radial gradient keeps the rim (and the lettering ring) and drops the
+    lifter's legs, the bar and other edges crossing the circle.
     """
     h, w = gray.shape
     m = int(r * (1 + band)) + 3
@@ -155,26 +155,158 @@ def fit_outline(gray: np.ndarray, x: float, y: float, r: float,
     g = np.hypot(gx[ys, xs], gy[ys, xs]) + 1e-6
     radial = np.abs(gx[ys, xs] * u + gy[ys, xs] * v) / (g * d)
     sel = (np.abs(d - r) < band * r) & (radial > 0.8)
-    pts = np.column_stack([xs + x0, ys + y0])[sel].astype(np.float32)
-    if len(pts) < min_cover * 2 * np.pi * r:
+    return np.column_stack([xs + x0, ys + y0])[sel].astype(float)
+
+
+def circle_lsq(pts: np.ndarray) -> tuple[float, float, float]:
+    """Least-squares (algebraic) circle through points."""
+    a = np.column_stack([2 * pts, np.ones(len(pts))])
+    cx, cy, c = np.linalg.lstsq(a, (pts ** 2).sum(1), rcond=None)[0]
+    return float(cx), float(cy), float(np.sqrt(c + cx ** 2 + cy ** 2))
+
+
+def ransac_circle(pts: np.ndarray, r_lo: float, r_hi: float, tol: float,
+                  n_hyp: int, rng: np.random.Generator
+                  ) -> tuple[float, float, float] | None:
+    """Circle with radius in [r_lo, r_hi] that most points lie within tol of."""
+    if len(pts) < 3:
         return None
-    for tol in (0.1, 0.05, 0.02):
-        if len(pts) < 5:
+    a, b, c = (pts[rng.integers(0, len(pts), n_hyp)] for _ in range(3))
+    # circumcentre of each triple
+    d = 2 * ((b[:, 0] - a[:, 0]) * (c[:, 1] - a[:, 1])
+             - (b[:, 1] - a[:, 1]) * (c[:, 0] - a[:, 0]))
+    ok = np.abs(d) > 1e-6
+    a, b, c, d = a[ok], b[ok], c[ok], d[ok]
+    sa, sb, sc = (a ** 2).sum(1), (b ** 2).sum(1), (c ** 2).sum(1)
+    ux = (sa * (b[:, 1] - c[:, 1]) + sb * (c[:, 1] - a[:, 1])
+          + sc * (a[:, 1] - b[:, 1])) / d
+    uy = (sa * (c[:, 0] - b[:, 0]) + sb * (a[:, 0] - c[:, 0])
+          + sc * (b[:, 0] - a[:, 0])) / d
+    rr = np.hypot(a[:, 0] - ux, a[:, 1] - uy)
+    keep = (rr >= r_lo) & (rr <= r_hi)
+    if not keep.any():
+        return None
+    ux, uy, rr = ux[keep], uy[keep], rr[keep]
+    dist = np.hypot(pts[None, :, 0] - ux[:, None], pts[None, :, 1] - uy[:, None])
+    k = int(np.argmax((np.abs(dist - rr[:, None]) < tol).sum(1)))
+    return float(ux[k]), float(uy[k]), float(rr[k])
+
+
+def _ellipse_residual(pts: np.ndarray, cx: float, cy: float, a: float,
+                      b: float, ang: float) -> np.ndarray:
+    """Approximate distance (px) of points from an ellipse."""
+    th = np.deg2rad(ang)
+    pu, pv = pts[:, 0] - cx, pts[:, 1] - cy
+    eu = np.cos(th) * pu + np.sin(th) * pv
+    ev = -np.sin(th) * pu + np.cos(th) * pv
+    return (np.hypot(eu / a, ev / b) - 1) * (a + b) / 2
+
+
+def ransac_ellipse(pts: np.ndarray, minor: tuple[float, float],
+                   major: tuple[float, float], tol: float, n_hyp: int,
+                   rng: np.random.Generator) -> Outline | None:
+    """Ellipse with axes in the given (lo, hi) ranges supported by most points.
+
+    5-point samples; then refit on the inliers until stable.
+    """
+    if len(pts) < 5:
+        return None
+    f32 = pts.astype(np.float32)
+    best, best_n = None, 0
+    for _ in range(n_hyp):
+        sample = f32[rng.choice(len(pts), 5, replace=False)]
+        try:
+            (cx, cy), (dw, dh), ang = cv2.fitEllipse(sample)
+        except cv2.error:
+            continue
+        lo, hi = sorted((dw / 2, dh / 2))
+        if not (minor[0] <= lo <= minor[1] and major[0] <= hi <= major[1]):
+            continue
+        n = int((np.abs(_ellipse_residual(pts, cx, cy, dw / 2, dh / 2, ang))
+                 < tol).sum())
+        if n > best_n:
+            best, best_n = (cx, cy, dw / 2, dh / 2, ang), n
+    if best is None:
+        return None
+    for _ in range(3):
+        inl = f32[np.abs(_ellipse_residual(pts, *best)) < tol]
+        if len(inl) < 5:
+            break
+        (cx, cy), (dw, dh), ang = cv2.fitEllipse(inl)
+        best = (cx, cy, dw / 2, dh / 2, ang)
+    return tuple(float(v) for v in best)  # type: ignore[return-value]
+
+
+def fit_outline(gray: np.ndarray, x: float, y: float, r: float,
+                r0: float | None = None, band: float = 0.3,
+                r_tol: float = 0.1, tol_px: float = 2.0,
+                min_cover: float = 0.3, n_hyp: int = 400,
+                rng_seed: int = 0, model: str = "circle",
+                axes0: tuple[float, float] | None = None) -> Outline | None:
+    """Plate rim near a seed circle: a circle, or an ellipse if clearly better.
+
+    RANSAC circle over radial edge pixels, radius limited to r0 +- r_tol (the
+    clip's plate radius: it barely changes within a clip, and the limit rules
+    out the lettering ring at ~0.8 r and the tread crescent), then least
+    squares on its inliers. An ellipse (off-axis views) replaces the circle
+    only if it explains >= 15% more rim pixels. None if under min_cover of
+    the rim is supported.
+
+    model="ellipse" (plate seen at an angle): RANSAC ellipse instead, with
+    the (minor, major) semi-axes within r_tol of axes0, or, without axes0,
+    within 0.75-1.35 of r0.
+    """
+    r0 = r if r0 is None else r0
+    if model == "ellipse":
+        rng = np.random.default_rng(rng_seed)
+        if axes0 is None:
+            lims = ((0.75 * r0, 1.35 * r0),) * 2
+        else:
+            lims = tuple(((1 - r_tol) * v, (1 + r_tol) * v) for v in axes0)
+        reach = max(r, r0, *(axes0 or ()))
+        pts = rim_points(gray, x, y, reach, band)
+        e = ransac_ellipse(pts, lims[0], lims[1], tol_px, n_hyp, rng)
+        if e is None:
             return None
-        (cx, cy), (dw, dh), ang = cv2.fitEllipse(pts)
-        a, b = dw / 2, dh / 2
-        th = np.deg2rad(ang)
-        pu, pv = pts[:, 0] - cx, pts[:, 1] - cy
-        eu = np.cos(th) * pu + np.sin(th) * pv
-        ev = -np.sin(th) * pu + np.cos(th) * pv
-        rho = np.hypot(eu / a, ev / b)
-        pts = pts[np.abs(rho - 1) < tol]
-    if len(pts) < min_cover * 2 * np.pi * r:
+        cx, cy, a, b, ang = e
+        n = int((np.abs(_ellipse_residual(pts, *e)) < tol_px).sum())
+        if (n < min_cover * np.pi * (a + b)
+                or np.hypot(cx - x, cy - y) > 0.35 * reach):
+            return None
+        return e
+    pts = rim_points(gray, x, y, max(r, r0), band)
+    rng = np.random.default_rng(rng_seed)
+    # an ellipse up to b/a ~ 0.85 is still caught by a loose circle
+    found = ransac_circle(pts, (1 - r_tol) * r0, (1 + r_tol) * r0,
+                          max(tol_px, 0.06 * r0), n_hyp, rng)
+    if found is None:
         return None
-    (cx, cy), (dw, dh), ang = cv2.fitEllipse(pts)
-    a, b = dw / 2, dh / 2
-    if np.hypot(cx - x, cy - y) > 0.2 * r or not (
-            0.6 * r <= min(a, b) and max(a, b) <= 1.3 * r):
+    cx, cy, rr = found
+    for t in (max(tol_px, 0.06 * r0), 2 * tol_px, tol_px):
+        inl = pts[np.abs(np.hypot(pts[:, 0] - cx, pts[:, 1] - cy) - rr) < t]
+        if len(inl) < 5:
+            return None
+        cx, cy, rr = circle_lsq(inl)
+    n_circle = len(inl)
+    best: Outline = (cx, cy, rr, rr, 0.0)
+    near = pts[np.abs(np.hypot(pts[:, 0] - cx, pts[:, 1] - cy) - rr) < 0.15 * rr]
+    if len(near) >= 5:
+        (ex, ey), (dw, dh), ang = cv2.fitEllipse(near.astype(np.float32))
+        for _ in range(2):  # refit on the ellipse's own inliers
+            e_inl = near[np.abs(_ellipse_residual(near, ex, ey, dw / 2, dh / 2,
+                                                  ang)) < tol_px]
+            if len(e_inl) < 5:
+                break
+            (ex, ey), (dw, dh), ang = cv2.fitEllipse(e_inl.astype(np.float32))
+        n_ellipse = int((np.abs(_ellipse_residual(pts, ex, ey, dw / 2, dh / 2,
+                                                  ang)) < tol_px).sum())
+        if n_ellipse >= 1.15 * n_circle:
+            best, n_circle = (ex, ey, dw / 2, dh / 2, ang), n_ellipse
+    cx, cy, a, b, ang = best
+    if n_circle < min_cover * 2 * np.pi * rr:
+        return None
+    if np.hypot(cx - x, cy - y) > 0.35 * max(r, r0) or not (
+            0.6 * r0 <= min(a, b) and max(a, b) <= 1.3 * r0):
         return None
     return float(cx), float(cy), float(a), float(b), float(ang)
 
@@ -217,6 +349,19 @@ def longest_steady_run(y: np.ndarray, tol_px: float,
     return best
 
 
+def radius_track(seed_r: np.ndarray, window: int = 61) -> np.ndarray:
+    """Plate radius per frame: running median of the tracked Hough radius.
+
+    Follows slow changes with depth (the plate is a few % smaller overhead)
+    and drops brief blur-inflated or missing radii. NaNs are interpolated.
+    """
+    from scipy.ndimage import median_filter
+
+    from snatch.signals import fill_gaps
+    return np.asarray(median_filter(fill_gaps(seed_r), size=window | 1,
+                                    mode="reflect"))
+
+
 FIELDS = ("found", "hub_x", "hub_y", "a", "b", "angle", "px_per_m",
           "seed", "seed_x", "seed_y", "seed_r", "ellipse_fit")
 SEED_NONE, SEED_HOUGH, SEED_GAP = 0, 1, 2
@@ -242,9 +387,9 @@ def gap_seeds(seeds: np.ndarray, max_gap: int = 24) -> np.ndarray:
 def detect(read_frames: Callable[[], Iterable[np.ndarray]], n_frames: int,
            r_min: float = 110, r_max: float = 260,
            max_step_px: float = MAX_STEP_PX,
-           progress: Callable[[str, int], None] | None = None
-           ) -> dict[str, np.ndarray]:
-    """Per-frame plate outline for one clip (two decodes of the frames).
+           progress: Callable[[str, int], None] | None = None,
+           model: str = "circle") -> dict[str, np.ndarray]:
+    """Per-frame plate outline for one clip (three decodes of the frames).
 
     The outline is refit around the tracked Hough circle; in short gaps of
     the track, around the circle interpolated across the gap (found only if
@@ -265,28 +410,53 @@ def detect(read_frames: Callable[[], Iterable[np.ndarray]], n_frames: int,
     tracked[chosen >= 0] = [cands[i][chosen[i], :3]
                             for i in np.flatnonzero(chosen >= 0)]
     seeds = gap_seeds(tracked)
+    r_ref = radius_track(tracked[:, 2]) if (chosen >= 0).any() else np.full(
+        n_frames, r0)
     out = {k: np.full(n_frames, np.nan) for k in FIELDS}
     out["found"] = np.zeros(n_frames, bool)
     out["ellipse_fit"] = np.zeros(n_frames, bool)
     out["seed"] = np.where(chosen >= 0, SEED_HOUGH,
                            np.where(np.isnan(seeds[:, 0]), SEED_NONE, SEED_GAP))
-    for i, img in enumerate(read_frames()):
-        if i >= n_frames:
-            break
-        if out["seed"][i] == SEED_NONE:
-            continue
-        sx, sy, sr = seeds[i]
-        out["seed_x"][i], out["seed_y"][i], out["seed_r"][i] = sx, sy, sr
-        fit = fit_outline(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), sx, sy, sr)
-        if fit is None and out["seed"][i] == SEED_GAP:
-            continue
-        out["found"][i] = True
-        out["ellipse_fit"][i] = fit is not None
-        cx, cy, a, b, ang = fit if fit is not None else (sx, sy, sr, sr, 0.0)
-        out["hub_x"][i], out["hub_y"][i] = cx, cy
-        out["a"][i], out["b"][i], out["angle"][i] = a, b, ang
-        out["px_per_m"][i] = px_per_m(a, b)
-        if progress:
-            progress("outline", i)
+    # Two outline passes. The plate is thick enough that its tread shows on
+    # one side, so the rim offers two near-equal circles (near face, outer
+    # silhouette) and a single fit can flip between them frame to frame.
+    # Pass A fits within +-6% of the tracked Hough radius; pass B refits
+    # within +-2.5% of pass A's radius smoothed over time, so neighbouring
+    # frames use the same edge.
+    # model="ellipse": the same two passes, pass B holding both semi-axes
+    # within 6% of their smoothed tracks.
+    axes_ref = None
+    for pass_r, pass_tol, stage in ((r_ref, 0.06, "outline A"),
+                                    (None, 0.025, "outline B")):
+        if pass_r is None:
+            pass_r = radius_track(out["a"]) if out["found"].any() else r_ref
+            if model == "ellipse" and out["found"].any():
+                lo, hi = np.fmin(out["a"], out["b"]), np.fmax(out["a"], out["b"])
+                axes_ref = np.column_stack([radius_track(lo), radius_track(hi)])
+                pass_tol = 0.06
+            out["found"][:] = False
+            for k in ("hub_x", "hub_y", "a", "b", "angle", "px_per_m"):
+                out[k][:] = np.nan
+        for i, img in enumerate(read_frames()):
+            if i >= n_frames:
+                break
+            if out["seed"][i] == SEED_NONE:
+                continue
+            sx, sy, sr = seeds[i]
+            out["seed_x"][i], out["seed_y"][i], out["seed_r"][i] = sx, sy, sr
+            fit = fit_outline(
+                cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), sx, sy, sr,
+                r0=float(pass_r[i]), r_tol=pass_tol, rng_seed=i, model=model,
+                axes0=None if axes_ref is None else tuple(axes_ref[i]))
+            out["ellipse_fit"][i] = fit is not None
+            if fit is None and out["seed"][i] == SEED_GAP:
+                continue
+            out["found"][i] = True
+            cx, cy, a, b, ang = fit if fit is not None else (sx, sy, sr, sr, 0.0)
+            out["hub_x"][i], out["hub_y"][i] = cx, cy
+            out["a"][i], out["b"][i], out["angle"][i] = a, b, ang
+            out["px_per_m"][i] = px_per_m(a, b)
+            if progress:
+                progress(stage, i)
     out["r0"] = np.asarray(r0)
     return out

@@ -4,8 +4,8 @@ Ticket: [#14](https://github.com/jirigrill/snatch-exercise-validation/issues/14)
 
 **Bottom line.**
 - **Ladder:** all 24 files (8 clips × 120/60/30 fps) are built. Each is checked frame by frame and is pixel-identical to every 2nd/4th/8th frame of its 240 fps original. The originals are untouched.
-- **Plate:** the near plate is tracked as an object in all 7 plate clips. Coverage is 100% on the 5 side-on clips. The 2 off-axis clips are partial: 4586 has stretches where the tracker follows something else.
-- **Hold:** the standing hold in 4579 is **1.43 s (344 frames, f1147–f1490)**.
+- **Plate:** the near plate is tracked as an object in all 7 plate clips. **Revised 2026-10-02:** the first outline fit was visibly off the rim in many frames (see §2, "Correction"). After the fix, the 5 side-on clips are found in 100% of frames with the outline on the rim and hub jitter 0.7–1.6 px. **The 2 off-axis clips (4585, 4586) are not reliable** on the floor and must not drive v2 timing.
+- **Hold:** the standing hold in 4579 is **1.42 s (340 frames, f1151–f1490)**.
 - **Phase definition v2** (hub height in place of wrist height, plus the v2.1 transition rule chosen by the lifter after seeing 4584) is written down and frozen. On 4584 it moves **setup ~0.3 s earlier** (v1 was late, see below). Transition, catch and lockout land on the same frames as v1.
 
 Code: `prototype/src/snatch/{ladder,plate}.py`, `prototype/scripts/{build_ladder,track_plate,measure_hold,compare_phases}.py`.
@@ -54,9 +54,13 @@ uv run python scripts/build_ladder.py ../vids          # ~3 min per clip
 The plate is found by its outline, never from the wrists (`snatch/plate.py`):
 
 1. **Candidates per frame:** Hough circles at half resolution, r 110–260 px. Each candidate also records the mean grey level inside it. The bumper plate is black, which separates it from round look-alikes such as the wall logo, the ball shelf and ducts.
-2. **Track (Viterbi over all frames):** picks the smoothest path of plate-sized, dark circles, with an explicit "not found" state. Allowed moves are ≤ 30 px per frame, and gaps of up to 24 frames can be bridged if the position is continuous. The plate radius per clip is the median radius of the best dark candidate.
-3. **Outline:** each tracked circle is refit at full resolution as an ellipse through rim edge pixels whose gradient points along the radius, with a shrinking inlier band. Short gaps in the track are refit around the circle interpolated across the gap, and count as found only if that fit succeeds.
-4. **Per-clip sanity check:** the hub must travel ≥ 0.4 m vertically, be found in ≥ 90% of frames, and never jump. The result is saved as `status`.
+2. **Track (Viterbi over all frames):** picks the smoothest path of plate-sized, dark circles, with an explicit "not found" state. Allowed moves are ≤ 30 px per frame, and gaps of up to 24 frames can be bridged if the position is continuous.
+3. **Outline, pass A:** at full resolution, a RANSAC circle over rim edge pixels (edges whose gradient points along the radius). The radius is limited to ±6% of the tracked Hough radius, smoothed over 0.25 s. The limit rules out the lettering ring (~0.8 r) and blur-inflated circles. A least-squares refit on the inliers follows. An ellipse replaces the circle only if it explains ≥ 15% more rim pixels.
+4. **Outline, pass B (consistency):** refit every frame with the radius held within ±2.5% of pass A's radius, smoothed over time. The plate is thick enough that its tread shows on one side. That gives two near-equal circles (near face and outer silhouette), and without this pass the fit flipped between them frame to frame.
+5. Short gaps in the track are refit around the circle interpolated across the gap, and count as found only if that fit succeeds.
+6. **Per-clip sanity check:** the hub must travel ≥ 0.4 m vertically, be found in ≥ 90% of frames, and never jump. The result is saved as `status`.
+
+Off-axis clips run with `model="ellipse"`: a RANSAC ellipse, with pass B holding both semi-axes within 6% of their smoothed tracks (`track_plate.py <clip> <out> ellipse`).
 
 Saved per clip in `prototype/out/<clip>/plate.npz`. Arrays have length n_frames (240 fps), with the same frame index as `raw_pose.npz`, in pixels of the rotated frame:
 
@@ -64,56 +68,67 @@ Saved per clip in `prototype/out/<clip>/plate.npz`. Arrays have length n_frames 
 |---|---|
 | `found` | plate outline present at this frame |
 | `hub_x`, `hub_y` | outline centre = bar axis at the near plate's face. **Use as a keypoint.** |
-| `a`, `b`, `angle` | ellipse semi-axes (px) and rotation (deg, OpenCV `fitEllipse` convention); a circle when a = b |
+| `a`, `b`, `angle` | semi-axes (px) and rotation (deg, OpenCV `fitEllipse` convention); a circle when a = b |
 | `px_per_m` | 2·max(a, b) / 0.45 m: the major axis is the true diameter even when the plate is tilted |
 | `ellipse_fit` | False where the refit failed and the Hough circle is used as the outline |
 | `seed`, `seed_x/y/r` | 1 = tracked Hough circle, 2 = interpolated across a gap |
-| `status`, `travel_m`, `jumps`, `r0` | clip-level sanity check |
+| `status`, `travel_m`, `jumps`, `r0`, `model` | clip-level sanity check and outline model |
 
-Also per clip: `plate.csv` (the same data; gitignored, regenerate it), `plate_check.jpg` (the outline and hub drawn at 6 evenly spaced frames plus the highest and lowest hub positions and up to 2 missed frames; green = ellipse fit, yellow = circle fallback) and `bar_path.png` (hub path over the first frame, and hub x/y against time).
+Also per clip:
+- `plate_check.jpg`: **zoomed full-resolution crops** around the plate at ~18 frames (14 evenly spaced, the highest and lowest hub, up to 2 missed). Green = rim fit, yellow = circle fallback.
+- `bar_path.png`: hub path over the first frame, and hub x/y against time.
+- `plate.csv`: the same data as `plate.npz` (gitignored, regenerate it).
 
-| Clip | View | Found | Ellipse fit | Plate r (px) | px/m (median) | b/a | Status |
+| Clip | View | Model | Found | Plate r (px) | px/m (median) | Hub jitter x/y (px), before → after | Status |
 |---|---|---|---|---|---|---|---|
-| 4579 | side | 100.0% | 100.0% | 173 | 819 | 0.96 | ok |
-| 4581 | side | 100.0% | 99.9% | 171 | 794 | 0.95 | ok |
-| 4583 | side | 100.0% | 100.0% | 174 | 826 | 0.94 | ok |
-| 4584 | side | 100.0% | 99.7% | 175 | 819 | 0.96 | ok |
-| 4587 | side | 100.0% | 99.8% | 152 | 708 | 0.95 | ok |
-| 4585 | off-axis | 97.1% | 95.6% | 133 | 620 | 0.89 | ok (gaps after the drop) |
-| 4586 | off-axis | 97.8% | 97.0% | 132 | 617 | 0.91 | **check: 8 jumps** |
+| 4579 | side | circle | 100.0% | 173 | 767 | 3.4/2.8 → **1.6/1.6** | ok |
+| 4581 | side | circle | 100.0% | 171 | 775 | 2.9/2.6 → **1.1/1.4** | ok |
+| 4583 | side | circle | 100.0% | 174 | 793 | 3.2/2.7 → **0.8/1.1** | ok |
+| 4584 | side | circle | 100.0% | 175 | 784 | 3.4/2.8 → **0.8/1.0** | ok |
+| 4587 | side | circle | 100.0% | 152 | 674 | 2.9/2.6 → **0.7/0.7** | ok |
+| 4585 | off-axis | ellipse | 93.3% | 133 | 606 | 7.1/4.6 → 8.6/7.5 | **check: 42 jumps** |
+| 4586 | off-axis | ellipse | 96.1% | 132 | 627 | 9.9/13.3 → 11.5/15.0 | **check: 119 jumps** |
 | 4578 | bar only | — | — | — | — | — | **no plate** |
 
-**Precision.** Frame-to-frame jitter (raw minus smoothed) is 2.6–3.4 px on the side-on clips, about 3–4 mm. The near wrist keypoint jitters 1.9–7.4 px on the same clips. After the same smoothing, the gap is large: at rest before the lift in 4584, hub speed SD is 40 px/s against 297 px/s for the wrist. The wrist wanders while it is hidden; the hub does not. A scale of ~820 px/m means 1 px ≈ 1.2 mm.
+Jitter is the SD of raw minus smoothed (Savitzky-Golay 0.1 s) over found frames. It measures consistency, not accuracy. Accuracy is checked by eye on the zoomed sheets: every sampled frame of the 5 side-on clips has the outline on the rim.
 
-**Assumption to confirm:** the 5 kg plates are 450 mm in diameter (as stated in the ticket). If they are smaller, `px_per_m` scales by 450 / true diameter. Hub positions and outlines are unaffected.
+**Precision.** After the fix, side-on hub jitter is 0.7–1.6 px (~1–2 mm). The near wrist keypoint jitters 1.9–7.4 px on the same clips. At rest before the lift in 4584, smoothed hub speed SD is 15 px/s against 297 px/s for the wrist. The scale is ~780 px/m on the hoodie-session clips, so 1 px ≈ 1.3 mm.
+
+**Assumption to confirm:** the 5 kg plates are 450 mm in diameter (standard bumper size, not measured). If they are smaller, `px_per_m` scales by 450 / true diameter. Hub positions and outlines are unaffected.
+
+### Correction (2026-10-02): the first outline fit was off the rim
+
+The first version (commit 6d7a77e) refit an unconstrained 5-parameter ellipse through all rim-like edges. At full resolution it was visibly off the plate in many frames, e.g. 4579 f324/f510/f1021/f2042 and 4581 f357/f713/f1427. It mixed in the lettering ring and the tread crescent, came out slightly oval on side-on plates (b/a 0.94–0.96, where the true value is ~1.0), and scattered the hub by 3–4 px frame to frame. The thumbnail check images were too small to show it.
+
+Compared with the fixed hub, the old one was off by a median of 5–7 px and a 95th percentile of 14–19 px on the side-on clips. Phase frames on 4584 moved by at most 2 frames (rep 1 setup f927 → f925). The hold went from 344 to 340 frames. px/m went down by ~4%, because the old ellipse's major axis was inflated.
 
 ### Where plate detection fails
 
 | Clip | What fails | Reason |
 |---|---|---|
-| **4578** | Everything: no plate, so no hub. `plate.npz` was deleted. `plate_check.jpg` and `bar_path.png` are kept as evidence: the tracker latched onto balls and the hoodie, and the sanity check flagged 7 jumps. | Bar only. The bar end/sleeve (~50 mm across, ~35 px) was **not attempted**. It is end-on to the camera only part of the time, and the bar tilts and rotates in the hands (see the 4578 contact sheet), so it is not a circle-detector target. **4578 keeps phase definition v1 (wrist timing).** |
-| **4586** (off-axis) | Both lifts are tracked. At least four stretches follow the lifter's black shorts instead of the plate: ~2.1–3.3 s, **~4.9–5.7 s (rep 1 overhead)**, ~8.7–9.3 s, ~15.6–16.5 s. Flagged automatically (jumps at f999, 1189, 1380, 1580, 2245). | Seen from behind and to the right, the plate is an ellipse (b/a ≈ 0.9) that is smaller (r ≈ 132 px), and the black shorts look like a dark disc of the same size. Do **not** use the 4586 hub without masking these stretches. |
-| 4585 (off-axis) | Tracked through the lift. Gappy for ~1 s after the drop, while the plate bounces and rolls. | Motion blur and the bar rolling. Passes the sanity check. |
+| **4578** | Everything: no plate, so no hub. `plate.npz` was deleted. `plate_check.jpg` and `bar_path.png` are kept as evidence: the tracker latched onto balls and the hoodie, and the sanity check flags it. | Bar only. The bar end/sleeve (~50 mm across, ~35 px) was **not attempted**. It is end-on to the camera only part of the time, and the bar tilts and rotates in the hands, so it is not a circle-detector target. **4578 keeps phase definition v1 (wrist timing).** |
+| **4585, 4586** (off-axis) | The outline is right overhead, against the bright wall. On the floor (setup, pull, after the drop) it wanders: oversized or tilted ellipses, and in 4586 stretches on the lifter's black shorts. Flagged automatically (42 and 119 jumps). **Their hub must not be used for v2 timing as it stands.** | Seen from behind and to the right, the plate is an ellipse (b/a ≈ 0.84) whose rim on the dark floor is faint, while the tread, the legs and the shorts add rim-like edges. Neither the circle nor the ellipse model separates them reliably. |
 
-Off-axis clips are the "degraded" condition in #11, so a partial result there is a finding, not a blocker.
+Off-axis clips are the "degraded" condition in #11, so a partial result there is a finding, not a blocker. It does affect #15, though; see "Open for #15" in §4.
 
 ```
-uv run python scripts/track_plate.py ../vids/IMG_4584.MOV out/4584   # ~2-4 min per clip
+uv run python scripts/track_plate.py ../vids/IMG_4584.MOV out/4584           # ~2-4 min per clip
+uv run python scripts/track_plate.py ../vids/IMG_4585.MOV out/4585 ellipse   # off-axis
 ```
 
 ## 3. Standing hold in 4579 (noise-floor sample)
 
-**1.433 s = 344 frames, f1147–f1490 (4.779–6.208 s).** Output: `prototype/out/4579/hold.json`, from `scripts/measure_hold.py`.
+**1.417 s = 340 frames, f1151–f1490 (4.796–6.208 s).** Output: `prototype/out/4579/hold.json`, from `scripts/measure_hold.py`.
 
-Definition: the longest run where the hub is found and above the knee keypoints (bar off the floor, at the hips), and its smoothed height stays within a **2 cm band** (15 px at the plate's own scale). Horizontal sway is allowed, since it is part of standing still: the hub drifts 40 px ≈ 5 cm forward and back. During the hold, knee angle is 170.5–180° and the hub sits 62 px (~8 cm) below the hip keypoints.
+Definition: the longest run where the hub is found and above the knee keypoints (bar off the floor, at the hips), and its smoothed height stays within a **2 cm band** (15 px at the plate's own scale). Horizontal sway is allowed, since it is part of standing still: the hub drifts 26 px ≈ 3.5 cm forward and back. During the hold, knee angle is 170.5–180° and the hub sits 64 px (~8.5 cm) below the hip keypoints.
 
 | Band | Hold length |
 |---|---|
-| 1 cm | 211 frames (0.88 s) |
-| **2 cm** | **344 frames (1.43 s)** |
-| 3 cm | 384 frames (1.60 s) |
+| 1 cm | 241 frames (1.00 s) |
+| **2 cm** | **340 frames (1.42 s)** |
+| 3 cm | 380 frames (1.58 s) |
 
-A speed threshold does not work here: the 50 px/s "still" threshold used for liftoff gives only 23 frames, because the hub's frame-to-frame jitter alone crosses it.
+A speed threshold is too strict here: the 50 px/s "still" threshold used for liftoff gives at most 147 frames (0.61 s), because normal standing sway crosses it.
 
 So the static sample is ~1.4 s × 240 fps ≈ 340 frames, but only ~1.4 s of real time. Frame-to-frame values within it are strongly correlated, so it is a short noise-floor sample, not 340 independent ones.
 
@@ -139,7 +154,7 @@ The rationale (from #12): seen from the side, the hands sit inside the plate's o
 
 | Rep | Event | v1 | v2 | v2 − v1 |
 |---|---|---|---|---|
-| 1 | setup | f1001 (4.171 s) | f927 (3.862 s) | **−74 frames (−308 ms)** |
+| 1 | setup | f1001 (4.171 s) | f925 (3.854 s) | **−76 frames (−317 ms)** |
 | 1 | transition | f1065 | f1065 | 0 |
 | 1 | catch | f1238 | f1238 | 0 |
 | 1 | lockout | f1471 | f1471 | 0 |
@@ -150,11 +165,18 @@ The rationale (from #12): seen from the side, the hands sit inside the plate's o
 
 (The overhead run, which only defines the rep, shifts by −6 to +15 frames.)
 
-**Setup: v1 was late, not v2.** At v1's setup frame the plate is already off the floor: the hub is 129 px (~16 cm) above its resting height at f1001, and 103 px (~13 cm) at f2553. At v2's setup frame the hub has risen 5 px (f927) and 0 px (f2483), which is the true start of the bar's rise. While hidden behind the plate, the wrist keypoint stalls and lags the bar. Check: `prototype/out/4584/setup_v1_v2.jpg`, crops at rest, v2 setup, mid-rise and v1 setup for both reps. **Consequence for #12:** the "setup" angles in #12 were sampled ~0.3 s after liftoff, with the bar 13–16 cm up.
+**Setup: v1 was late, not v2.** At v1's setup frame the plate is already off the floor: the hub is 135 px (~17 cm) above its resting height at f1001, and 106 px (~14 cm) at f2553. At v2's setup frame the hub has risen 4 px (f925) and 3 px (f2483), which is the true start of the bar's rise. While hidden behind the plate, the wrist keypoint stalls and lags the bar. Check: `prototype/out/4584/setup_v1_v2.jpg`, crops at rest, v2 setup, mid-rise and v1 setup for both reps. **Consequence for #12:** the "setup" angles in #12 were sampled ~0.3 s after liftoff, with the bar 14–17 cm up.
 
 Two more notes on the comparison:
 - v1 uses the mean of both wrists (as in #12); v2 uses the near plate's hub only.
-- v2 timing is only as good as the hub. 4586's bad stretches (§2) would corrupt its timing, and nothing in `plate.npz` masks them; only the `status`/`jumps` fields flag the clip.
+- v2 timing is only as good as the hub.
+
+### Open for #15: off-axis clips
+
+The off-axis hub is unreliable on the floor (§2), which is exactly where v2 times setup and the transition window. #15 needs a decision for 4585 and 4586:
+- **(a)** use v1 (wrist) timing for them. This is simple, but the degraded-take SD ratio then compares across two phase definitions, which have been shown to differ by ~0.3 s at setup.
+- **(b)** improve off-axis plate tracking first, e.g. a learned segmenter prompted with the tracked Hough seed.
+- **(c)** report the off-axis clips without setup-phase values.
 
 ## Files
 
@@ -163,7 +185,7 @@ Two more notes on the comparison:
 | `vids/ladder/*.MOV` | 24 ladder files | no (`vids/` ignored) |
 | `prototype/out/ladder.json` | per clip and rate: method, frames, expected, pixel_identical, rotation, size | yes |
 | `prototype/out/<clip>/plate.npz` | per-frame hub, outline, px/m, status (7 plate clips) | yes |
-| `prototype/out/<clip>/plate_check.jpg`, `bar_path.png` | check images (all 8, incl. the 4578 failure) | yes |
+| `prototype/out/<clip>/plate_check.jpg`, `bar_path.png` | zoomed check images and bar path (all 8, incl. the 4578 failure) | yes |
 | `prototype/out/<clip>/plate.csv` | the same data as `plate.npz` | no (regenerate) |
 | `prototype/out/4579/hold.json` | hold length and stats | yes |
 | `prototype/out/4584/phases_v1_v2.md`, `phases_v2.json`, `setup_v1_v2.jpg` | v1 vs v2 | yes |

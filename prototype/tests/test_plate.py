@@ -4,7 +4,7 @@ import pytest
 
 from snatch.plate import (
     PLATE_DIAMETER_M, candidates, fit_outline, gap_seeds, longest_steady_run,
-    px_per_m, track, typical_radius,
+    px_per_m, radius_track, track, typical_radius,
 )
 
 
@@ -38,13 +38,43 @@ def test_fit_outline_recovers_a_circle_with_subpixel_centre():
 
 
 def test_fit_outline_recovers_a_plate_seen_at_an_angle():
-    img = _scene(400, 650, 175, 120, angle=10)
-    out = fit_outline(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 400, 650, 150)
+    # off-axis clips: b/a ~ 0.85-0.9
+    img = _scene(400, 650, 175, 150, angle=10)
+    out = fit_outline(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 400, 650, 160,
+                      r0=165)
     assert out is not None
     cx, cy, a, b, _ = out
     assert (cx, cy) == pytest.approx((400, 650), abs=1.5)
     assert max(a, b) == pytest.approx(175, abs=3)
-    assert min(a, b) == pytest.approx(120, abs=3)
+    assert min(a, b) == pytest.approx(150, abs=3)
+
+
+def _lettered_plate(cx: float, cy: float, r: float) -> np.ndarray:
+    """Plate with a light lettering ring at ~0.8 r (as on the real plates)."""
+    img = _scene(cx, cy, r, r)
+    for k in range(12):  # 12 "letters": dashed light arcs
+        cv2.ellipse(img, (round(cx), round(cy)), (round(0.8 * r), round(0.8 * r)),
+                    0, 30 * k, 30 * k + 20, (150, 150, 150), 14)
+    return img
+
+
+def test_fit_outline_ignores_the_lettering_ring_given_the_clip_radius():
+    img = _lettered_plate(410, 700, 175)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # seed off by 25 px and too small, as Hough seeds sometimes are
+    out = fit_outline(gray, 430, 715, 150, r0=175)
+    assert out is not None
+    cx, cy, a, b, _ = out
+    assert (cx, cy) == pytest.approx((410, 700), abs=1.5)
+    assert (a, b) == pytest.approx((175, 175), abs=2.0)
+
+
+def test_fit_outline_is_a_circle_when_the_plate_faces_the_camera():
+    img = _lettered_plate(410, 700, 175)
+    out = fit_outline(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 410, 700, 175,
+                      r0=175)
+    assert out is not None
+    assert out[2] == out[3]  # no ellipse freedom unless it clearly fits better
 
 
 def test_fit_outline_gives_up_when_there_is_no_plate():
@@ -142,3 +172,29 @@ def test_gap_seeds_bridge_short_gaps_only():
     assert out[2] == pytest.approx([20, 40, 174])
     assert np.isnan(out[4:7]).all()  # seeds 4 frames apart > max_gap
     assert np.isnan(out[8]).all()  # open at the end
+
+
+def test_radius_track_follows_depth_and_ignores_outliers():
+    rng = np.random.default_rng(3)
+    r = np.linspace(180, 170, 400) + rng.normal(0, 3, 400)  # plate moves away
+    r[100:104] = 200  # blur-inflated Hough radii
+    r[250:260] = np.nan  # not found
+    ref = radius_track(r, window=61)
+    assert not np.isnan(ref).any()
+    assert ref[102] == pytest.approx(180 - 10 * 102 / 399, abs=1.5)
+    assert ref[255] == pytest.approx(180 - 10 * 255 / 399, abs=1.5)
+    assert ref[0] == pytest.approx(180, abs=2)
+
+
+def test_fit_outline_ellipse_mode_with_axis_limits():
+    img = _scene(400, 650, 175, 145, angle=15)
+    for k in range(12):  # lettering ring
+        cv2.ellipse(img, (400, 650), (140, 116), 15, 30 * k, 30 * k + 20,
+                    (150, 150, 150), 12)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    out = fit_outline(gray, 410, 660, 150, model="ellipse",
+                      axes0=(145, 175), r_tol=0.06)
+    assert out is not None
+    cx, cy, a, b, _ = out
+    assert (cx, cy) == pytest.approx((400, 650), abs=1.5)
+    assert sorted((a, b)) == pytest.approx([145, 175], abs=3)

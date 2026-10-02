@@ -23,7 +23,7 @@ Pooled reps: main set 6 side-on plate reps; degraded 3 off-axis plate reps; base
 All candidate pose models are run on these clips to compare performance, including ones whose licences block commercial use (see `research/09-pose-model-licensing.md`). Blocked-model results are research-only and must be labelled as such.
 
 ## Known limits
-- No dedicated static standing clip. Best proxy: standing hold in 4579 (plates, same session): **1.43 s, 344 frames, f1147–f1490** (hub height within 2 cm; see `results/14-ladder-and-plate.md`). Secondary: 4578 (bar only), overhead lockout holds (quasi-static, includes real sway).
+- No dedicated static standing clip. Best proxy: standing hold in 4579 (plates, same session): **1.42 s, 340 frames, f1151–f1490** (hub height within 2 cm; see `results/14-ladder-and-plate.md`). Secondary: 4578 (bar only), overhead lockout holds (quasi-static, includes real sway).
 - Main set mixes two sessions (hoodie / grey tee).
 - n = 6 reps: clear pass/fail only, not close calls.
 - Near plate occludes lower legs at setup/pull in side-on plate clips.

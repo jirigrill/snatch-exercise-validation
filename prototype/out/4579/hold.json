@@ -1,26 +1,26 @@
 {
- "frames": 344,
- "seconds": 1.433,
- "first_frame": 1147,
+ "frames": 340,
+ "seconds": 1.417,
+ "first_frame": 1151,
  "last_frame": 1490,
- "t_start_s": 4.779,
+ "t_start_s": 4.796,
  "t_end_s": 6.208,
  "band_m": 0.02,
- "band_px": 15.3,
+ "band_px": 15.0,
  "frames_by_band_m": {
-  "0.01": 211,
-  "0.02": 344,
-  "0.03": 384
+  "0.01": 241,
+  "0.02": 340,
+  "0.03": 380
  },
  "hub_raw_sd_px": [
-  11.75,
-  3.7
+  8.09,
+  2.97
  ],
- "hub_minus_hip_y_px": 62.0,
+ "hub_minus_hip_y_px": 63.9,
  "knee_deg_range": [
   170.5,
   180.0
  ],
- "hub_x_range_px": 39.5,
- "px_per_m": 767.4
+ "hub_x_range_px": 25.8,
+ "px_per_m": 746.4
 }
