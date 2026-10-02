@@ -1,0 +1,34 @@
+{
+ "fps": 240.0,
+ "side": "r",
+ "reps": [
+  {
+   "setup": 859,
+   "transition": 925,
+   "catch": 1102,
+   "lockout": 1365,
+   "overhead_start": 1013,
+   "overhead_end": 1601,
+   "setup_s": 3.579,
+   "transition_s": 3.854,
+   "catch_s": 4.592,
+   "lockout_s": 5.688,
+   "overhead_start_s": 4.221,
+   "overhead_end_s": 6.671
+  }
+ ],
+ "near_side_score_at_phase": {
+  "setup": [
+   0.6772739291191101
+  ],
+  "transition": [
+   0.7327380776405334
+  ],
+  "catch": [
+   0.8265945315361023
+  ],
+  "lockout": [
+   0.8670110702514648
+  ]
+ }
+}

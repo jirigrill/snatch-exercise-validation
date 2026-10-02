@@ -194,3 +194,30 @@ The off-axis hub is unreliable on the floor (§2), which is exactly where v2 tim
 | `prototype/out/4584/phases_v1_v2.md`, `phases_v2.json`, `setup_v1_v2.jpg` | v1 vs v2 | yes |
 
 Pose output (`raw_pose.npz`) for clips other than 4584 stays local, as before.
+
+### Per-clip output set (added 2026-10-02, before #15)
+
+Every clip folder `prototype/out/<clip>/` now has the same set, where it applies:
+
+| File | Made by | In git | Clips |
+|---|---|---|---|
+| `raw_pose.npz` | `extract_pose.py` | yes | all 8 |
+| `plate.npz` | `track_plate.py` | yes | 7 plate clips (not 4578) |
+| `plate_check.jpg`, `bar_path.png` | `track_plate.py` | yes | all 8 |
+| `plate.csv` | `track_plate.py` | no | 7 plate clips |
+| `angles.csv`, `angles.png`, `phases.json` (v1 marks) | `analyze.py` | yes | all 8 |
+| `grabs/*.jpg`, `phase_sheet.jpg` (pose + v1 marks) | `analyze.py` | yes | all with reps (not 4579) |
+| `overlay.mp4` | `analyze.py` | no (~3 MB each; ~15 s to regenerate) | all 8 |
+| `phases_v2.json`, `phases_v1_v2.md` | `compare_phases.py` | yes | 4579, 4581, 4583, 4584, 4587 (not 4578: no plate; not 4585/4586: hub unreliable, v1 for #15) |
+| `spread.md`, `values`/`sd` in `phases.json` | `analyze.py … spread` | yes | **4584 only** (#12). Left to #15 for the others, so across-rep SD is not seen before #15 runs |
+| `hold.json` | `measure_hold.py` | yes | 4579 only |
+| `setup_v1_v2.jpg` | one-off (#14), no script | yes | 4584 only |
+| `raw_pose_untracked.npz` | first pose run before the crop fix (#12) | yes | 4584 only |
+
+`overlay.mp4` shows the pose (as in `grabs/`) plus: plate outline and hub (green; **orange** with "plate: check" where the sanity check failed, 4585/4586), the hub path over the last 2 s, the near elbow-to-hub segment, v1 (yellow) and v2 (green) phase marks as 0.25 s banners and as ticks on a timeline, a 10 cm scale bar from `px_per_m`, and "HOLD" over the 4579 hold. v2 is shown only where the plate status is `ok`. The video is display only: nothing in it changes a phase rule or a value.
+
+```
+uv run python scripts/analyze.py ../vids/IMG_4584.MOV out/4584 spread   # 4584 only
+uv run python scripts/analyze.py ../vids/IMG_4581.MOV out/4581          # other clips
+uv run python scripts/compare_phases.py out/4581                        # side-on plate clips
+```
