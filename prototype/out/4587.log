@@ -1,0 +1,26 @@
+ClipInfo(width=1080, height=1920, fps=240.0, n_frames=3837, rotation=-90)
+2026-10-02 08:26:35.306 python3[98792:22654806] 2026-10-02 08:26:35.305974 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to improve perf.
+2026-10-02 08:26:35.306 python3[98792:22654806] 2026-10-02 08:26:35.306031 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/yolox_x_8xb8-300e_humanart-a39d44ed.onnx with onnxruntime backend
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/rtmpose-x_simcc-body7_pt-body7_700e-384x288-71d7b7e9_20230629.onnx with onnxruntime backend
+frame 0/3837 4s
+frame 200/3837 100s
+frame 400/3837 188s
+frame 600/3837 281s
+frame 800/3837 383s
+frame 1000/3837 475s
+frame 1200/3837 574s
+frame 1400/3837 671s
+frame 1600/3837 770s
+frame 1800/3837 870s
+frame 2000/3837 964s
+frame 2200/3837 1050s
+frame 2400/3837 1136s
+frame 2600/3837 1223s
+frame 2800/3837 1315s
+frame 3000/3837 1403s
+frame 3200/3837 1495s
+frame 3400/3837 1586s
+frame 3600/3837 1674s
+frame 3800/3837 1767s
+done 3837 frames in 1783s
