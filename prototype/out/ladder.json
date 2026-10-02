@@ -1,0 +1,298 @@
+{
+ "4578": {
+  "frames_240": 2943,
+  "nb_frames_tag": 2943,
+  "rates": {
+   "30": {
+    "expected": 368,
+    "file": "vids/ladder/IMG_4578_30fps.MOV",
+    "frames": 368,
+    "mbytes": 403.5,
+    "method": "lossless re-encode (sub-layer step uneven)",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 8
+   },
+   "60": {
+    "expected": 736,
+    "file": "vids/ladder/IMG_4578_60fps.MOV",
+    "frames": 736,
+    "mbytes": 29.9,
+    "method": "sub-layer tid<=1, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 4
+   },
+   "120": {
+    "expected": 1472,
+    "file": "vids/ladder/IMG_4578_120fps.MOV",
+    "frames": 1472,
+    "mbytes": 43.9,
+    "method": "sub-layer tid<=2, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 2
+   }
+  },
+  "rotation": -90
+ },
+ "4579": {
+  "frames_240": 2553,
+  "nb_frames_tag": 2553,
+  "rates": {
+   "30": {
+    "expected": 320,
+    "file": "vids/ladder/IMG_4579_30fps.MOV",
+    "frames": 320,
+    "mbytes": 352.8,
+    "method": "lossless re-encode (sub-layer step uneven)",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 8
+   },
+   "60": {
+    "expected": 639,
+    "file": "vids/ladder/IMG_4579_60fps.MOV",
+    "frames": 639,
+    "mbytes": 27.5,
+    "method": "sub-layer tid<=1, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 4
+   },
+   "120": {
+    "expected": 1277,
+    "file": "vids/ladder/IMG_4579_120fps.MOV",
+    "frames": 1277,
+    "mbytes": 39.7,
+    "method": "sub-layer tid<=2, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 2
+   }
+  },
+  "rotation": -90
+ },
+ "4581": {
+  "frames_240": 2498,
+  "nb_frames_tag": 2498,
+  "rates": {
+   "30": {
+    "expected": 313,
+    "file": "vids/ladder/IMG_4581_30fps.MOV",
+    "frames": 313,
+    "mbytes": 349.9,
+    "method": "lossless re-encode (sub-layer step uneven)",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 8
+   },
+   "60": {
+    "expected": 625,
+    "file": "vids/ladder/IMG_4581_60fps.MOV",
+    "frames": 625,
+    "mbytes": 26.9,
+    "method": "sub-layer tid<=1, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 4
+   },
+   "120": {
+    "expected": 1249,
+    "file": "vids/ladder/IMG_4581_120fps.MOV",
+    "frames": 1249,
+    "mbytes": 39.0,
+    "method": "sub-layer tid<=2, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 2
+   }
+  },
+  "rotation": -90
+ },
+ "4583": {
+  "frames_240": 2644,
+  "nb_frames_tag": 2644,
+  "rates": {
+   "30": {
+    "expected": 331,
+    "file": "vids/ladder/IMG_4583_30fps.MOV",
+    "frames": 331,
+    "mbytes": 360.4,
+    "method": "lossless re-encode (sub-layer step uneven)",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 8
+   },
+   "60": {
+    "expected": 661,
+    "file": "vids/ladder/IMG_4583_60fps.MOV",
+    "frames": 661,
+    "mbytes": 26.5,
+    "method": "sub-layer tid<=1, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 4
+   },
+   "120": {
+    "expected": 1322,
+    "file": "vids/ladder/IMG_4583_120fps.MOV",
+    "frames": 1322,
+    "mbytes": 1178.7,
+    "method": "lossless re-encode (sub-layer decode differed)",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 2
+   }
+  },
+  "rotation": -90
+ },
+ "4584": {
+  "frames_240": 3953,
+  "nb_frames_tag": 3953,
+  "rates": {
+   "30": {
+    "expected": 495,
+    "file": "vids/ladder/IMG_4584_30fps.MOV",
+    "frames": 495,
+    "mbytes": 555.4,
+    "method": "lossless re-encode (sub-layer step uneven)",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 8
+   },
+   "60": {
+    "expected": 989,
+    "file": "vids/ladder/IMG_4584_60fps.MOV",
+    "frames": 989,
+    "mbytes": 43.8,
+    "method": "sub-layer tid<=1, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 4
+   },
+   "120": {
+    "expected": 1977,
+    "file": "vids/ladder/IMG_4584_120fps.MOV",
+    "frames": 1977,
+    "mbytes": 61.5,
+    "method": "sub-layer tid<=2, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 2
+   }
+  },
+  "rotation": -90
+ },
+ "4585": {
+  "frames_240": 2455,
+  "nb_frames_tag": 2455,
+  "rates": {
+   "30": {
+    "expected": 307,
+    "file": "vids/ladder/IMG_4585_30fps.MOV",
+    "frames": 307,
+    "mbytes": 321.8,
+    "method": "lossless re-encode (sub-layer step uneven)",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 8
+   },
+   "60": {
+    "expected": 614,
+    "file": "vids/ladder/IMG_4585_60fps.MOV",
+    "frames": 614,
+    "mbytes": 25.3,
+    "method": "sub-layer tid<=1, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 4
+   },
+   "120": {
+    "expected": 1228,
+    "file": "vids/ladder/IMG_4585_120fps.MOV",
+    "frames": 1228,
+    "mbytes": 37.3,
+    "method": "sub-layer tid<=2, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 2
+   }
+  },
+  "rotation": -90
+ },
+ "4586": {
+  "frames_240": 4180,
+  "nb_frames_tag": 4180,
+  "rates": {
+   "30": {
+    "expected": 523,
+    "file": "vids/ladder/IMG_4586_30fps.MOV",
+    "frames": 523,
+    "mbytes": 555.3,
+    "method": "lossless re-encode (sub-layer step uneven)",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 8
+   },
+   "60": {
+    "expected": 1045,
+    "file": "vids/ladder/IMG_4586_60fps.MOV",
+    "frames": 1045,
+    "mbytes": 44.1,
+    "method": "sub-layer tid<=1, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 4
+   },
+   "120": {
+    "expected": 2090,
+    "file": "vids/ladder/IMG_4586_120fps.MOV",
+    "frames": 2090,
+    "mbytes": 1783.3,
+    "method": "lossless re-encode (sub-layer decode differed)",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 2
+   }
+  },
+  "rotation": -90
+ },
+ "4587": {
+  "frames_240": 3837,
+  "nb_frames_tag": 3837,
+  "rates": {
+   "30": {
+    "expected": 480,
+    "file": "vids/ladder/IMG_4587_30fps.MOV",
+    "frames": 480,
+    "mbytes": 525.0,
+    "method": "lossless re-encode (sub-layer step uneven)",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 8
+   },
+   "60": {
+    "expected": 960,
+    "file": "vids/ladder/IMG_4587_60fps.MOV",
+    "frames": 960,
+    "mbytes": 38.5,
+    "method": "sub-layer tid<=1, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 4
+   },
+   "120": {
+    "expected": 1919,
+    "file": "vids/ladder/IMG_4587_120fps.MOV",
+    "frames": 1919,
+    "mbytes": 55.7,
+    "method": "sub-layer tid<=2, no re-encode",
+    "pixel_identical": true,
+    "rotation": -90,
+    "step": 2
+   }
+  },
+  "rotation": -90
+ }
+}

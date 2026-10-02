@@ -16,3 +16,9 @@ def smooth(x: np.ndarray, fps: float, window_s: float = 0.1,
            polyorder: int = 2) -> np.ndarray:
     window = int(round(window_s * fps)) | 1  # odd
     return np.asarray(savgol_filter(fill_gaps(x), window, polyorder))
+
+
+def smooth_keypoints(kps: np.ndarray, fps: float) -> np.ndarray:
+    """`smooth` applied to every coordinate of (n_frames, n_joints, 2)."""
+    return np.stack([np.stack([smooth(kps[:, j, d], fps) for d in (0, 1)], -1)
+                     for j in range(kps.shape[1])], 1)

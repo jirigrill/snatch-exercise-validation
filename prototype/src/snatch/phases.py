@@ -19,6 +19,18 @@ downward) or degrees, already smoothed by the caller.
   of the overhead run.
 - lockout: first frame after the catch at which the knee angle is within
   `tol_deg` of its maximum for the rest of the overhead run.
+
+Phase definition v2 (frozen 2026-10-02, before #15 runs; see
+docs/results/14-ladder-and-plate.md): v1 with every use of wrist height
+replaced by the height of the near plate's hub (snatch.plate), the bar the
+hands grip. From the side the hands sit inside the plate's outline, so the
+wrists are the least confident keypoints; the hub is visible. One more
+change ("v2.1", chosen after seeing 4584): the re-bend's prominence is
+measured on the whole setup -> peak-extension segment, and only minima after
+the hub passes the knees count. The hub is lower than the wrists, so it can
+pass the knees after the knee's local maximum, and a window starting there
+cuts off the re-bend's left shoulder. Everything else as v1: same events,
+thresholds and order. Clips without a plate (4578, bar only) keep v1.
 """
 
 from dataclasses import dataclass
@@ -62,12 +74,22 @@ def pull_anchor_frame(wrist_y: np.ndarray, hip_y: np.ndarray, end: int) -> int:
 
 
 def transition_frame(knee: np.ndarray, start: int, end: int,
-                     min_dip_deg: float) -> int | None:
+                     min_dip_deg: float, accept_from: int | None = None
+                     ) -> int | None:
+    """Deepest knee re-bend in [start, end].
+
+    accept_from (v2): prominence is still measured on the whole segment, but
+    only minima at or after accept_from count.
+    """
     seg = knee[start:end + 1]
     minima, props = find_peaks(-seg, prominence=min_dip_deg)
+    prom = props["prominences"]
+    if accept_from is not None:
+        ok = start + minima >= accept_from
+        minima, prom = minima[ok], prom[ok]
     if len(minima) == 0:
         return None
-    return start + int(minima[np.argmax(props["prominences"])])
+    return start + int(minima[np.argmax(prom)])
 
 
 def catch_frame(hip_y: np.ndarray, start: int, end: int) -> int:
@@ -84,7 +106,8 @@ def find_reps(*, wrist_y: np.ndarray, nose_y: np.ndarray, hip_y: np.ndarray,
               knee: np.ndarray, fps: float,
               knee_y: np.ndarray | None = None, min_overhead_s: float = 0.25,
               still_px_s: float = 50.0, min_dip_deg: float = 3.0,
-              tol_deg: float = 5.0) -> list[Rep]:
+              tol_deg: float = 5.0, prominence_from_setup: bool = False
+              ) -> list[Rep]:
     reps = []
     runs = overhead_runs(wrist_y < nose_y, int(min_overhead_s * fps))
     for oh_start, oh_end in runs:
@@ -95,8 +118,22 @@ def find_reps(*, wrist_y: np.ndarray, nose_y: np.ndarray, hip_y: np.ndarray,
         if knee_y is not None:  # re-bend only once the bar is above the knees
             above = np.flatnonzero(wrist_y[setup:peak + 1] < knee_y[setup:peak + 1])
             search_from = setup + int(above[0]) if len(above) else peak
-        transition = transition_frame(knee, search_from, peak, min_dip_deg)
+        if prominence_from_setup:  # v2
+            transition = transition_frame(knee, setup, peak, min_dip_deg,
+                                          accept_from=search_from)
+        else:  # v1
+            transition = transition_frame(knee, search_from, peak, min_dip_deg)
         catch = catch_frame(hip_y, peak, oh_end - 1)
         lockout = lockout_frame(knee, catch, oh_end - 1, tol_deg)
         reps.append(Rep(setup, transition, catch, lockout, oh_start, oh_end))
     return reps
+
+
+def find_reps_v2(*, hub_y: np.ndarray, nose_y: np.ndarray, hip_y: np.ndarray,
+                 knee: np.ndarray, fps: float, knee_y: np.ndarray | None = None,
+                 **thresholds: float) -> list[Rep]:
+    """Phase definition v2: v1 timed from the plate hub, not the wrists,
+    with the transition's prominence measured from setup."""
+    return find_reps(wrist_y=hub_y, nose_y=nose_y, hip_y=hip_y, knee=knee,
+                     fps=fps, knee_y=knee_y, prominence_from_setup=True,
+                     **thresholds)

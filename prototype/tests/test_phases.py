@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from snatch.phases import (
-    catch_frame, find_reps, liftoff_frame, lockout_frame, overhead_runs,
+    catch_frame, find_reps, find_reps_v2, liftoff_frame, lockout_frame, overhead_runs,
     pull_anchor_frame, transition_frame,
 )
 
@@ -138,3 +138,40 @@ def test_find_reps_on_two_synthetic_reps():
         assert r.transition is not None
         assert r.setup < r.transition < r.catch < r.lockout
         assert r.lockout < r.overhead_end
+
+
+def test_v2_times_phases_from_the_hub_not_the_wrists():
+    hub, nose, knee, hip = _synthetic_clip()
+    wrists = np.full_like(hub, 950.0)  # hidden behind the plate: never rise
+    reps = find_reps_v2(hub_y=hub, nose_y=nose, hip_y=hip, knee=knee, fps=FPS)
+    assert reps == find_reps(wrist_y=hub, nose_y=nose, hip_y=hip, knee=knee, fps=FPS)
+    assert len(reps) == 2
+    assert find_reps(wrist_y=wrists, nose_y=nose, hip_y=hip, knee=knee, fps=FPS) == []
+
+
+def test_transition_window_cut_after_the_knee_peak_loses_the_rebend():
+    knee = _knee_with_rebend(dip=6)  # local knee max at 29, re-bend min at 37
+    end = len(knee) - 1
+    assert transition_frame(knee, start=35, end=end, min_dip_deg=3) is None
+
+
+def test_transition_v21_measures_prominence_from_setup_but_accepts_later():
+    knee = _knee_with_rebend(dip=6)
+    end = len(knee) - 1
+    assert transition_frame(knee, start=0, end=end, min_dip_deg=3,
+                            accept_from=35) == 37
+    assert transition_frame(knee, start=0, end=end, min_dip_deg=3,
+                            accept_from=38) is None
+
+
+def test_v2_finds_the_rebend_when_the_hub_passes_the_knees_late():
+    hub, nose, knee, hip = _synthetic_clip()
+    # knees so low that the hub (rising 900 -> 100 over 60 frames from frame
+    # 100) passes them only after the knee's local max at frame 129
+    knee_y = np.full_like(hub, 415.0)  # passed at frame 136
+    v1 = find_reps(wrist_y=hub, nose_y=nose, hip_y=hip, knee=knee, fps=FPS,
+                   knee_y=knee_y)
+    v2 = find_reps_v2(hub_y=hub, nose_y=nose, hip_y=hip, knee=knee, fps=FPS,
+                      knee_y=knee_y)
+    assert all(r.transition is None for r in v1)
+    assert [r.transition for r in v2] == [137, 547]

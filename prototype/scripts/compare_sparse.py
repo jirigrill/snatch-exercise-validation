@@ -15,14 +15,13 @@ import numpy as np
 from snatch import pose
 from snatch.angles import JOINTS, mid_y, sagittal_angles
 from snatch.phases import find_reps
-from snatch.signals import smooth
+from snatch.signals import smooth_keypoints
 from snatch.spread import PHASES as PHASES_ORDER, phase_values, spread_table
 from snatch.video import frames, probe
 
 
 def analyse(kps: np.ndarray, fps: float):
-    kps_s = np.stack([np.stack([smooth(kps[:, j, d], fps) for d in (0, 1)], -1)
-                      for j in range(17)], 1)
+    kps_s = smooth_keypoints(kps, fps)
     ang = sagittal_angles(kps_s)
     reps = find_reps(wrist_y=mid_y(kps_s, "wrist"), nose_y=mid_y(kps_s, "nose"),
                      hip_y=mid_y(kps_s, "hip"), knee=ang["knee"], fps=fps,

@@ -50,8 +50,10 @@ def frames(path: str, info: ClipInfo | None = None) -> Iterator[np.ndarray]:
     """Yield rotated BGR frames (H x W x 3, uint8)."""
     info = info or probe(path)
     proc = subprocess.Popen(
-        ["ffmpeg", "-v", "error", "-i", path, "-f", "rawvideo",
-         "-pix_fmt", "bgr24", "-"],
+        # passthrough: one output frame per coded frame, never duplicated to a
+        # constant rate (the 120 fps ladder files keep a 240 fps rate tag)
+        ["ffmpeg", "-v", "error", "-i", path, "-fps_mode", "passthrough",
+         "-f", "rawvideo", "-pix_fmt", "bgr24", "-"],
         stdout=subprocess.PIPE,
     )
     size = info.width * info.height * 3

@@ -20,7 +20,7 @@ import numpy as np
 
 from snatch.angles import COCO, JOINTS, mid_y, sagittal_angles
 from snatch.phases import find_reps
-from snatch.signals import smooth
+from snatch.signals import smooth_keypoints
 from snatch.spread import PHASES, phase_values, spread_table
 from snatch.video import frames, probe
 
@@ -38,8 +38,7 @@ raw = np.load(out / "raw_pose.npz")
 kps, scores, fps = raw["keypoints"], raw["scores"], float(raw["fps"])
 n = len(kps)
 
-kps_s = np.stack([np.stack([smooth(kps[:, j, d], fps) for d in (0, 1)], -1)
-                  for j in range(17)], 1)
+kps_s = smooth_keypoints(kps, fps)
 ang_raw = sagittal_angles(kps, SIDE)
 ang_s = sagittal_angles(kps_s, SIDE)
 
