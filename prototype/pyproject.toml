@@ -1,0 +1,30 @@
+[project]
+name = "snatch"
+version = "0.1.0"
+description = "Repeatability prototype for #11: pose -> sagittal angles -> across-rep spread"
+authors = [
+    { name = "Jiri Grill", email = "jiri.grill@workday.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.3",
+    "onnxruntime>=1.30.0",
+    "opencv-python-headless>=5.0.0.93",
+    "rtmlib>=0.0.16",
+    "scipy>=1.18.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.2,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.414",
+    "pytest>=9.1.1",
+]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"

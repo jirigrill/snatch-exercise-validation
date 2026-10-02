@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+out/**/overlay.mp4
+out/**/raw_pose_tmp*
