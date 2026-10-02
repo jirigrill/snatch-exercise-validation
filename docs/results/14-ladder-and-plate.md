@@ -4,7 +4,7 @@ Ticket: [#14](https://github.com/jirigrill/snatch-exercise-validation/issues/14)
 
 **Bottom line.**
 - **Ladder:** all 24 files (8 clips × 120/60/30 fps) are built. Each is checked frame by frame and is pixel-identical to every 2nd/4th/8th frame of its 240 fps original. The originals are untouched.
-- **Plate:** the near plate is tracked as an object in all 7 plate clips. **Revised 2026-10-02:** the first outline fit was visibly off the rim in many frames (see §2, "Correction"). After the fix, the 5 side-on clips are found in 100% of frames with the outline on the rim and hub jitter 0.7–1.6 px. **The 2 off-axis clips (4585, 4586) are not reliable** on the floor and must not drive v2 timing.
+- **Plate:** the near plate is tracked as an object in all 7 plate clips. **Revised 2026-10-02:** the first outline fit was visibly off the rim in many frames (see §2, "Correction"). After the fix, the 5 side-on clips are found in 100% of frames with the outline on the rim and hub jitter 0.7–1.6 px. **The 2 off-axis clips (4585, 4586) are not reliable** on the floor. That is accepted for now, and they are phased with v1 in #15 (§4).
 - **Hold:** the standing hold in 4579 is **1.42 s (340 frames, f1151–f1490)**.
 - **Phase definition v2** (hub height in place of wrist height, plus the v2.1 transition rule chosen by the lifter after seeing 4584) is written down and frozen. On 4584 it moves **setup ~0.3 s earlier** (v1 was late, see below). Transition, catch and lockout land on the same frames as v1.
 
@@ -109,7 +109,7 @@ Compared with the fixed hub, the old one was off by a median of 5–7 px and a 9
 | **4578** | Everything: no plate, so no hub. `plate.npz` was deleted. `plate_check.jpg` and `bar_path.png` are kept as evidence: the tracker latched onto balls and the hoodie, and the sanity check flags it. | Bar only. The bar end/sleeve (~50 mm across, ~35 px) was **not attempted**. It is end-on to the camera only part of the time, and the bar tilts and rotates in the hands, so it is not a circle-detector target. **4578 keeps phase definition v1 (wrist timing).** |
 | **4585, 4586** (off-axis) | The outline is right overhead, against the bright wall. On the floor (setup, pull, after the drop) it wanders: oversized or tilted ellipses, and in 4586 stretches on the lifter's black shorts. Flagged automatically (42 and 119 jumps). **Their hub must not be used for v2 timing as it stands.** | Seen from behind and to the right, the plate is an ellipse (b/a ≈ 0.84) whose rim on the dark floor is faint, while the tread, the legs and the shorts add rim-like edges. Neither the circle nor the ellipse model separates them reliably. |
 
-Off-axis clips are the "degraded" condition in #11, so a partial result there is a finding, not a blocker. It does affect #15, though; see "Open for #15" in §4.
+Off-axis clips are the "degraded" condition in #11, so a partial result there is a finding, not a blocker. For how #15 phases them, see "Decision for #15" in §4.
 
 ```
 uv run python scripts/track_plate.py ../vids/IMG_4584.MOV out/4584           # ~2-4 min per clip
@@ -171,12 +171,15 @@ Two more notes on the comparison:
 - v1 uses the mean of both wrists (as in #12); v2 uses the near plate's hub only.
 - v2 timing is only as good as the hub.
 
-### Open for #15: off-axis clips
+### Decision for #15: off-axis clips (lifter, 2026-10-02)
 
-The off-axis hub is unreliable on the floor (§2), which is exactly where v2 times setup and the transition window. #15 needs a decision for 4585 and 4586:
-- **(a)** use v1 (wrist) timing for them. This is simple, but the degraded-take SD ratio then compares across two phase definitions, which have been shown to differ by ~0.3 s at setup.
-- **(b)** improve off-axis plate tracking first, e.g. a learned segmenter prompted with the tracked Hough seed.
-- **(c)** report the off-axis clips without setup-phase values.
+The off-axis hub is unreliable on the floor (§2), which is exactly where v2 times setup and the transition window. For now that is acceptable: 4585 and 4586 are not filmed from the right side, so a perfect plate fit is not expected. #15 handles them as follows:
+
+- **4585 and 4586 are phased with v1 (wrist timing).**
+- **#15 also runs v1 on the side-on main-set clips.** It's cheap, because it uses the same pose output.
+- **The degraded-take SD ratio is v1 against v1:** off-axis SD (v1) / main-set SD (v1). Using v2 for the main set would mix two phase definitions, which differ by ~0.3 s at setup, so part of the ratio would come from the definition rather than the camera angle.
+- **All main side-on results use v2,** as frozen.
+- 4578 (bar only) keeps v1, as before.
 
 ## Files
 
