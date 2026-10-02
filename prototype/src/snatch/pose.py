@@ -35,15 +35,16 @@ def pick_lifter(boxes: np.ndarray, prev: np.ndarray | None) -> np.ndarray | None
     return boxes[int(np.argmax(areas))]
 
 
-def track_box(det: np.ndarray, prev_kps: np.ndarray | None,
+def track_box(det: np.ndarray | None, prev_kps: np.ndarray | None,
               prev_scores: np.ndarray | None, pad: float = 0.1,
-              min_score: float = 0.3) -> np.ndarray:
+              min_score: float = 0.3) -> np.ndarray | None:
     """Union of the detector box and last frame's confident keypoint extent.
 
     YOLOX cuts the box off at the plate when the plates hide the lower legs,
     and RTMPose then guesses the legs. At 240 fps the previous frame's pose is
     a close prior, so its extent (padded by `pad` of its size) keeps the legs
-    in the crop.
+    in the crop. Without a detection (sparse detector runs) the padded
+    keypoint extent alone is the crop.
     """
     if prev_kps is None or prev_scores is None:
         return det
@@ -53,8 +54,17 @@ def track_box(det: np.ndarray, prev_kps: np.ndarray | None,
     lo, hi = pts.min(0), pts.max(0)
     margin = (hi - lo) * pad
     lo, hi = lo - margin, hi + margin
+    if det is None:
+        return np.array([lo[0], lo[1], hi[0], hi[1]])
     return np.array([min(det[0], lo[0]), min(det[1], lo[1]),
                      max(det[2], hi[0]), max(det[3], hi[1])])
+
+
+def sparse_detections(boxes: np.ndarray, every: int) -> np.ndarray:
+    """Keep every `every`-th detector box; NaN elsewhere (tracked frames)."""
+    out = np.full_like(boxes, np.nan)
+    out[::every] = boxes[::every]
+    return out
 
 
 def load_models(pose_device: str = "mps") -> tuple[YOLOX, RTMPose]:
@@ -87,12 +97,13 @@ def run(images: Iterable[np.ndarray], n_frames: int, pose_device: str = "mps",
             box = pick_lifter(boxes, prev)
         else:
             box = None if np.isnan(det_boxes[i]).any() else det_boxes[i]
-        if box is not None:
-            crop = track_box(box, prev_kps, prev_scores)
+        crop = track_box(box, prev_kps, prev_scores)
+        if crop is not None:
             k, s = pose(img, bboxes=[crop])
-            kps[i], scores[i] = k[0], s[0]
-            det_bbox[i], pose_bbox[i] = box, crop
-            prev, prev_kps, prev_scores = box, k[0], s[0]
+            kps[i], scores[i], pose_bbox[i] = k[0], s[0], crop
+            prev_kps, prev_scores = k[0], s[0]
+        if box is not None:
+            det_bbox[i], prev = box, box
         if progress:
             progress(i)
     return {"keypoints": kps, "scores": scores, "bbox": det_bbox,

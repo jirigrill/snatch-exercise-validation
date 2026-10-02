@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from snatch.pose import pick_lifter, track_box
+from snatch.pose import pick_lifter, sparse_detections, track_box
 
 
 def test_track_box_extends_a_truncated_detection_to_last_frames_keypoints():
@@ -31,3 +31,18 @@ def test_pick_lifter_prefers_the_box_overlapping_the_previous_one():
     prev = np.array([10, 10, 110, 110], float)
     assert pick_lifter(boxes, prev) == pytest.approx(boxes[0])
     assert pick_lifter(boxes, None) == pytest.approx(boxes[1])
+
+
+def test_track_box_without_a_detection_uses_last_frames_keypoints():
+    prev_kps = np.array([[150.0, 120.0], [200.0, 600.0]])
+    prev_scores = np.array([0.9, 0.8])
+    out = track_box(None, prev_kps, prev_scores, pad=0.1, min_score=0.3)
+    assert out == pytest.approx([145.0, 72.0, 205.0, 648.0])
+
+
+def test_sparse_detection_mask_keeps_every_nth_box():
+    boxes = np.arange(40, dtype=float).reshape(10, 4)
+    out = sparse_detections(boxes, every=4)
+    kept = ~np.isnan(out).any(1)
+    assert np.flatnonzero(kept).tolist() == [0, 4, 8]
+    assert out[4] == pytest.approx(boxes[4])

@@ -15,7 +15,7 @@ Originals in `vids/` (gitignored, never edited). All: HEVC, 1920x1080, 240 fps, 
 
 \*Session inferred from clothing/lighting (hoodie vs grey tee; 4586/4585 skylight lighting, exposure shift mid-4586). Confirm.
 
-†Variant from visual check of 0.25 s frame sheets (agent, 2026-10-01): every rep has a knee dip under the bar but no deep squat catch. Confirm; the pipeline also reports knee angle at the catch per rep. Spread is only computed within one variant — mixed variants would inflate the catch SD with technique, not model, variation.
+†Variant from visual check of 0.25 s frame sheets (agent, 2026-10-01), **confirmed by the lifter 2026-10-02**: every rep has a knee dip under the bar but no deep squat catch. The pipeline also reports knee angle at the catch per rep (4584: 107°, 102°). Spread is only computed within one variant — mixed variants would inflate the catch SD with technique, not model, variation.
 
 Pooled reps: main set 6 side-on plate reps; degraded 3 off-axis plate reps; baseline 1 bar-only rep.
 

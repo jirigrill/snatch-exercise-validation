@@ -132,3 +132,32 @@ How to read this:
 ## Licensing
 
 Per `docs/research/09-pose-model-licensing.md`, RTMPose code and rtmlib are Apache-2.0, but the body7 weights' licence is **UNVERIFIED**. Treat these results as research-only until the weights are checked.
+
+## Addendum 2026-10-02: detector every Nth frame (tested, rejected)
+
+Can the CPU-bound detector run only every Nth frame, with the crop tracked from the previous frame's keypoints in between? Pose still runs on every frame. Test on 4584, reusing the saved every-frame boxes: `uv run python scripts/compare_sparse.py ../vids/IMG_4584.MOV out/4584 8 24`.
+
+| | Every 8th frame (30 Hz) | Every 24th frame (10 Hz) |
+|---|---|---|
+| Keypoint shift vs every-frame, during lifts | median 5.7 px, 99th pct 61 px | median 6.4 px, 99th pct 62 px |
+| Angle diff, median (hip / knee / elbow / trunk) | 0.5 / 0.5 / 2.0 / 0.3° | 0.5 / 0.6 / 2.6 / 0.3° |
+| Angle diff, max | elbow 54° (crop drift) | elbow 96° |
+| Phase frames | shift up to 20 frames (rep 2 setup) | up to 23 frames |
+| SD cells that change by > 2° | 4 of 16 (e.g. setup hip 1.1 → 5.7°, transition elbow 2.7 → 6.4°) | 3 of 16 |
+
+**Result: rejected.** No timing detail is lost, but RTMPose's output depends on the crop box. A different crop moves keypoints by ~6 px and changes SD cells by up to ~5°, which is more than the 3° bar. Two consequences:
+- **#15 keeps the every-frame detector.** The 120/60/30 fps versions are subsets of the 240 fps frames, so they reuse the 240 fps boxes. The detector runs once per clip, about 25 k frames ≈ 3.5–5 h in total, as an overnight background job.
+- **Crop sensitivity is part of the measurement noise.** The crop rule must be the same for every rep and clip. It is: every-frame detection plus the tracked crop.
+
+## Addendum 2026-10-02: keypoint confidence at each phase (4584, mean of 2 reps)
+
+Each cell is the lowest / mean score of the keypoints the angle uses.
+
+| Angle | Setup | Transition | Catch | Lockout |
+|---|---|---|---|---|
+| Hip | 0.63 / 0.68 | 0.73 / 0.78 | 0.82 / 0.84 | 0.81 / 0.86 |
+| Knee | **0.52** / 0.60 | 0.73 / 0.78 | 0.82 / 0.87 | 0.81 / 0.90 |
+| Elbow | 0.65 / 0.71 | 0.68 / 0.79 | 0.66 / 0.76 | 0.73 / 0.78 |
+| Trunk | 0.66 / 0.71 | 0.73 / 0.80 | 0.82 / 0.82 | 0.81 / 0.83 |
+
+A cut-off of 0.5 on the *mean* flags nothing. The proposal for #15 is changed to the **lowest keypoint score < 0.6**, which flags only setup knee (ankle 0.52). The transition knee scores 0.73 even though it sits behind the plate: the model is confidently guessing. So confidence flags catch only part of the occlusion problem. The 4578 bar-only comparison in #15 is the stronger check.
