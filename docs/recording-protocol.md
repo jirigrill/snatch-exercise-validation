@@ -94,30 +94,33 @@ Never exclude a clip because of how its numbers look.
 
 ## Coach labels (gate 1)
 
-- **Two coaches** label every miss independently.
+- **Two coaches** label every lift independently: misses for the cause check, made lifts for the false-alarm check.
 - Each coach sees only the video, with no app output, marker values or the other coach's labels. The lifter's log is hidden too, except `load_kg`.
 - Each coach writes their own file: `docs/coach-labels-C1.csv` and `docs/coach-labels-C2.csv`.
 
 | Column | Values |
 |---|---|
 | `clip` | as in the log |
-| `cause` | one cause from the final closed list (`research/12-feasibility-grill.md` §4), or `outside_list` / `cant_tell` |
+| `verdict` | made lifts only: `clean` / `flawed`; blank for misses |
+| `cause` | one cause from the final closed list (`research/12-feasibility-grill.md` §4), or `outside_list` / `cant_tell`; blank for a `clean` made lift |
 | `cause_2` | optional second cause, same values |
 | `notes` | free text |
 
-The app's causes are produced **before** the coach files are opened, and committed first, so the scoring can't be tuned to the labels.
+The cause engine runs the same way on every lift, made or missed, and outputs a cause or none. Its output is produced **before** the coach files are opened, and committed first, so the scoring can't be tuned to the labels.
 
 ## Gate 1 rule (fixed in advance)
 
 - **Coverage:** the share of misses where the app names a cause from the list.
 - **Agreement:** the app's primary or second cause matches the coach's cause.
+- **False alarm:** the app outputs a cause on a made lift that both coaches label `clean`. In the app, made lifts show only "deviations from your best reps", never a cause; this check makes sure those deviations aren't noise.
 
-**Go** needs all three:
+**Go** needs all four:
 1. coverage ≥ **13/16** misses;
 2. app–coach agreement ≥ coach–coach agreement;
-3. agreement ≥ 80% on misses where both coaches give the same cause.
+3. agreement ≥ 80% on misses where both coaches give the same cause;
+4. false alarms on ≤ 20% of the made lifts both coaches label `clean`.
 
-**≤ 12/16 coverage means no-go, and the project ends.** The grey zone 11–12 also counts as no-go.
+**≤ 12/16 coverage, or any other condition failing, means no-go, and the project ends.** The grey zone 11–12 also counts as no-go.
 
 Misses where the coaches disagree are reported separately as "ambiguous". With 16 misses, 13/16 is consistent with a true rate of about 57–93%: the gate catches a clear failure, it doesn't prove 80%.
 
