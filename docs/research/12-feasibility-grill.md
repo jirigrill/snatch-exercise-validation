@@ -23,6 +23,7 @@ Status: decisions agreed in a grilling session, nothing built · Date: 2026-10-0
 | Reference | Hybrid: universal physical bands from day one, refined by the lifter's own made reps |
 | Causes | **A closed list**; only validated causes ship |
 | Co-occurring faults | **The earliest deviation in time = the primary cause**; later deviations are reported as consequences |
+| Made lifts | Misses get a cause; made lifts get only "deviations from your best reps", with no cause claim. Gate 1 checks false alarms on clean made lifts. Full diagnosis of made lifts needs its own validation later |
 | Uncertainty | The app may answer "fault detected, cause outside what we can diagnose" |
 | Promise | "The most likely cause + what to try", not "we'll tell you why" |
 | Fallback without causes | **Not acceptable**: no cause, no product |
@@ -101,7 +102,7 @@ What is universal are **physical bands**:
 | **D1** | View spike: one phone, interleaved sets side / 30° / 45°, plus a static metric test (`../recording-protocol.md` § Spike session) | An oblique view shows the transition hip/knee or the wrist **and** the rectified bar path is within ~1 cm on the static test | Side-on stays |
 | **D2** | Arm-bend spike (same session as D1) | Shoulder-to-hub distance separates bent and straight arms beyond rep-to-rep spread | Early arm bend leaves the list |
 | — | Fix the view and the final cause list in the recording protocol, **before** gate 1 | — | — |
-| **D3** | **Gate 1:** 2 lifters × ≥ 8 misses, 2 coaches labelling blind | **≥ 13/16** misses get a cause **and** app–coach agreement ≥ coach–coach agreement **and** ≥ 80% on misses where both coaches agree | **≤ 12/16 → end the project** (the grey zone 11–12 counts as no-go) |
+| **D3** | **Gate 1:** 2 lifters × ≥ 8 misses, 2 coaches labelling blind | **≥ 13/16** misses get a cause **and** app–coach agreement ≥ coach–coach agreement **and** ≥ 80% on misses where both coaches agree **and** false alarms on ≤ 20% of made lifts both coaches call clean | **≤ 12/16 → end the project** (the grey zone 11–12 counts as no-go) |
 | D4 | Generalization | — (risk accepted) | — |
 
 **Gate 1 is a filter against a clear failure, not proof of success.**
@@ -110,8 +111,9 @@ What is universal are **physical bands**:
 
 ### How agreement is measured
 
-- Each coach labels every miss **blind**: without seeing app output, marker values or the other coach's labels.
+- Each coach labels every lift **blind**: without seeing app output, marker values or the other coach's labels.
 - Labels come from the closed cause list, plus `outside_list` and `cant_tell`.
 - Coach–coach agreement is the ceiling. Misses where the coaches disagree are reported separately as "ambiguous"; that count is itself a finding.
 - **Coverage:** the share of misses where the app names a cause from the list (not "I don't know").
+- **False alarm:** the engine outputs a cause on a made lift both coaches label `clean`.
 - **Agreement:** the share of misses where the app's primary cause, or the cause it ranks second, matches the coach's cause.
