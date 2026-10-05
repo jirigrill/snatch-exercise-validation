@@ -1,10 +1,10 @@
-# 12 — Walking skeleton: RTMPose-x on clip 4584 → angles → spread
+# 12 — Walking skeleton: RTMPose-x on clip 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg → angles → spread
 
 Ticket: [#12](https://github.com/jirigrill/snatch-exercise-validation/issues/12) (parent [#11](https://github.com/jirigrill/snatch-exercise-validation/issues/11)). Run 2026-10-01.
 
-**Bottom line.** The pipeline runs end to end on the Mac and gives plausible numbers. Clip 4584 has 2 reps, both power snatches. All four phases are found in both reps, including the transition. 13 of the 16 joint×phase SDs are ≤ 3° (smoothed). The three above 3°: setup knee at 9.4°, where the near plate hides the shin and ankle, catch knee at 3.6° and catch elbow at 4.3°. **n = 2 is far too few for a verdict.** This run checks that the pipeline works; it is not a result.
+**Bottom line.** The pipeline runs end to end on the Mac and gives plausible numbers. Clip 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg has 2 reps, both power snatches. All four phases are found in both reps, including the transition. 13 of the 16 joint×phase SDs are ≤ 3° (smoothed). The three above 3°: setup knee at 9.4°, where the near plate hides the shin and ankle, catch knee at 3.6° and catch elbow at 4.3°. **n = 2 is far too few for a verdict.** This run checks that the pipeline works; it is not a result.
 
-Code: `prototype/` (uv project). Outputs: `prototype/out/4584/`.
+Code: `prototype/` (uv project). Outputs: `prototype/out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg/`.
 
 ## Mac readiness
 
@@ -26,7 +26,7 @@ Code: `prototype/` (uv project). Outputs: `prototype/out/4584/`.
 | RTMPose-x (pose) | **0.018 s/frame** ✓ | 0.066 s/frame |
 | YOLOX-x (person detector) | **fails**: `CoreML static output shape ({1,1,1,8400,8400}) and inferred shape ({1,8400}) have different ranks` | 0.34 s/frame (benchmark), 0.42–0.74 s/frame in full runs |
 
-So pose runs on CoreML and the detector runs on CPU only. The detector sets the runtime: the full 4584 run (3953 frames) took **2917 s (49 min)**. Re-running pose alone on saved detector boxes took **85 s**. Reproduce the benchmark with `uv run python scripts/bench.py ../vids/IMG_4584.MOV`.
+So pose runs on CoreML and the detector runs on CPU only. The detector sets the runtime: the full 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg run (3953 frames) took **2917 s (49 min)**. Re-running pose alone on saved detector boxes took **85 s**. Reproduce the benchmark with `uv run python scripts/bench.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV`.
 
 ## Pipeline
 
@@ -40,8 +40,8 @@ Run:
 
 ```
 cd prototype
-uv run python scripts/extract_pose.py ../vids/IMG_4584.MOV out/4584                 # ~50 min
-uv run python scripts/analyze.py ../vids/IMG_4584.MOV out/4584                      # ~1 min
+uv run python scripts/extract_pose.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg                 # ~50 min
+uv run python scripts/analyze.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg                      # ~1 min
 ```
 
 ## Phase definition v1 (frozen; later tickets reuse it)
@@ -67,14 +67,14 @@ Why it looks like this: three earlier versions failed on real data. Each failure
 - The wrist sits lower during the reach-down than at the final grip, which broke a "floor level" rule.
 - A plate-occluded knee dip right after liftoff was picked as the transition.
 
-### Phase times found (4584)
+### Phase times found (20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg)
 
 | Rep | Setup | Transition | Catch | Lockout | Transition detected |
 |---|---|---|---|---|---|
 | 1 | f1001 (4.171 s) | f1065 (4.438 s) | f1238 (5.158 s) | f1471 (6.129 s) | yes |
 | 2 | f2553 (10.637 s) | f2630 (10.958 s) | f2781 (11.588 s) | f3010 (12.542 s) | yes |
 
-Visual check: `prototype/out/4584/phase_sheet.jpg` (rows = reps, columns = phases) and `grabs/*.jpg`. Both reps show matching positions at every phase: liftoff, bar at upper thigh/hip (close to the power position: trunk 18–20°, hip 129–131°), power catch under the bar, standing lockout. The skeleton sits on the lifter in every frame checked, so the rotation is applied correctly. A human check of these phase frames is ticket #13.
+Visual check: `prototype/out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg/phase_sheet.jpg` (rows = reps, columns = phases) and `grabs/*.jpg`. Both reps show matching positions at every phase: liftoff, bar at upper thigh/hip (close to the power position: trunk 18–20°, hip 129–131°), power catch under the bar, standing lockout. The skeleton sits on the lifter in every frame checked, so the rotation is applied correctly. A human check of these phase frames is ticket #13.
 
 ## SD across the 2 reps (degrees)
 
@@ -98,7 +98,7 @@ Raw (unsmoothed) angles at the same frames:
 | Elbow | 1.0 | 4.3 | 5.0 | 1.1 |
 | Trunk | 1.4 | 1.7 | 2.3 | 3.0 |
 
-Per-rep values: `prototype/out/4584/spread.md`. Catch depth (knee at the catch) is 107° and 102°, which fits a power catch and matches the visual variant label in `docs/clip-log.md`.
+Per-rep values: `prototype/out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg/spread.md`. Catch depth (knee at the catch) is 107° and 102°, which fits a power catch and matches the visual variant label in `docs/clip-log.md`.
 
 How to read this:
 - **Setup knee (9.4°) is the weak spot.** The near plate hides the near shin and ankle. RTMPose places the ankle on the plate hub (see `grabs/rep*_setup_*.jpg`), so the knee angle at setup is a guess. This matches the clip-log limit "near plate occludes lower legs at setup/pull".
@@ -111,13 +111,13 @@ How to read this:
 
 | File | Content |
 |---|---|
-| `out/4584/raw_pose.npz` | Raw model output used for the analysis: keypoints (3953×17×2 px), scores, detector box, tracked crop box, people count, run metadata |
-| `out/4584/raw_pose_untracked.npz` | First run, before the crop fix (detector box only). Kept for comparison: 343 frames differ by > 20 px on some keypoint |
-| `out/4584/angles.csv` | Per frame: 4 angles raw + smoothed, all 17 keypoints x/y/score, people count |
-| `out/4584/phases.json` | Phase frames and times, per-rep values, SD tables, mean near-side keypoint score at each phase |
-| `out/4584/angles.png` | Angle and height traces with the phase markers |
-| `out/4584/phase_sheet.jpg`, `grabs/` | Overlays at each phase frame. Yellow = near side, grey = far side, red dot = score < 0.3, blue = detector box, magenta = tracked crop |
-| `out/4584/overlay.mp4` | Full overlay video, every 4th frame at 60 fps (real time). **Gitignored** (3.4 MB); regenerate with `analyze.py` |
+| `out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg/raw_pose.npz` | Raw model output used for the analysis: keypoints (3953×17×2 px), scores, detector box, tracked crop box, people count, run metadata |
+| `out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg/raw_pose_untracked.npz` | First run, before the crop fix (detector box only). Kept for comparison: 343 frames differ by > 20 px on some keypoint |
+| `out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg/angles.csv` | Per frame: 4 angles raw + smoothed, all 17 keypoints x/y/score, people count |
+| `out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg/phases.json` | Phase frames and times, per-rep values, SD tables, mean near-side keypoint score at each phase |
+| `out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg/angles.png` | Angle and height traces with the phase markers |
+| `out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg/phase_sheet.jpg`, `grabs/` | Overlays at each phase frame. Yellow = near side, grey = far side, red dot = score < 0.3, blue = detector box, magenta = tracked crop |
+| `out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg/overlay.mp4` | Full overlay video, every 4th frame at 60 fps (real time). **Gitignored** (3.4 MB); regenerate with `analyze.py` |
 
 ## Blockers and slowdowns
 
@@ -135,7 +135,7 @@ Per `docs/research/09-pose-model-licensing.md`, RTMPose code and rtmlib are Apac
 
 ## Addendum 2026-10-02: detector every Nth frame (tested, rejected)
 
-Can the CPU-bound detector run only every Nth frame, with the crop tracked from the previous frame's keypoints in between? Pose still runs on every frame. Test on 4584, reusing the saved every-frame boxes: `uv run python scripts/compare_sparse.py ../vids/IMG_4584.MOV out/4584 8 24`.
+Can the CPU-bound detector run only every Nth frame, with the crop tracked from the previous frame's keypoints in between? Pose still runs on every frame. Test on 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg, reusing the saved every-frame boxes: `uv run python scripts/compare_sparse.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg 8 24`.
 
 | | Every 8th frame (30 Hz) | Every 24th frame (10 Hz) |
 |---|---|---|
@@ -149,7 +149,7 @@ Can the CPU-bound detector run only every Nth frame, with the crop tracked from 
 - **#15 keeps the every-frame detector.** The 120/60/30 fps versions are subsets of the 240 fps frames, so they reuse the 240 fps boxes. The detector runs once per clip, about 25 k frames ≈ 3.5–5 h in total, as an overnight background job.
 - **Crop sensitivity is part of the measurement noise.** The crop rule must be the same for every rep and clip. It is: every-frame detection plus the tracked crop.
 
-## Addendum 2026-10-02: keypoint confidence at each phase (4584, mean of 2 reps)
+## Addendum 2026-10-02: keypoint confidence at each phase (20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg, mean of 2 reps)
 
 Each cell is the lowest / mean score of the keypoints the angle uses.
 
@@ -160,4 +160,4 @@ Each cell is the lowest / mean score of the keypoints the angle uses.
 | Elbow | 0.65 / 0.71 | 0.68 / 0.79 | 0.66 / 0.76 | 0.73 / 0.78 |
 | Trunk | 0.66 / 0.71 | 0.73 / 0.80 | 0.82 / 0.82 | 0.81 / 0.83 |
 
-A cut-off of 0.5 on the *mean* flags nothing. The proposal for #15 is changed to the **lowest keypoint score < 0.6**, which flags only setup knee (ankle 0.52). The transition knee scores 0.73 even though it sits behind the plate: the model is confidently guessing. So confidence flags catch only part of the occlusion problem. The 4578 bar-only comparison in #15 is the stronger check.
+A cut-off of 0.5 on the *mean* flags nothing. The proposal for #15 is changed to the **lowest keypoint score < 0.6**, which flags only setup knee (ankle 0.52). The transition knee scores 0.73 even though it sits behind the plate: the model is confidently guessing. So confidence flags catch only part of the occlusion problem. The 20261001_1_jiri_v1_powersnatch_bar_1rep_success_0deg bar-only comparison in #15 is the stronger check.

@@ -1,6 +1,6 @@
 """Decode a clip (rotation applied) and save raw RTMPose-x output to .npz.
 
-usage: uv run python scripts/extract_pose.py ../vids/IMG_4584.MOV out/4584 [det.npz]
+usage: uv run python scripts/extract_pose.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg [det.npz]
 
 Partial progress is saved to raw_pose_partial.npz every 500 frames; rerunning
 the same command resumes from it.

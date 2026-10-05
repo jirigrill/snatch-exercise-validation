@@ -1,10 +1,11 @@
 """Review material for #13: phase marks (definition v2) on side-on reps.
 
 usage: uv run python scripts/review_phases.py
-reads  out/<clip>/raw_pose.npz, plate.npz and ../vids/IMG_<clip>.MOV
+reads  out/<clip>/raw_pose.npz, plate.npz and ../vids/<clip>.MOV
 writes out/review13/<clip>_rep<k>.jpg   one sheet per rep: columns = setup,
            transition, catch, lockout; rows = event -0.1 s, event, +0.1 s
        out/review13/checklist.md        verdict + visibility ticks to fill in
+           (only if missing: an existing, filled-in checklist is kept)
        out/review13/model_visibility.json  model scores per event frame (for
            #15; kept out of the checklist so the ticks are not biased)
 """
@@ -20,7 +21,7 @@ from snatch.phases import find_reps_v2
 from snatch.signals import smooth, smooth_keypoints
 from snatch.video import frames, probe
 
-CLIPS = ["4581", "4583", "4584", "4587"]  # side-on, v2 phases (4579: no reps)
+CLIPS = ["20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg", "20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg", "20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg", "20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg"]  # side-on, v2 phases (20261001_2_jiri_v1_standup_5kg_1rep_success_0deg: no reps)
 SIDE = "r"
 PHASES = ("setup", "transition", "catch", "lockout")
 NEAR = ("shoulder", "elbow", "wrist", "hip", "knee", "ankle")
@@ -57,10 +58,10 @@ for clip in CLIPS:
                 continue
             for o in OFFSETS_S:
                 want[min(max(f + round(o * fps), 0), len(kps) - 1)] = (k, ph, o)
-    info = probe(f"../vids/IMG_{clip}.MOV")
+    info = probe(f"../vids/{clip}.MOV")
     grabs: dict[tuple[int, str, float], np.ndarray] = {}
     last = max(want, default=-1)
-    for i, img in enumerate(frames(f"../vids/IMG_{clip}.MOV", info)):
+    for i, img in enumerate(frames(f"../vids/{clip}.MOV", info)):
         if i > last:
             break
         if i not in want:
@@ -123,6 +124,11 @@ for clip in CLIPS:
         checklist.append("")
     print(clip, "reps", len(reps), flush=True)
 
-(out_dir / "checklist.md").write_text("\n".join(checklist) + "\n")
+# the checklist is filled in by hand after the first run (#13 verdict): never overwrite it
+checklist_path = out_dir / "checklist.md"
+if checklist_path.exists():
+    print("kept existing", checklist_path, "(filled-in review, not regenerated)")
+else:
+    checklist_path.write_text("\n".join(checklist) + "\n")
 (out_dir / "model_visibility.json").write_text(json.dumps(model_vis, indent=1) + "\n")
 print("wrote", sorted(p.name for p in out_dir.iterdir()))

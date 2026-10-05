@@ -45,7 +45,7 @@ Tags: **VERIFIED** (read in primary source this session), **SECONDARY** (seen on
 - **10° is a noise limit, not a "size that matters".** It is reportable only if the app's own measurement noise stays at about 2° or less. That is exactly what #11 checks.
 - **The 3–7° differences linked to success cannot be seen in a single rep comparison, even with a perfect sensor.** Seeing them needs the average of several reps (roughly 4–9).
 - **"Compared with your best rep" is a weak design.** The best rep is partly luck, so later reps look worse for chance reasons alone. Compare with the average of several reference reps instead.
-- **The pass/fail rule for #11 does not change:** noise 3° or less across reps = pass, 3–5° = marginal, over 5° = fail, with the standing hold in 4579 as the model-only noise floor (about 2° or less).
+- **The pass/fail rule for #11 does not change:** noise 3° or less across reps = pass, 3–5° = marginal, over 5° = fail, with the standing hold in 20261001_2_jiri_v1_standup_5kg_1rep_success_0deg as the model-only noise floor (about 2° or less).
 - **Biggest caveat:** every "natural wobble" figure is borrowed from other movements. A heavy fast lift may wobble more. Only your own reps can settle it.
 
 **Where the detail is**

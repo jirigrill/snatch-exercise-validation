@@ -13,7 +13,7 @@ Code: `prototype/src/snatch/markers.py` (bar markers B2–B5, B8, C1, D4 and the
 
 ## 1. Method
 
-- **Clips:** the 6 side-on reps of 4581, 4583, 4584 (2) and 4587 (2). 6 light power snatches, one lifter.
+- **Clips:** the 6 side-on reps of 20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg, 20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg, 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg (2) and 20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg (2). 6 light power snatches, one lifter.
 - **Subsampling:** every 2nd/4th/8th frame of `raw_pose.npz` and `plate.npz`, at **every start offset** (2/4/8 per rate). Offset 0 is the ladder file (#14), pixel for pixel; the other offsets show how much the result depends on where the frames happen to fall.
 - **Re-run at the lower rate:** Savitzky–Golay smoothing with the same 0.1 s window (13/7/3 frames at 120/60/30; at 30 fps a 3-frame window with order 2 does not smooth at all), phases v2 unchanged, then the markers. Times are mapped back to the 240 fps clock.
 - **Markers** (doc 11 rows, from the smoothed hub; operational details in `snatch/markers.py`):
@@ -28,11 +28,11 @@ Code: `prototype/src/snatch/markers.py` (bar markers B2–B5, B8, C1, D4 and the
 
 ## 2. Two markers fail at any rate: the catch mark and D4
 
-- **Catch (lowest hip)** moves up to ±104 ms even at 120 fps. The two 120 fps offsets of the *same* rep disagree by up to 129 ms (4584 rep 2: +104 vs −25 ms).
+- **Catch (lowest hip)** moves up to ±104 ms even at 120 fps. The two 120 fps offsets of the *same* rep disagree by up to 129 ms (20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg rep 2: +104 vs −25 ms).
   - At 240 fps (checked ad hoc, not in the script), the bottom of the receiving squat has several local hip-height maxima within 2 px of the deepest one, spread over 70–200 ms (all 6 reps). The mark is an argmax over near-ties, so dropping half the frames can move it to another tie.
   - The joint angles at the catch move much less (median |Δ| ≤ 0.6° at 120 fps), because the pose barely changes across that plateau. The elbow is the exception (up to 6.8°); likely it is still moving while the hips sit at the bottom (not checked).
 - **D4** inherits the same weakness at both ends:
-  - start: 4581 has two near-equal peaks in bar speed about 80 ms apart (a two-peak curve, C2), and the 120 fps offset 0 picks the earlier one;
+  - start: 20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg has two near-equal peaks in bar speed about 80 ms apart (a two-peak curve, C2), and the 120 fps offset 0 picks the earlier one;
   - end: the lowest bar speed and the bar catch are extrema too. Bias is +11…+26 ms at every rate.
 - **So:** catch-based and D4 timing need a definition that does not pick from near-ties (for example a threshold crossing, or the centre of the plateau) before #15 can say which rate they need. That would change the frozen v2 catch rule. This ticket only flags it.
 

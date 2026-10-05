@@ -1,7 +1,7 @@
 """Build the 120/60/30 fps ladder for every clip and verify it frame by frame.
 
 usage: uv run python scripts/build_ladder.py ../vids [clip ...]
-writes ../vids/ladder/IMG_<clip>_<fps>fps.MOV (gitignored, next to the
+writes ../vids/ladder/<clip>_<fps>fps.MOV (gitignored, next to the
        originals, which are only read), out/ladder.json
 """
 
@@ -13,20 +13,19 @@ from snatch.ladder import STEPS, build, frame_hashes, verify
 from snatch.video import probe
 
 vids = Path(sys.argv[1])
-clips = sys.argv[2:] or sorted(p.stem.removeprefix("IMG_")
-                               for p in vids.glob("IMG_*.MOV"))
+clips = sys.argv[2:] or sorted(p.stem for p in vids.glob("*.MOV"))
 (vids / "ladder").mkdir(exist_ok=True)
 report_path = Path("out/ladder.json")
 report = json.loads(report_path.read_text()) if report_path.exists() else {}
 
 for clip in clips:
-    src = str(vids / f"IMG_{clip}.MOV")
+    src = str(vids / f"{clip}.MOV")
     info = probe(src)
     original = frame_hashes(src)
     entry = {"frames_240": len(original), "nb_frames_tag": info.n_frames,
              "rotation": info.rotation, "rates": {}}
     for fps, step in STEPS.items():
-        dst = vids / "ladder" / f"IMG_{clip}_{fps}fps.MOV"
+        dst = vids / "ladder" / f"{clip}_{fps}fps.MOV"
         method, hashes = build(src, str(dst), step, original)
         built = probe(str(dst))
         entry["rates"][fps] = {

@@ -24,7 +24,7 @@ Don't chase misses: lift normally at heavy loads and take the misses that come. 
 4. Phone **level**: use the camera's level indicator. A 1° tilt shifts the bar by about 1.7 cm per metre of rise (marker doc N4).
 5. Frame: the whole lifter and the near plate stay in frame from setup to lockout, with headroom above the bar at full lockout and floor below the feet.
 6. Near side: the **outermost large plate must be a 450 mm bumper** (scale assumption in `plate.npz`). Change plates go inside the bumpers. Collars should be a plain colour.
-7. Lighting: steady. Avoid a skylight or window behind the lifter, which caused the exposure shift in 4586. Keep the background uncluttered and no one else in frame.
+7. Lighting: steady. Avoid a skylight or window behind the lifter, which caused the exposure shift in 20261001_7_jiri_v2_powersnatch_5kg_2rep_success_-30deg. Keep the background uncluttered and no one else in frame.
 8. Don't move the tripod during a session. If it gets bumped, re-level it and log a note.
 
 ## Positioning the camera (5 m tape, no protractor)
@@ -66,7 +66,7 @@ Keep this in `docs/sensitivity-log.csv`. It is created with the first session an
 
 | Column | Values |
 |---|---|
-| `clip` | iPhone file number, e.g. `IMG_4712` |
+| `clip` | file name in `vids/` without extension, e.g. `20261005_11_jiri_v2_powersnatch_5kg_3rep_success_30deg` |
 | `date`, `session` | date; session id (S1, S2 …) |
 | `lifter` | L1, L2 (no names) |
 | `bodyweight_kg` | at the session |

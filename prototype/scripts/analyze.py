@@ -1,8 +1,8 @@
 """Angles, phases and across-rep SD from raw pose output; overlays for checking.
 
-usage: uv run python scripts/analyze.py ../vids/IMG_4584.MOV out/4584 [spread]
+usage: uv run python scripts/analyze.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg [spread]
        (spread: also write the across-rep values and SD, spread.md and the
-       "values"/"sd" keys of phases.json. Only 4584 (#12) has them; for the
+       "values"/"sd" keys of phases.json. Only 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg (#12) has them; for the
        other clips SD is left to #15, so it is not seen before #15 runs)
 reads  out/<clip>/raw_pose.npz; plate.npz and hold.json if present
 writes angles.csv, phases.json, angles.png, phase_sheet.jpg, grabs/*.jpg
@@ -163,8 +163,8 @@ def draw(img: np.ndarray, i: int, label: str = "") -> np.ndarray:
 
 
 # --- video-only markers: plate, bar path, v1/v2 marks, scale, hold -----------
-# v2 only where the plate track passed its sanity check (#14); 4585/4586 keep
-# v1 (decision for #15), 4578 has no plate. Their outline is still drawn, in
+# v2 only where the plate track passed its sanity check (#14); 20261001_6_jiri_v1_powersnatch_5kg_1rep_success_-30deg/20261001_7_jiri_v2_powersnatch_5kg_2rep_success_-30deg keep
+# v1 (decision for #15), 20261001_1_jiri_v1_powersnatch_bar_1rep_success_0deg has no plate. Their outline is still drawn, in
 # orange, so the failure stays visible.
 plate = np.load(out / "plate.npz") if (out / "plate.npz").exists() else None
 plate_ok = plate is not None and str(plate["status"]) == "ok"
@@ -261,7 +261,7 @@ enc.wait()
 blank = np.zeros((640, 360, 3), np.uint8)
 rows = [np.hstack([tiles.get(f"rep{k + 1}_{ph}", blank) for ph in PHASES])
         for k in range(len(reps))]
-if rows:  # 4579 has no reps
+if rows:  # 20261001_2_jiri_v1_standup_5kg_1rep_success_0deg has no reps
     cv2.imwrite(str(out / "phase_sheet.jpg"), np.vstack(rows),
                 [cv2.IMWRITE_JPEG_QUALITY, 80])
 print("wrote", sorted(p.name for p in out.iterdir()))

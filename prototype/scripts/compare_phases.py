@@ -1,6 +1,6 @@
 """Phase times, definition v1 (wrist height) vs v2 (plate hub height).
 
-usage: uv run python scripts/compare_phases.py out/4584
+usage: uv run python scripts/compare_phases.py out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg
 reads  out/<clip>/raw_pose.npz, out/<clip>/plate.npz
 writes out/<clip>/phases_v2.json, out/<clip>/phases_v1_v2.md
 """

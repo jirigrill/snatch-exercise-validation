@@ -8,7 +8,7 @@ An automatic method marks four events per rep on side-on phone videos of a snatc
 
 ## Material (repo root = `snatch-excercise-validation/`)
 
-- Sheets: `prototype/out/review13/<clip>_rep<k>.jpg` (6 reps: 4581 r1, 4583 r1, 4584 r1+r2, 4587 r1+r2). Columns = setup, transition, catch, lockout. Rows = 0.1 s before the event, **the marked event frame**, 0.1 s after. Cyan lines = near-side skeleton (lifter's right, nearest the camera), green ellipse and red dot = plate outline and hub.
+- Sheets: `prototype/out/review13/<clip>_rep<k>.jpg` (6 reps: 20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg r1, 20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg r1, 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg r1+r2, 20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg r1+r2). Columns = setup, transition, catch, lockout. Rows = 0.1 s before the event, **the marked event frame**, 0.1 s after. Cyan lines = near-side skeleton (lifter's right, nearest the camera), green ellipse and red dot = plate outline and hub.
 - Form to fill in: `prototype/out/review13/checklist.md` (verdict per phase, visibility ticks).
 - Numbers: `prototype/out/review13/literature_check.md`. Do not let these replace looking at the images.
 - Video is 240 fps, so 0.1 s = 24 frames.

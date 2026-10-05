@@ -1,7 +1,7 @@
 """Track the near plate per frame; bar path and check images.
 
-usage: uv run python scripts/track_plate.py ../vids/IMG_4584.MOV out/4584 [ellipse]
-       (ellipse: outline model for off-axis clips, 4585 and 4586)
+usage: uv run python scripts/track_plate.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg [ellipse]
+       (ellipse: outline model for off-axis clips, 20261001_6_jiri_v1_powersnatch_5kg_1rep_success_-30deg and 20261001_7_jiri_v2_powersnatch_5kg_2rep_success_-30deg)
 writes plate.npz (per-frame arrays, indexed like raw_pose.npz), plate.csv,
        plate_check.jpg (outline + hub, zoomed, at ~18 frames), bar_path.png
 """

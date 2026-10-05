@@ -1,5 +1,5 @@
 {
- "4581_rep1_setup_f786": {
+ "20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg_rep1_setup_f786": {
   "shoulder": 0.758,
   "elbow": 0.713,
   "wrist": 0.66,
@@ -7,7 +7,7 @@
   "knee": 0.7,
   "ankle": 0.554
  },
- "4581_rep1_transition_f925": {
+ "20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg_rep1_transition_f925": {
   "shoulder": 0.822,
   "elbow": 0.779,
   "wrist": 0.64,
@@ -15,7 +15,7 @@
   "knee": 0.693,
   "ankle": 0.81
  },
- "4581_rep1_catch_f1102": {
+ "20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg_rep1_catch_f1102": {
   "shoulder": 0.837,
   "elbow": 0.803,
   "wrist": 0.695,
@@ -23,7 +23,7 @@
   "knee": 0.886,
   "ankle": 0.925
  },
- "4581_rep1_lockout_f1365": {
+ "20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg_rep1_lockout_f1365": {
   "shoulder": 0.885,
   "elbow": 0.802,
   "wrist": 0.785,
@@ -31,7 +31,7 @@
   "knee": 0.909,
   "ankle": 1.002
  },
- "4583_rep1_setup_f968": {
+ "20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg_rep1_setup_f968": {
   "shoulder": 0.794,
   "elbow": 0.754,
   "wrist": 0.716,
@@ -39,7 +39,7 @@
   "knee": 0.722,
   "ankle": 0.598
  },
- "4583_rep1_transition_f1114": {
+ "20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg_rep1_transition_f1114": {
   "shoulder": 0.864,
   "elbow": 0.765,
   "wrist": 0.643,
@@ -47,7 +47,7 @@
   "knee": 0.795,
   "ankle": 0.858
  },
- "4583_rep1_catch_f1285": {
+ "20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg_rep1_catch_f1285": {
   "shoulder": 0.839,
   "elbow": 0.809,
   "wrist": 0.661,
@@ -55,7 +55,7 @@
   "knee": 0.876,
   "ankle": 0.925
  },
- "4583_rep1_lockout_f1577": {
+ "20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg_rep1_lockout_f1577": {
   "shoulder": 0.859,
   "elbow": 0.766,
   "wrist": 0.724,
@@ -63,7 +63,7 @@
   "knee": 0.92,
   "ankle": 0.989
  },
- "4584_rep1_setup_f925": {
+ "20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg_rep1_setup_f925": {
   "shoulder": 0.766,
   "elbow": 0.722,
   "wrist": 0.665,
@@ -71,7 +71,7 @@
   "knee": 0.694,
   "ankle": 0.533
  },
- "4584_rep1_transition_f1065": {
+ "20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg_rep1_transition_f1065": {
   "shoulder": 0.872,
   "elbow": 0.808,
   "wrist": 0.694,
@@ -79,7 +79,7 @@
   "knee": 0.756,
   "ankle": 0.864
  },
- "4584_rep1_catch_f1238": {
+ "20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg_rep1_catch_f1238": {
   "shoulder": 0.838,
   "elbow": 0.808,
   "wrist": 0.674,
@@ -87,7 +87,7 @@
   "knee": 0.887,
   "ankle": 0.928
  },
- "4584_rep1_lockout_f1471": {
+ "20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg_rep1_lockout_f1471": {
   "shoulder": 0.876,
   "elbow": 0.811,
   "wrist": 0.817,
@@ -95,7 +95,7 @@
   "knee": 0.911,
   "ankle": 0.995
  },
- "4584_rep2_setup_f2483": {
+ "20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg_rep2_setup_f2483": {
   "shoulder": 0.724,
   "elbow": 0.689,
   "wrist": 0.641,
@@ -103,7 +103,7 @@
   "knee": 0.635,
   "ankle": 0.532
  },
- "4584_rep2_transition_f2630": {
+ "20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg_rep2_transition_f2630": {
   "shoulder": 0.871,
   "elbow": 0.832,
   "wrist": 0.666,
@@ -111,7 +111,7 @@
   "knee": 0.741,
   "ankle": 0.866
  },
- "4584_rep2_catch_f2781": {
+ "20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg_rep2_catch_f2781": {
   "shoulder": 0.808,
   "elbow": 0.777,
   "wrist": 0.646,
@@ -119,7 +119,7 @@
   "knee": 0.887,
   "ankle": 0.893
  },
- "4584_rep2_lockout_f3010": {
+ "20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg_rep2_lockout_f3010": {
   "shoulder": 0.825,
   "elbow": 0.719,
   "wrist": 0.659,
@@ -127,7 +127,7 @@
   "knee": 0.909,
   "ankle": 0.977
  },
- "4587_rep1_setup_f854": {
+ "20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg_rep1_setup_f854": {
   "shoulder": 0.78,
   "elbow": 0.772,
   "wrist": 0.693,
@@ -135,7 +135,7 @@
   "knee": 0.742,
   "ankle": 0.486
  },
- "4587_rep1_transition_f982": {
+ "20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg_rep1_transition_f982": {
   "shoulder": 0.873,
   "elbow": 0.846,
   "wrist": 0.748,
@@ -143,7 +143,7 @@
   "knee": 0.84,
   "ankle": 0.886
  },
- "4587_rep1_catch_f1116": {
+ "20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg_rep1_catch_f1116": {
   "shoulder": 0.859,
   "elbow": 0.858,
   "wrist": 0.692,
@@ -151,7 +151,7 @@
   "knee": 0.888,
   "ankle": 0.936
  },
- "4587_rep1_lockout_f1353": {
+ "20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg_rep1_lockout_f1353": {
   "shoulder": 0.874,
   "elbow": 0.851,
   "wrist": 0.769,
@@ -159,7 +159,7 @@
   "knee": 0.895,
   "ankle": 0.972
  },
- "4587_rep2_setup_f2354": {
+ "20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg_rep2_setup_f2354": {
   "shoulder": 0.736,
   "elbow": 0.715,
   "wrist": 0.691,
@@ -167,7 +167,7 @@
   "knee": 0.669,
   "ankle": 0.538
  },
- "4587_rep2_transition_f2488": {
+ "20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg_rep2_transition_f2488": {
   "shoulder": 0.857,
   "elbow": 0.841,
   "wrist": 0.732,
@@ -175,7 +175,7 @@
   "knee": 0.768,
   "ankle": 0.88
  },
- "4587_rep2_catch_f2614": {
+ "20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg_rep2_catch_f2614": {
   "shoulder": 0.843,
   "elbow": 0.831,
   "wrist": 0.671,
@@ -183,7 +183,7 @@
   "knee": 0.874,
   "ankle": 0.938
  },
- "4587_rep2_lockout_f2855": {
+ "20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg_rep2_lockout_f2855": {
   "shoulder": 0.873,
   "elbow": 0.888,
   "wrist": 0.804,

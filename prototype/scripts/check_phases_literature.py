@@ -21,7 +21,7 @@ from snatch.signals import smooth, smooth_keypoints
 
 rows = ["| rep | first pull s | transition→catch s | hub rise at transition (m) | "
         "knee max before → at transition (°, dip) | max bar speed frame vs transition |", "|---|---|---|---|---|---|"]
-for clip in ["4581", "4583", "4584", "4587"]:
+for clip in ["20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg", "20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg", "20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg", "20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg"]:
     raw, plate = np.load(f"out/{clip}/raw_pose.npz"), np.load(f"out/{clip}/plate.npz")
     fps = float(raw["fps"])
     ks = smooth_keypoints(raw["keypoints"], fps)

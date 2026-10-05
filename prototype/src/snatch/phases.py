@@ -25,12 +25,12 @@ docs/results/14-ladder-and-plate.md): v1 with every use of wrist height
 replaced by the height of the near plate's hub (snatch.plate), the bar the
 hands grip. From the side the hands sit inside the plate's outline, so the
 wrists are the least confident keypoints; the hub is visible. One more
-change ("v2.1", chosen after seeing 4584): the re-bend's prominence is
+change ("v2.1", chosen after seeing 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg): the re-bend's prominence is
 measured on the whole setup -> peak-extension segment, and only minima after
 the hub passes the knees count. The hub is lower than the wrists, so it can
 pass the knees after the knee's local maximum, and a window starting there
 cuts off the re-bend's left shoulder. Everything else as v1: same events,
-thresholds and order. Clips without a plate (4578, bar only) keep v1.
+thresholds and order. Clips without a plate (20261001_1_jiri_v1_powersnatch_bar_1rep_success_0deg, bar only) keep v1.
 
 #13 (2026-10-02): the developer accepted all v2 marks on 6 side-on reps.
 v2 is final; do not change it (docs/results/13-phase-check.md).

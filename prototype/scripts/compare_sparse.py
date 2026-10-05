@@ -4,7 +4,7 @@ Reuses the saved every-frame detector boxes, keeps every Nth, tracks the crop
 from the previous frame's keypoints in between, reruns pose, and compares
 angles, phase frames and the SD table with the every-frame run.
 
-usage: uv run python scripts/compare_sparse.py ../vids/IMG_4584.MOV out/4584 8 24
+usage: uv run python scripts/compare_sparse.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg 8 24
 """
 
 import sys

@@ -26,7 +26,7 @@ from snatch.phases import Rep, find_reps_v2
 from snatch.signals import smooth, smooth_keypoints
 from snatch.spread import PHASES
 
-CLIPS = ["4581", "4583", "4584", "4587"]
+CLIPS = ["20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg", "20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg", "20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg", "20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg"]
 STEPS = {240: 1, 120: 2, 60: 4, 30: 8}
 BAR = {"turnover_s": ("D4 turnover (to lowest bar velocity)", "ms", 1000),
        "turnover_to_bar_catch_s": ("D4 turnover (to bar catch), alt.", "ms", 1000),

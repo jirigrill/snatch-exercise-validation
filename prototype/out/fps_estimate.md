@@ -1,6 +1,6 @@
 # Frame-rate estimate (#30): difference from 240 fps vs rep-to-rep spread
 
-6 reps from 4581, 4583, 4584, 4587. Δ = lower rate − 240 fps, same rep. SD = rep-to-rep SD at 240 fps (phase marks: of the event's time after the rep's overhead start). Bias = mean Δ; median and max |Δ| over all reps and start offsets, detected reps only; offset 0 = the ladder file. ratio = max |Δ| / SD. A rep not detected at all makes the marker unusable (snatch.markers.verdict). Group verdict = most common marker verdict (plurality).
+6 reps from 20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg, 20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg, 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg, 20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg. Δ = lower rate − 240 fps, same rep. SD = rep-to-rep SD at 240 fps (phase marks: of the event's time after the rep's overhead start). Bias = mean Δ; median and max |Δ| over all reps and start offsets, detected reps only; offset 0 = the ladder file. ratio = max |Δ| / SD. A rep not detected at all makes the marker unusable (snatch.markers.verdict). Group verdict = most common marker verdict (plurality).
 
 ## 120 fps (2 offsets × 6 reps)
 

@@ -2,18 +2,18 @@
 
 Ticket: [#13](https://github.com/jirigrill/snatch-exercise-validation/issues/13) (parent [#11](https://github.com/jirigrill/snatch-exercise-validation/issues/11)). Reviewed 2026-10-02.
 
-**Bottom line.** The developer accepted all 24 phase marks (6 reps × 4 events, clips 4581, 4583, 4584, 4587), after an outside review prepared with `13-reviewer-brief.md`. **Phase definition v2 is final and frozen, unchanged:** see [`14-ladder-and-plate.md` §4](14-ladder-and-plate.md#4-phase-definition-v2-frozen-2026-10-02-before-15) and `prototype/src/snatch/phases.py`. Later tickets must not change it.
+**Bottom line.** The developer accepted all 24 phase marks (6 reps × 4 events, clips 20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg, 20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg, 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg, 20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg), after an outside review prepared with `13-reviewer-brief.md`. **Phase definition v2 is final and frozen, unchanged:** see [`14-ladder-and-plate.md` §4](14-ladder-and-plate.md#4-phase-definition-v2-frozen-2026-10-02-before-15) and `prototype/src/snatch/phases.py`. Later tickets must not change it.
 
 ## Verdict
 
 | Rep | setup | transition | catch | lockout |
 |---|---|---|---|---|
-| 4581 r1 | accept | accept | accept | accept |
-| 4583 r1 | accept | accept (maybe late, see below) | accept | accept |
-| 4584 r1 | accept | accept | accept | accept |
-| 4584 r2 | accept | accept | accept | accept |
-| 4587 r1 | accept | accept (maybe late, see below) | accept | accept |
-| 4587 r2 | accept | accept | accept | accept |
+| 20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg r1 | accept | accept | accept | accept |
+| 20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg r1 | accept | accept (maybe late, see below) | accept | accept |
+| 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg r1 | accept | accept | accept | accept |
+| 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg r2 | accept | accept | accept | accept |
+| 20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg r1 | accept | accept (maybe late, see below) | accept | accept |
+| 20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg r2 | accept | accept | accept | accept |
 
 Per-frame verdicts, notes and visibility ticks: `prototype/out/review13/checklist.md`.
 
@@ -26,7 +26,7 @@ Per-frame verdicts, notes and visibility ticks: `prototype/out/review13/checklis
 
 ## Known limitation (accepted, not investigated)
 
-On **4583 r1 and 4587 r1** the transition may be ~10–20 f (0.04–0.08 s) late. The torso already looks near vertical, peak bar speed follows only 25 / 67 ms later, and the knee dips are shallow (−6°, −4°), so the minimum is flat. Not resolved with a finer frame strip: this is a prototype. If the transition-frame angles in #15 show a large spread, check here first.
+On **20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg r1 and 20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg r1** the transition may be ~10–20 f (0.04–0.08 s) late. The torso already looks near vertical, peak bar speed follows only 25 / 67 ms later, and the knee dips are shallow (−6°, −4°), so the minimum is flat. Not resolved with a finer frame strip: this is a prototype. If the transition-frame angles in #15 show a large spread, check here first.
 
 ## Visibility (input for #15)
 

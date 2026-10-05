@@ -68,7 +68,7 @@ What is universal are **physical bands**:
 - The plate moves sideways off the hand and hip.
 - `plate.py` already fits an ellipse. Its axis ratio ≈ cos(viewing angle), so the image can be rectified back to the sagittal plane.
 - Rectification is exact only in the plate plane; the body is 20–40 cm deeper.
-- Against it so far: off-axis clips 4585 and 4586 broke hub tracking on the floor, and Shah fails at ≥ 20°.
+- Against it so far: off-axis clips 20261001_6_jiri_v1_powersnatch_5kg_1rep_success_-30deg and 20261001_7_jiri_v2_powersnatch_5kg_2rep_success_-30deg broke hub tracking on the floor, and Shah fails at ≥ 20°.
 
 ## 4. Closed cause list (candidates; final list fixed after D1/D2)
 
