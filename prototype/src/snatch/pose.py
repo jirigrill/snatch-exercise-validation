@@ -67,13 +67,57 @@ def sparse_detections(boxes: np.ndarray, every: int) -> np.ndarray:
     return out
 
 
+def load_detector() -> YOLOX:
+    cfg = Body.MODE["performance"]
+    return YOLOX(cfg["det"], model_input_size=cfg["det_input_size"],
+                 backend="onnxruntime", device="cpu")
+
+
 def load_models(pose_device: str = "mps") -> tuple[YOLOX, RTMPose]:
     cfg = Body.MODE["performance"]
-    det = YOLOX(cfg["det"], model_input_size=cfg["det_input_size"],
-                backend="onnxruntime", device="cpu")
     pose = RTMPose(cfg["pose"], model_input_size=cfg["pose_input_size"],
                    backend="onnxruntime", device=pose_device)
-    return det, pose
+    return load_detector(), pose
+
+
+def detect_boxes(images: Iterable[np.ndarray], n_frames: int, every: int, det,
+                 progress=None) -> tuple[np.ndarray, np.ndarray]:
+    """Lifter box on every `every`-th frame (NaN elsewhere) and people counts.
+
+    Detection only, no pose: the first pass of a run that fills the frames in
+    between with `interpolate_boxes`. The lifter is followed from detection to
+    detection like in `run` (overlap with the previous box, else the largest).
+    """
+    boxes = np.full((n_frames, 4), np.nan, np.float32)
+    n_people = np.zeros(n_frames, np.int16)
+    prev = None
+    for i, img in enumerate(images):
+        if i >= n_frames:
+            break
+        if i % every:
+            continue
+        found = np.asarray(det(img)).reshape(-1, 4)
+        n_people[i] = len(found)
+        box = pick_lifter(found, prev)
+        if box is not None:
+            boxes[i], prev = box, box
+        if progress:
+            progress(i)
+    return boxes, n_people
+
+
+def interpolate_boxes(boxes: np.ndarray) -> np.ndarray:
+    """Fill NaN rows by a straight line between the nearest boxes on both sides.
+
+    Before the first and after the last box the nearest one is kept. All NaN
+    stays NaN. At 240 fps a lifter moves a few pixels in a few frames, so the
+    estimate is close to what the detector would return.
+    """
+    seen = np.flatnonzero(~np.isnan(boxes).any(1))
+    if not len(seen):
+        return boxes.copy()
+    t = np.arange(len(boxes))
+    return np.stack([np.interp(t, seen, boxes[seen, c]) for c in range(4)], 1).astype(boxes.dtype)
 
 
 def resume_state(part: dict[str, np.ndarray], done: int):
@@ -102,7 +146,7 @@ def run(images: Iterable[np.ndarray], n_frames: int, pose_device: str = "mps",
         resume: dict[str, np.ndarray] | None = None, done: int = 0,
         checkpoint=None, checkpoint_every: int = 500,
         ranges: list[tuple[int, int]] | None = None, restart_gap: int = 1,
-        ) -> dict[str, np.ndarray]:
+        det_every: int = 1) -> dict[str, np.ndarray]:
     """Detect (unless det_boxes are given), pick the lifter, track, pose.
 
     resume/done: continue from a partial result holding `done` finished frames.
@@ -114,6 +158,10 @@ def run(images: Iterable[np.ndarray], n_frames: int, pose_device: str = "mps",
     pass (every Nth frame) sets restart_gap=N so it keeps following the
     lifter's box; restarting each sample picks the largest box, which can be
     someone else (20261005_9).
+    det_every: run the person detector only every Nth posed frame (and whenever
+    tracking restarts); in between, the crop is the previous frame's padded
+    keypoint extent (`track_box` without a detection). The detector is ~95% of
+    the run time. `bbox` is NaN and `n_people` 0 on frames without a detection.
     """
     active = range_mask(n_frames, ranges)
     det, pose = load_models(pose_device)
@@ -131,6 +179,7 @@ def run(images: Iterable[np.ndarray], n_frames: int, pose_device: str = "mps",
         prev, prev_kps, prev_scores = resume_state(out, done)
     last = int(np.flatnonzero(active)[-1]) + 1 if active.any() else 0
     last_posed = done - 1 if done else -1
+    last_det = -det_every  # frame of the last detector run
     for i, img in enumerate(images):
         if i >= last:
             break
@@ -140,9 +189,13 @@ def run(images: Iterable[np.ndarray], n_frames: int, pose_device: str = "mps",
             prev = prev_kps = prev_scores = None
         last_posed = i
         if det_boxes is None:
-            boxes = np.asarray(det(img)).reshape(-1, 4)
-            n_people[i] = len(boxes)
-            box = pick_lifter(boxes, prev)
+            if prev_kps is None or i - last_det >= det_every:
+                boxes = np.asarray(det(img)).reshape(-1, 4)
+                n_people[i] = len(boxes)
+                box = pick_lifter(boxes, prev)
+                last_det = i
+            else:
+                box = None  # follow the previous keypoints
         else:
             box = None if np.isnan(det_boxes[i]).any() else det_boxes[i]
         crop = track_box(box, prev_kps, prev_scores)

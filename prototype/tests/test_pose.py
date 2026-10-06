@@ -115,3 +115,70 @@ def test_sparse_run_keeps_following_the_lifter_not_the_largest_box(monkeypatch):
     out = pose.run(images, 24, ranges=sparse, restart_gap=8)
     assert all(b[0] < 250 for b in seen)  # every crop is the lifter's
     assert out["bbox"][16].tolist() == lifter.tolist()
+
+
+def test_det_every_runs_the_detector_only_every_nth_frame_and_follows_keypoints(monkeypatch):
+    det_calls, crops = [], []
+
+    def det(img):
+        det_calls.append(int(img[0, 0, 0]))
+        return np.array([[0.0, 0.0, 10.0, 10.0]])
+
+    def fake_pose(img, bboxes):
+        crops.append(bboxes[0].tolist())
+        return np.full((1, 17, 2), 5.0), np.ones((1, 17))
+
+    monkeypatch.setattr(pose, "load_models", lambda device: (det, fake_pose))
+    images = (np.full((2, 2, 3), i, np.uint8) for i in range(10))
+    out = pose.run(images, 10, det_every=4)
+    assert det_calls == [0, 4, 8]
+    assert len(crops) == 10  # every frame is still posed
+    assert out["n_people"].tolist() == [1, 0, 0, 0, 1, 0, 0, 0, 1, 0]
+    assert np.isnan(out["bbox"][1]).all() and not np.isnan(out["bbox"][4]).any()
+    assert crops[1] == crops[2] != crops[0]  # follows the keypoints, not the detection
+
+
+def test_det_every_detects_again_after_a_tracking_restart(monkeypatch):
+    det_calls = []
+
+    def det(img):
+        det_calls.append(int(img[0, 0, 0]))
+        return np.array([[0.0, 0.0, 10.0, 10.0]])
+
+    monkeypatch.setattr(pose, "load_models", lambda device: (
+        det, lambda img, bboxes: (np.full((1, 17, 2), 5.0), np.ones((1, 17)))))
+    images = (np.full((2, 2, 3), i, np.uint8) for i in range(10))
+    pose.run(images, 10, ranges=[(1, 3), (6, 8)], det_every=4)
+    assert det_calls == [1, 6]  # a new range restarts tracking: detect at once
+
+
+def test_interpolate_boxes_draws_a_line_between_detections_and_holds_the_ends():
+    boxes = np.full((9, 4), np.nan, np.float32)
+    boxes[2] = [0, 0, 10, 10]
+    boxes[6] = [4, 8, 14, 18]
+    out = pose.interpolate_boxes(boxes)
+    assert out[2].tolist() == [0, 0, 10, 10] and out[6].tolist() == [4, 8, 14, 18]
+    assert out[4].tolist() == [2, 4, 12, 14]  # halfway
+    assert out[0].tolist() == out[2].tolist() and out[8].tolist() == out[6].tolist()
+
+
+def test_interpolate_boxes_without_any_box_stays_nan():
+    assert np.isnan(pose.interpolate_boxes(np.full((3, 4), np.nan, np.float32))).all()
+
+
+def test_detect_boxes_runs_the_detector_every_nth_frame_and_follows_the_lifter():
+    lifter = np.array([100.0, 100.0, 200.0, 200.0])
+    bystander = np.array([300.0, 0.0, 500.0, 400.0])
+    calls = []
+
+    def det(img):
+        i = int(img[0, 0, 0])
+        calls.append(i)
+        return np.array([lifter] if i < 4 else [lifter, bystander])
+
+    images = (np.full((2, 2, 3), i, np.uint8) for i in range(10))
+    boxes, n_people = pose.detect_boxes(images, 10, 4, det)
+    assert calls == [0, 4, 8]
+    assert n_people.tolist() == [1, 0, 0, 0, 2, 0, 0, 0, 2, 0]
+    assert boxes[4].tolist() == boxes[8].tolist() == lifter.tolist()  # not the larger bystander
+    assert np.isnan(boxes[1]).all()

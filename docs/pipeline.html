@@ -68,7 +68,7 @@
       <pre class="mermaid">
 flowchart TB
   V["vids/clip.MOV<br/>the phone video"]:::src --> D["Decode video<br/>snatch/video.py<br/>⏱ part of each step"]:::src
-  D --> P["① Find the body<br/>extract_pose.py<br/>⏱ ~15 min (~1 min with saved boxes)"]:::pose
+  D --> P["① Find the body<br/>extract_pose.py<br/>⏱ ~15–45 min (~1 min with saved boxes)"]:::pose
   D --> T["② Find the plate<br/>track_plate.py<br/>⏱ ~1 min"]:::plate
   P --> RP[("raw_pose.npz")]:::pose
   T --> PL[("plate.npz")]:::plate
@@ -350,7 +350,7 @@ for each frame
 save points + run details (and frame_ranges)
 delete the progress file`,
     out:"<code>raw_pose.npz</code>",
-    time:"The slow step. Measured per frame: finding people (YOLOX) ~330 ms, body points (RTMPose) ~16 ms, decoding ~3 ms. So ~350 ms per frame: example clip (2498 frames) ~15 min, 3-rep clip (~4900 frames) ~28 min. With boxes reused from an earlier run (<code>det.npz</code>) only ~20 ms per frame: ~1–2 min. <code>--every 8</code> does 1/8 of the frames: ~2–4 min." },
+    time:"The slow step. Measured per frame: finding people (YOLOX) ~330 ms, body points (RTMPose) ~16 ms, decoding ~3 ms. So ~350 ms per frame on a quiet Mac: example clip (2498 frames) ~15 min, 3-rep clip (~4900 frames) ~28 min. A real full run of 4637 frames took 44 min (560 ms per frame), so plan for 15–45 min. With boxes reused from an earlier run (<code>det.npz</code>) only ~20 ms per frame: ~1–2 min. <code>--every 8</code> does 1/8 of the frames: ~2–4 min." },
   options: { t:"Read the options", tag:"pose",
     what:"Decides what this run does: which video, where to write, which frames, and which file name.",
     in:"The command line: video, output folder, and optional <code>--reps</code>, <code>--every N</code>, <code>--name</code>, <code>det.npz</code>.",
