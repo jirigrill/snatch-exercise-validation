@@ -1,9 +1,10 @@
 """Track the near plate per frame; bar path and check images.
 
-usage: uv run python scripts/track_plate.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg [ellipse]
+usage: uv run python scripts/track_plate.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg [ellipse] [--radius LO:HI] [--overlay [--overlay-step 4]]
        (ellipse: outline model for off-axis clips, 20261001_6_jiri_v1_powersnatch_5kg_1rep_success_-30deg and 20261001_7_jiri_v2_powersnatch_5kg_2rep_success_-30deg)
 writes plate.npz (per-frame arrays, indexed like raw_pose.npz), plate.csv,
        plate_check.jpg (outline + hub, zoomed, at ~18 frames), bar_path.png
+       overlay_plate.mp4 with --overlay: the outline on the video (scripts/overlay_video.py)
 """
 
 import csv
@@ -15,13 +16,21 @@ import cv2
 import matplotlib
 import numpy as np
 
-from snatch import plate
+from snatch import overlay, plate
 from snatch.video import frames, probe
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 args = sys.argv[1:]
+overlay_step = "4"
+if "--overlay-step" in args:
+    i = args.index("--overlay-step")
+    overlay_step = args[i + 1]
+    del args[i:i + 2]
+make_overlay = "--overlay" in args
+if make_overlay:
+    args.remove("--overlay")
 # --radius LO:HI  plate radius range in px (default 110:260, camera at ~4 m);
 # 2026-10-05 was filmed from further away: plate radius ~100 px
 radius = (110.0, 260.0)
@@ -154,3 +163,6 @@ fig.suptitle(f"{Path(clip).stem} — near plate hub")
 fig.tight_layout()
 fig.savefig(out / "bar_path.png", dpi=100)
 print("wrote", out / "plate.npz", flush=True)
+if make_overlay:  # scripts/overlay_video.py
+    overlay.call_script(clip, out / "overlay_plate.mp4", "--plate", str(out / "plate.npz"),
+                        "--zoom", "--step", overlay_step)

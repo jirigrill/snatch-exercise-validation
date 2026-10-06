@@ -33,7 +33,7 @@
   aside { position:sticky; top:60px; align-self:start; max-height:calc(100vh - 80px); overflow:auto; }
   aside .card { min-height:200px; }
   .tag { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
-  .t-pose{background:var(--pose)} .t-plate{background:var(--plate)} .t-ana{background:var(--ana)} .t-new{background:var(--new)} .t-src{background:var(--src)}
+  .t-person{background:#c9a400} .t-pose{background:var(--pose)} .t-plate{background:var(--plate)} .t-ana{background:var(--ana)} .t-new{background:var(--new)} .t-src{background:var(--src)}
   code, pre { font:12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
   pre { background:#f2f2ef; border:1px solid var(--line); border-radius:8px; padding:10px; overflow-x:auto; white-space:pre; margin:4px 0 0; }
   .d h3 { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--mute); margin:12px 0 2px; }
@@ -53,22 +53,26 @@
 </header>
 <nav>
   <button data-tab="overview" class="on">1 · Overview</button>
-  <button data-tab="pose">2 · Pose</button>
-  <button data-tab="plate">3 · Plate</button>
-  <button data-tab="analysis">4 · Angles &amp; phases</button>
-  <button data-tab="reps">5 · Rep list (new)</button>
-  <button data-tab="files">6 · Files in out/&lt;clip&gt;/</button>
+  <button data-tab="person">2 · Person (new)</button>
+  <button data-tab="pose">3 · Pose</button>
+  <button data-tab="plate">4 · Plate</button>
+  <button data-tab="analysis">5 · Angles &amp; phases</button>
+  <button data-tab="reps">6 · Rep list (new)</button>
+  <button data-tab="files">7 · Files in out/&lt;clip&gt;/</button>
 </nav>
 <main>
 <div>
   <section id="overview" class="on">
     <div class="card">
       <h2>The whole pipeline</h2>
-      <p class="hint">Times are for the example clip (2498 frames) on this Mac. ① and ② don't depend on each other. ③ and ④ need both. ⑤ (dashed) is new: it is only needed for clips with several reps, and lets ① skip the frames between reps.</p>
+      <p class="hint">Times are for the example clip (2498 frames) on this Mac. ⓪ (new) finds the lifter once; ① reads it. ① and ② don't depend on each other. ③ and ④ need both. ⑤ (dashed) is new: it is only needed for clips with several reps, and lets ① skip the frames between reps.</p>
       <pre class="mermaid">
 flowchart TB
   V["vids/clip.MOV<br/>the phone video"]:::src --> D["Decode video<br/>snatch/video.py<br/>⏱ part of each step"]:::src
-  D --> P["① Find the body<br/>extract_pose.py<br/>⏱ ~15–45 min (~1 min with saved boxes)"]:::pose
+  D --> PP["⓪ Find the person<br/>extract_person.py<br/>⏱ ~1 min"]:::person
+  PP --> PN[("person.npz")]:::person
+  D --> P["① Find the body<br/>extract_pose.py<br/>⏱ ~1–2 min"]:::pose
+  PN --> P
   D --> T["② Find the plate<br/>track_plate.py<br/>⏱ ~1 min"]:::plate
   P --> RP[("raw_pose.npz")]:::pose
   T --> PL[("plate.npz")]:::plate
@@ -78,12 +82,15 @@ flowchart TB
   PL --> C
   PL -.-> RL["⑤ Rep list, for clips with several reps<br/>find_reps.py · rep_sheets.py<br/>⏱ seconds; +4 min/clip if the plate fails<br/>then ① runs on the rep frames only"]:::new
   classDef new fill:#efe6fb,stroke:#8a4fd1,stroke-dasharray:4 3
+  classDef person fill:#fff3c4,stroke:#c9a400
   classDef pose fill:#e6efff,stroke:#2f6fde
   classDef plate fill:#fdeedd,stroke:#d9822b
   classDef ana fill:#e3f5ec,stroke:#2e9e6a
   classDef src fill:#eee,stroke:#999
   click V call show("video_file")
   click D call show("decode")
+  click PP call show("person")
+  click PN call show("person_npz")
   click P call show("pose")
   click RP call show("raw_pose")
   click T call show("plate")
@@ -97,21 +104,53 @@ flowchart TB
       <h2>Commands for one clip</h2>
 <pre>cd prototype
 clip=20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg
-uv run python scripts/extract_pose.py   ../vids/$clip.MOV out/$clip      # ①
-uv run python scripts/track_plate.py    ../vids/$clip.MOV out/$clip      # ②  add "ellipse" for ±30° views, "--radius 70:140" for 2026-10-05
+uv run python scripts/extract_person.py ../vids/$clip.MOV out/$clip      # ⓪ add --overlay for a video with the boxes
+uv run python scripts/extract_pose.py   ../vids/$clip.MOV out/$clip      # ① needs person.npz; add --overlay for a skeleton video
+uv run python scripts/track_plate.py    ../vids/$clip.MOV out/$clip      # ②  add "ellipse" for ±30° views, "--radius 70:140" for 2026-10-05, --overlay for a plate video
 uv run python scripts/analyze.py        ../vids/$clip.MOV out/$clip      # ③
 uv run python scripts/compare_phases.py out/$clip                        # ④</pre>
+    </div>
+  </section>
+
+  <section id="person">
+    <div class="card where" data-step="person"></div>
+    <div class="card">
+      <h2>Inside ⓪: from video to one box per frame</h2>
+      <p class="hint">The slow part of the old pose step, now done once per clip and saved. Click a box.</p>
+      <pre class="mermaid">
+flowchart TB
+  F["Next frame"] --> E{"Every 24th frame?"}
+  E -- no --> F
+  E -- yes --> Y["Find all people<br/>(YOLOX)"]
+  Y --> L["Choose the lifter"]
+  L --> F
+  F -- "no frames left" --> I["Fill the gaps between<br/>the boxes (straight line)"]
+  I --> S[("Save person.npz")]
+  S --> Q{"--overlay?"}
+  Q -- yes --> OV["Overlay video<br/>(overlay_video.py)"]
+  classDef p fill:#fff3c4,stroke:#c9a400
+  class Y,L,I,S,OV p
+  click F call show("decode")
+  click E call show("detect_every")
+  click Y call show("yolox")
+  click L call show("pick")
+  click I call show("interp")
+  click S call show("person_npz")
+  click Q call show("overlay")
+  click OV call show("overlay")
+      </pre>
     </div>
   </section>
 
   <section id="pose">
     <div class="card where" data-step="pose"></div>
     <div class="card">
-      <h2>Inside ①: from start to saved file</h2>
+      <h2>Inside ①: from the person box to saved body points</h2>
       <p class="hint">The middle part repeats for every frame of the video. Click a box.</p>
       <pre class="mermaid">
 flowchart TB
-  O["Read the options<br/>(--reps, --every, --name, det.npz)"] --> Rs{"Saved progress<br/>from an earlier run?"}
+  O["Read the options<br/>(--reps, --every, --name, --person)"] --> Pn["Load person.npz<br/>(stop if it is missing)"]
+  Pn --> Rs{"Saved progress<br/>from an earlier run?"}
   Rs -- yes --> Ld["Load it, continue<br/>from that frame"]
   Rs -- no --> F
   Ld --> F["Next frame"]
@@ -119,14 +158,10 @@ flowchart TB
   G -- no --> N["Skip it<br/>(stays empty)"]
   N --> F
   G -- yes --> Rg{"Long pause since<br/>the last frame we did?"}
-  Rg -- yes --> Fg["Forget who the lifter was"]
-  Rg -- no --> Dq
-  Fg --> Dq{"Boxes given<br/>(det.npz)?"}
-  Dq -- yes --> Ru["Reuse the saved box"]
-  Dq -- no --> Y["Find all people<br/>(YOLOX)"]
-  Y --> L["Choose the lifter"]
-  Ru --> Cr
-  L --> Cr["Draw the box to look in<br/>(box + last body points + 10%)"]
+  Rg -- yes --> Fg["Forget the last body points"]
+  Rg -- no --> Tb
+  Fg --> Tb["Take this frame's<br/>person box"]
+  Tb --> Cr["Draw the box to look in<br/>(box + last body points + 10%)"]
   Cr --> M["Find 17 body points<br/>(RTMPose)"]
   M --> Ck{"500 frames since<br/>the last save?"}
   Ck -- yes --> Sv["Save progress"]
@@ -134,9 +169,12 @@ flowchart TB
   Sv --> F
   F -- "no frames left" --> S[("Save raw_pose.npz<br/>+ run details")]
   S --> Dp["Delete the progress file"]
+  Dp --> Q{"--overlay?"}
+  Q -- yes --> OV["Overlay video<br/>(overlay_video.py)"]
   classDef p fill:#e6efff,stroke:#2f6fde
-  class O,Ld,Y,L,Ru,Cr,M,Sv,S,Dp p
+  class O,Pn,Ld,Tb,Cr,M,Sv,S,Dp,OV p
   click O call show("options")
+  click Pn call show("person_npz")
   click Rs call show("resume")
   click Ld call show("resume")
   click F call show("decode")
@@ -144,16 +182,15 @@ flowchart TB
   click N call show("ranges")
   click Rg call show("restart")
   click Fg call show("restart")
-  click Dq call show("reuse")
-  click Ru call show("reuse")
-  click Y call show("yolox")
-  click L call show("pick")
+  click Tb call show("takebox")
   click Cr call show("trackbox")
   click M call show("rtmpose")
   click Ck call show("checkpoint")
   click Sv call show("checkpoint")
   click S call show("raw_pose")
   click Dp call show("resume")
+  click Q call show("overlay")
+  click OV call show("overlay")
       </pre>
     </div>
   </section>
@@ -174,6 +211,8 @@ flowchart TB
   S --> ST{"7. Does the result<br/>look sane?"}
   ST -- yes --> OK["status: ok"]
   ST -- no --> CK["status: check"]
+  OK --> OV["Overlay video, if --overlay<br/>(overlay_video.py)"]
+  CK --> OV
   classDef p fill:#fdeedd,stroke:#d9822b
   class H,R,VT,A,B,S p
   click F call show("decode")
@@ -186,6 +225,7 @@ flowchart TB
   click ST call show("status")
   click OK call show("status")
   click CK call show("status")
+  click OV call show("overlay")
       </pre>
     </div>
     <div class="card warn">
@@ -281,6 +321,8 @@ flowchart TB
       <table>
         <thead><tr><th>File</th><th>Made by</th><th>What it is</th></tr></thead>
         <tbody>
+          <tr class="file" data-k="person_npz"><td><code>person.npz</code></td><td>⓪ extract_person.py</td><td>lifter box for every frame</td></tr>
+          <tr class="file" data-k="overlay"><td><code>overlay_person.mp4</code>, <code>overlay_raw_pose.mp4</code>, <code>overlay_plate.mp4</code></td><td>⓪ ① ② with <code>--overlay</code></td><td>boxes / skeleton / plate edge on the video (not in git)</td></tr>
           <tr class="file" data-k="raw_pose"><td><code>raw_pose.npz</code></td><td>① extract_pose.py</td><td>17 body points for every frame</td></tr>
           <tr class="file" data-k="plate_npz"><td><code>plate.npz</code>, <code>plate.csv</code></td><td>② track_plate.py</td><td>plate centre and size for every frame</td></tr>
           <tr class="file" data-k="plate_check"><td><code>plate_check.jpg</code></td><td>② track_plate.py</td><td>close-ups of the found plate edge</td></tr>
@@ -332,33 +374,35 @@ hand the pictures out one at a time`,
     out:"Upright pictures, numbered 0, 1, 2 … (frame 100 means the same moment in every output file).",
     time:"Not a separate step: it runs inside ①, ② and ③ (a few seconds per pass)." },
   pose: { t:"① Find the body (extract_pose.py)", tag:"pose",
-    what:"For every frame, finds where the lifter's joints are: 17 points like shoulders, hips, knees and wrists.",
-    in:"<code>vids/&lt;clip&gt;.MOV</code>. Optional: <code>--reps docs/reps.csv</code> (only rep frames) or <code>--every 8</code> (every 8th frame). Optional: an earlier <code>raw_pose.npz</code> to reuse its boxes.",
-    how:`read options (--reps / --every / --name / det.npz)
+    what:"For every frame, finds where the lifter's joints are: 17 points like shoulders, hips, knees and wrists. It looks only inside the lifter's box that ⓪ saved.",
+    in:"<code>vids/&lt;clip&gt;.MOV</code> and <code>out/&lt;clip&gt;/person.npz</code> (run ⓪ first). Optional: <code>--reps docs/reps.csv</code> (only rep frames) or <code>--every 8</code> (every 8th frame).",
+    how:`read options (--reps / --every / --name / --person)
+load person.npz (stop if it is missing)
 if a progress file exists: load it, continue from there
 
 for each frame
     if frame is not wanted (outside ranges / off the grid)   skip
-    if long gap since the last frame we did                  forget the lifter
-    find all people (or reuse boxes from det.npz)
-    choose the lifter: box overlapping last frame's box,
-                       else the biggest
-    crop = lifter box + last frame's body points + 10%
+    if long gap since the last frame we did                  forget the last body points
+    box  = this frame's person box from person.npz
+    crop = box + last frame's body points + 10%
     find 17 body points in the crop
     every 500 frames: save progress
+                      (so a crash can resume)
 
 save points + run details (and frame_ranges)
-delete the progress file`,
-    out:"<code>raw_pose.npz</code>",
-    time:"The slow step. Measured per frame: finding people (YOLOX) ~330 ms, body points (RTMPose) ~16 ms, decoding ~3 ms. So ~350 ms per frame on a quiet Mac: example clip (2498 frames) ~15 min, 3-rep clip (~4900 frames) ~28 min. A real full run of 4637 frames took 44 min (560 ms per frame), so plan for 15–45 min. With boxes reused from an earlier run (<code>det.npz</code>) only ~20 ms per frame: ~1–2 min. <code>--every 8</code> does 1/8 of the frames: ~2–4 min." },
+delete the progress file
+if --overlay: make overlay_&lt;name&gt;.mp4`,
+    out:"<code>raw_pose.npz</code> (and <code>overlay_raw_pose.mp4</code> with <code>--overlay</code>)",
+    time:"Fast now that the detector is gone: ~20 ms per frame, so ~1 min for the example clip (55 s measured for 2498 frames) and ~2 min for a 3-rep clip. Run ⓪ first (~1 min)." },
   options: { t:"Read the options", tag:"pose",
     what:"Decides what this run does: which video, where to write, which frames, and which file name.",
-    in:"The command line: video, output folder, and optional <code>--reps</code>, <code>--every N</code>, <code>--name</code>, <code>det.npz</code>.",
+    in:"The command line: video, output folder, and optional <code>--reps</code>, <code>--every N</code>, <code>--name</code>, <code>--person</code>, <code>--overlay</code>.",
     how:`--reps file   → frames = the rep ranges of this clip
 --every N     → frames = every Nth frame
 neither       → every frame
 --name        → output file name (default raw_pose)
-3rd argument  → reuse the boxes saved in that file`,
+--person      → boxes file (default out/<clip>/person.npz)
+--overlay     → also make the overlay video`,
     out:"The list of frames to do, and the settings for the run.", time:"Instant." },
   resume: { t:"Saved progress: load it, delete it", tag:"pose",
     what:"A long run can be stopped (crash, sleep) and started again with the same command. It carries on instead of starting over.",
@@ -369,15 +413,6 @@ neither       → every frame
 when the run finishes
     delete the progress file`,
     out:"The run continues from the saved frame. After a finished run no progress file is left.", time:"Instant." },
-  reuse: { t:"Reuse saved boxes (det.npz)", tag:"pose",
-    what:"Finding the people is the slow part. If a boxes file from an earlier run is given, it is used instead, and only the body-point model runs.",
-    in:"An earlier <code>raw_pose.npz</code> as the third argument.",
-    how:`if boxes were given
-    take this frame's lifter box from the file
-    (no box for this frame: none)
-else
-    find all people and choose the lifter`,
-    out:"The lifter's box for the frame.", time:"Saves ~330 ms per frame: the whole run drops from ~15 min to ~1–2 min." },
   checkpoint: { t:"Save progress", tag:"pose",
     what:"Every 500 frames, saves everything found so far, so a crash does not lose the whole run.",
     in:"The results so far.",
@@ -386,6 +421,64 @@ else
     rename it to raw_pose_partial.npz
     (so a half-written file is never used)`,
     out:"<code>raw_pose_partial.npz</code>. Counted in clip frames, so a sparse run saves less often.", time:"Under a second." },
+  person: { t:"⓪ Find the person (extract_person.py)", tag:"person",
+    what:"Finds the lifter's box in every frame and saves it once. The slow part of the pipeline, kept apart so pose runs (and re-runs after a tweak) don't repeat it.",
+    in:"<code>vids/&lt;clip&gt;.MOV</code>. Options: <code>--det-every 24</code> (default; 1 = every frame), <code>--name</code>, <code>--overlay</code>.",
+    how:`for every 24th frame
+    find all people in the picture (YOLOX)
+    choose the lifter (same person as last time)
+fill the frames in between with a straight line
+    from the box before to the box after
+save the box per frame
+if --overlay: make overlay_person.mp4`,
+    out:"<code>person.npz</code> (and <code>overlay_person.mp4</code> with <code>--overlay</code>)",
+    time:"~45 s for the example clip: 105 detections of ~0.4 s each. Without skipping frames it would be ~15–45 min." },
+  person_npz: { t:"person.npz", tag:"person",
+    what:"The output of ⓪: the lifter's box in every frame.",
+    in:"Made by ⓪; read by ①.",
+    how:`for every frame:
+    bbox      lifter box x1, y1, x2, y2 (straight line between detections)
+    detected  True where the detector really ran
+    n_people  people seen (0 where it did not run)
+once per clip: fps, size, model, det_every, run time`,
+    out:"Read by ①, and by the overlay video.", time:"—" },
+  detect_every: { t:"Every 24th frame?", tag:"person",
+    what:"The detector is slow (~0.4 s per frame) and the lifter hardly moves in 0.1 s (24 frames at 240 fps), so it runs on every 24th frame only. The boxes in between are drawn as straight lines.",
+    in:"The frame number and <code>--det-every</code>.",
+    how:`if frame number is a multiple of 24
+    run the detector
+else
+    leave it for the interpolation`,
+    out:"The frames where the detector ran.",
+    time:"Checked on all 8 clips of 2026-10-01 against runs on every frame: body points differ by 1.5 px (median), joint angles by under 1° (95% of frames; elbow 2°). Setup, transition and lockout move at most 2 frames; the catch can move more (the hip is almost flat there). 7–11× faster." },
+  interp: { t:"Fill the gaps between the boxes", tag:"person",
+    what:"Estimates the box on the frames the detector skipped.",
+    in:"The boxes from the detector frames.",
+    how:`for each frame without a box
+    take the nearest box before and after
+    draw a straight line between them
+before the first / after the last box: copy the nearest`,
+    out:"A box for every frame.", time:"Instant." },
+  takebox: { t:"Take this frame's person box", tag:"pose",
+    what:"Reads the lifter's box for this frame from <code>person.npz</code>.",
+    in:"<code>person.npz</code> and the frame number.",
+    how:`box = person.npz bbox[frame]
+if there is none: no box, the crop comes
+    from the last frame's body points only`,
+    out:"One box.", time:"Instant." },
+  overlay: { t:"Overlay video (overlay_video.py)", tag:"new",
+    what:"Draws results on the video so you can check them by eye. One script serves every step: ⓪, ① and ② call it with <code>--overlay</code>; you can also run it by hand, even to compare two runs.",
+    in:"The video and any of: <code>--person person.npz</code>, <code>--pose raw_pose.npz</code> (twice to compare two runs), <code>--plate plate.npz</code>.",
+    how:`pick the frames to show (every 4th by default)
+for each frame
+    draw the person box   (thick = detector ran, thin = interpolated)
+    draw the skeleton     (green = first run, magenta = second)
+    draw the plate edge and bar end
+    with two runs: label the biggest joint difference,
+                   red border above 10 px
+crop to everything drawn (--zoom), write the video`,
+    out:"<code>overlay_&lt;name&gt;.mp4</code> next to the npz file (overlay_person / overlay_raw_pose / overlay_plate).",
+    time:"~30 s for the example clip at every 4th frame (4× slow motion)." },
   raw_pose: { t:"raw_pose.npz", tag:"pose",
     what:"The output of ①: where each body point is in every frame, and how sure the model is.",
     in:"Made by ①.",
@@ -407,22 +500,21 @@ else
     skip it, leave it empty`,
     out:"The same file layout as a full run, so later steps don't need to change.",
     time:"Saves time in proportion: a 20 s clip with 3 × 4 s reps takes ~60% of the full time. Tested on the example clip: the result is the same as a full run (after the first 0.15 s of each rep)." },
-  restart: { t:"Forget who the lifter was", tag:"pose",
-    what:"After a long pause between processed frames, the last known position is too old to trust, so the lifter is chosen again from scratch.",
+  restart: { t:"Forget the last body points", tag:"pose",
+    what:"After a long pause between processed frames, the last body points are too old to trust. The crop is then the person box alone.",
     in:"The number of the last frame that was processed.",
     how:`if more frames were skipped than allowed
-    forget the previous box and body points
-    (the next frame picks the biggest person)`,
-    out:"A fresh start for the next frame.",
-    time:"None." },
-  yolox: { t:"Find all people (YOLOX)", tag:"pose",
+    forget the last body points
+    (the crop is the person box only)`,
+    out:"A fresh start for the next frame.", time:"None." },
+  yolox: { t:"Find all people (YOLOX)", tag:"person",
     what:"A ready-made AI model that draws a box around every person in the picture.",
     in:"One upright picture.",
     how:`look at the whole picture
 return one box per person`,
     out:"A list of boxes (one per person).",
-    time:"The most expensive operation: ~330 ms per frame, about 95% of ①'s time (runs on the CPU)." },
-  pick: { t:"Choose the lifter", tag:"pose",
+    time:"The most expensive operation: ~330–420 ms per call (runs on the CPU), which is why ⓪ calls it on every 24th frame only." },
+  pick: { t:"Choose the lifter", tag:"person",
     what:"When there are several people, picks the one who is lifting.",
     in:"The boxes from YOLOX and the lifter's box from the previous frame.",
     how:`if a box overlaps last frame's lifter box
@@ -687,8 +779,8 @@ compare the phases found from each`,
 };
 // summary card at the top of each tab = the overview item it zooms into
 const TABSTEP = { pose:"pose", plate:"plate", analyze:"analyze", compare:"compare", reps_step:"reps_step" };
-const TAGS = {pose:"t-pose", plate:"t-plate", ana:"t-ana", new:"t-new", src:"t-src"};
-const LABEL = { pose:"① Find the body", plate:"② Find the plate", analyze:"③ Angles, phases v1, pictures",
+const TAGS = {person:"t-person", pose:"t-pose", plate:"t-plate", ana:"t-ana", new:"t-new", src:"t-src"};
+const LABEL = { person:"⓪ Find the person", pose:"① Find the body", plate:"② Find the plate", analyze:"③ Angles, phases v1, pictures",
                 compare:"④ Phases v2", reps_step:"⑤ Rep list (dashed box)" };
 
 function body(d) {
@@ -721,7 +813,7 @@ async function render(id) {
   rendered.add(id);
   await mermaid.run({ nodes: document.querySelectorAll(`#${id} .mermaid`) });
 }
-const FIRST = { overview:"pose", pose:"pose", plate:"plate", analysis:"analyze", reps:"reps_step", files:"raw_pose" };
+const FIRST = { overview:"person", person:"person", pose:"pose", plate:"plate", analysis:"analyze", reps:"reps_step", files:"raw_pose" };
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
   document.querySelectorAll("section").forEach(s => s.classList.toggle("on", s.id === b.dataset.tab));
@@ -729,7 +821,7 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   show(FIRST[b.dataset.tab]);
 });
 render("overview");
-show("pose");
+show("person");
 </script>
 </body>
 </html>

@@ -1,39 +1,29 @@
-"""Decode a clip (rotation applied) and save raw RTMPose-x output to .npz.
+"""Pose the lifter in every frame (RTMPose-x) and save the raw output to .npz.
 
-usage: uv run python scripts/extract_pose.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg [det.npz]
-       [--reps ../docs/reps.csv | --every N] [--det-every N [--interpolate]] [--name raw_pose]
+usage: uv run python scripts/extract_pose.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg
+       [--reps ../docs/reps.csv | --every N] [--person person.npz] [--name raw_pose]
+       [--overlay [--overlay-step 4]]
+reads  the lifter's box per frame from out/<clip>/person.npz (scripts/extract_person.py,
+       run it first; --person names another file)
+writes out/<clip>/<name>.npz   keypoints, scores, bbox, pose_bbox, n_people, metadata
+       out/<clip>/overlay_<name>.mp4   with --overlay: skeleton and boxes on the video
+                               (scripts/overlay_video.py)
 
 Partial progress is saved to raw_pose_partial.npz every 500 frames; rerunning
 the same command resumes from it.
-
-With det.npz (an earlier raw_pose.npz), its saved lifter boxes are reused and
-only the pose model runs (the CPU-bound detector takes ~0.4-0.7 s/frame).
 
 With --reps, only the clip's pose_start:pose_end ranges from reps.csv are
 posed (each rep plus padding; rests between reps are skipped). Arrays stay
 indexed by clip frame, NaN outside the ranges; the ranges are saved as
 frame_ranges.
 
-With --every N, only every Nth frame is posed, following the lifter's box
-from sample to sample (a quick pass to find reps where the plate track
-fails; snatch.reps).
-
-With --det-every N, the person detector (~95% of the time) runs only every Nth
-posed frame; between, the crop follows the previous frame's keypoints. Name
-the output to show the setup, e.g. --name raw_pose_det4.
-
-With --interpolate (needs --det-every N, whole clip only), the detector runs
-first on every Nth frame, the boxes in between are interpolated, and the pose
-model then runs on every frame with the same crop recipe as a full run (box +
-previous keypoints). Name e.g. --name raw_pose_det4interp. bbox holds the
-interpolated boxes; n_people is 0 on frames the detector did not see.
-
---name sets the
-output file (<name>.npz, default raw_pose), e.g. to keep a full run.
+With --every N, only every Nth frame is posed, following the previous
+keypoints from sample to sample (a quick pass to find reps where the plate
+track fails; snatch.reps). --name sets the output file (<name>.npz, default
+raw_pose), e.g. to keep a full run.
 """
 
 import csv
-
 import platform
 import sys
 import time
@@ -41,7 +31,7 @@ from pathlib import Path
 
 import numpy as np
 
-from snatch import pose
+from snatch import overlay, pose
 from snatch.video import frames, probe
 
 args = sys.argv[1:]
@@ -58,17 +48,22 @@ def option(flag: str) -> str | None:
 
 reps_csv = option("--reps")
 every = option("--every")
-det_every = int(option("--det-every") or 1)
-interpolate = "--interpolate" in args
-if interpolate:
-    args.remove("--interpolate")
 name = option("--name") or "raw_pose"
+person_arg = option("--person")
+overlay_step = option("--overlay-step") or "4"
+make_overlay = "--overlay" in args
+if make_overlay:
+    args.remove("--overlay")
 clip, out_dir = args[0], Path(args[1])
-det = np.load(args[2]) if len(args) > 2 else None
-det_boxes = None if det is None else det["bbox"]
 out_dir.mkdir(parents=True, exist_ok=True)
+person_path = Path(person_arg) if person_arg else out_dir / "person.npz"
+if not person_path.exists():
+    sys.exit(f"{person_path} not found: run scripts/extract_person.py {clip} {out_dir} first")
+person = np.load(person_path)
 info = probe(clip)
 print(info, flush=True)
+if len(person["bbox"]) != info.n_frames:
+    sys.exit(f"{person_path} has {len(person['bbox'])} frames, the clip {info.n_frames}")
 ranges = None
 if reps_csv is not None:
     with open(reps_csv, newline="") as f:
@@ -81,26 +76,14 @@ if every is not None:
     ranges = [(i, i + 1) for i in range(0, info.n_frames, int(every))]
     print(f"every {every}th frame: {len(ranges)} frames", flush=True)
 
-t0 = time.time()  # whole run, incl. the detector pass
-seen_people = None
-if interpolate:
-    if det_every < 2 or ranges is not None or det_boxes is not None:
-        sys.exit("--interpolate needs --det-every N (N > 1), and no --reps/--every/det.npz")
-    t_det = time.time()
-    boxes, seen_people = pose.detect_boxes(
-        frames(clip, info), info.n_frames, det_every, pose.load_detector(),
-        progress=lambda i: print(f"detector frame {i}/{info.n_frames} "
-                                 f"{time.time() - t_det:.0f}s", flush=True) if i % 800 == 0 else None)
-    det_boxes = pose.interpolate_boxes(boxes)
-    print(f"detector done: {int((seen_people > 0).sum())} frames, "
-          f"{time.time() - t_det:.0f}s", flush=True)
-
 partial = out_dir / f"{name}_partial.npz"
 resume, done = None, 0
 if partial.exists():
     p = np.load(partial)
     resume, done = {k: p[k] for k in p.files if k != "done"}, int(p["done"])
     print(f"resuming from frame {done}", flush=True)
+
+t0 = time.time()
 
 
 def progress(i):
@@ -115,23 +98,22 @@ def checkpoint(result, n):
     tmp.replace(partial)
 
 
-raw = pose.run(frames(clip, info), info.n_frames, det_boxes=det_boxes,
+raw = pose.run(frames(clip, info), info.n_frames, person["bbox"],
                progress=progress, resume=resume, done=done, checkpoint=checkpoint,
-               ranges=ranges, restart_gap=int(every) if every else 1,
-               det_every=1 if interpolate else det_every)
+               ranges=ranges, restart_gap=int(every) if every else 1)
 elapsed = time.time() - t0
-if det is not None:
-    raw["n_people"] = det["n_people"]
-if seen_people is not None:
-    raw["n_people"] = seen_people
+raw["n_people"] = person["n_people"]
 meta = dict(fps=info.fps, width=info.width, height=info.height,
             rotation=info.rotation, model=pose.MODEL_NAME,
-            clip=Path(clip).name, seconds=elapsed, machine=platform.platform())
-meta["det_every"] = det_every
-meta["det_interpolated"] = interpolate
+            clip=Path(clip).name, seconds=elapsed, machine=platform.platform(),
+            person_file=person_path.name, det_every=person["det_every"])
 if ranges is not None:
     meta["frame_ranges"] = np.asarray(ranges, np.int64)
 arrays: dict[str, np.ndarray] = raw | {k: np.asarray(v) for k, v in meta.items()}
 np.savez_compressed(out_dir / f"{name}.npz", allow_pickle=False, **arrays)
 partial.unlink(missing_ok=True)
 print(f"done {info.n_frames} frames in {elapsed:.0f}s", flush=True)
+if make_overlay:
+    overlay.call_script(clip, out_dir / f"overlay_{name}.mp4", "--pose",
+                        str(out_dir / f"{name}.npz"), "--person", str(person_path),
+                        "--boxes", "--zoom", "--step", overlay_step)

@@ -7,7 +7,8 @@ shape rank mismatch), so the detector must run on CPU.
 import sys
 import time
 
-from snatch.pose import load_models
+from snatch.person import load_detector
+from snatch.pose import load_model
 from snatch.video import frames, probe
 
 clip = sys.argv[1]
@@ -24,13 +25,13 @@ def timed(fn, n):
     return (time.time() - t0) / n, out
 
 
-det, _ = load_models("cpu")
+det = load_detector()
 t_det, boxes = timed(lambda: det(imgs[0]), 5)
 print("det cpu", round(t_det, 3), "s/frame", boxes)
 
 for device in ("cpu", "mps"):
     try:
-        _, pose = load_models(device)
+        pose = load_model(device)
         t, (kps, scores) = timed(lambda: pose(imgs[0], bboxes=list(boxes)), 10)
         provider = pose.session.get_providers()[0]  # type: ignore[attr-defined]
         print("pose", device, provider, round(t, 3), "s/frame", kps.shape)

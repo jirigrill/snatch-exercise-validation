@@ -1,0 +1,153 @@
+"""Draw pipeline results on the video: person boxes, pose skeletons, plate outline.
+
+One renderer for every step of the pipeline. scripts/overlay_video.py is its
+command line; extract_person.py, extract_pose.py and track_plate.py call that
+script when given --overlay (`call_script`). Each layer is optional:
+
+- person: lifter box per frame; thick = the detector ran there, thin = interpolated
+- poses:  one or two raw_pose runs; green = first, magenta = second (with two,
+          only frames posed in both are shown, and each is labelled with the
+          largest joint distance between the runs, red border above `flag_px`)
+- plate:  plate outline (ellipse) and hub
+- boxes:  also draw each pose run's person box and the crop given to the pose model
+"""
+
+import subprocess
+import sys
+from collections.abc import Mapping, Sequence
+from pathlib import Path
+
+import cv2
+import numpy as np
+
+from snatch.angles import COCO
+from snatch.video import frames, probe
+
+EDGES = [("shoulder", "elbow"), ("elbow", "wrist"), ("shoulder", "hip"), ("hip", "knee"),
+         ("knee", "ankle")]
+POSE_COLORS = ((0, 255, 0), (255, 0, 255))  # BGR: green, magenta
+PERSON_COLOR = (255, 200, 0)  # BGR: light blue
+PLATE_COLOR = (0, 140, 255)  # BGR: orange
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "overlay_video.py"
+
+Arrays = Mapping[str, np.ndarray]
+
+
+def call_script(clip: str, out_mp4: Path, *options: str) -> None:
+    """Run scripts/overlay_video.py (the way each pipeline step makes its overlay)."""
+    subprocess.run([sys.executable, str(SCRIPT), clip, str(out_mp4), *options], check=True)
+
+
+def shown_frames(n_frames: int, start: int, end: int | None, step: int,
+                 poses: Sequence[Arrays], plate: Arrays | None) -> np.ndarray:
+    """Frames to draw: in [start, end), posed in every run, plate found, every `step`-th."""
+    mask = np.zeros(n_frames, bool)
+    mask[start:end] = True
+    for p in poses:
+        mask &= ~np.isnan(p["keypoints"]).all((1, 2))
+    if plate is not None and not poses:
+        mask &= np.asarray(plate["found"], bool)
+    return np.flatnonzero(mask)[::step]
+
+
+def zoom_window(points: np.ndarray, width: int, height: int, margin: int = 150
+                ) -> tuple[int, int, int, int]:
+    """(x0, y0, x1, y1) around all (x, y) points, NaN ignored, kept inside the frame."""
+    pts = points[~np.isnan(points).any(1)]
+    if not len(pts):
+        return 0, 0, width, height
+    (x0, y0), (x1, y1) = pts.min(0) - margin, pts.max(0) + margin
+    return max(0, int(x0)), max(0, int(y0)), min(width, int(x1)), min(height, int(y1))
+
+
+def _text(img: np.ndarray, s: str, line: int) -> None:
+    """Outlined label, `line` 0, 1, 2 ... from the top left of the (cropped) image."""
+    y = 32 + 40 * line
+    cv2.putText(img, s, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 0), 5)
+    cv2.putText(img, s, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
+
+
+def _box(img: np.ndarray, b: np.ndarray, color: tuple[int, int, int], thick: int) -> None:
+    if not np.isnan(b).any():
+        cv2.rectangle(img, (int(b[0]), int(b[1])), (int(b[2]), int(b[3])), color, thick)
+
+
+def _skeleton(img: np.ndarray, k: np.ndarray, color: tuple[int, int, int]) -> None:
+    for side in ("l", "r"):
+        for a, b in EDGES:
+            pa, pb = k[COCO[f"{side}_{a}"]], k[COCO[f"{side}_{b}"]]
+            if not (np.isnan(pa).any() or np.isnan(pb).any()):
+                cv2.line(img, tuple(map(int, pa)), tuple(map(int, pb)), color, 4)
+    for p in k:
+        if not np.isnan(p).any():
+            cv2.circle(img, tuple(map(int, p)), 6, color, -1)
+
+
+def _points(i: np.ndarray, person: Arrays | None, poses: Sequence[Arrays],
+            plate: Arrays | None, boxes: bool) -> np.ndarray:
+    """Every (x, y) that gets drawn on frames `i`, for the zoom window."""
+    parts = []
+    if person is not None:
+        parts.append(person["bbox"][i].reshape(-1, 2))
+    for p in poses:
+        parts.append(p["keypoints"][i].reshape(-1, 2))
+        if boxes:
+            parts += [p["bbox"][i].reshape(-1, 2), p["pose_bbox"][i].reshape(-1, 2)]
+    if plate is not None:
+        r = np.fmax(plate["a"][i], plate["b"][i])
+        for dx, dy in ((-1, -1), (1, 1)):
+            parts.append(np.column_stack([plate["hub_x"][i] + dx * r, plate["hub_y"][i] + dy * r]))
+    return np.concatenate(parts) if parts else np.empty((0, 2))
+
+
+def render(clip: str, out_path: str, *, person: Arrays | None = None,
+           poses: Sequence[Arrays] = (), plate: Arrays | None = None, boxes: bool = False,
+           start: int = 0, end: int | None = None, step: int = 1, fps: float = 30.0,
+           scale: float = 0.5, zoom: bool = False, flag_px: float = 10.0) -> dict[str, int]:
+    """Write the overlay video; returns {"frames": written, "flagged": above flag_px}."""
+    info = probe(clip)
+    show = shown_frames(info.n_frames, start, end, step, poses, plate)
+    if not len(show):
+        raise ValueError("no frame to draw: nothing is posed / found in the range")
+    dist = (np.linalg.norm(poses[0]["keypoints"] - poses[1]["keypoints"], axis=-1)
+            if len(poses) > 1 else None)
+    x0, y0, x1, y1 = (zoom_window(_points(show, person, poses, plate, boxes),
+                                  info.width, info.height) if zoom
+                      else (0, 0, info.width, info.height))
+    size = (max(1, int((x1 - x0) * scale)), max(1, int((y1 - y0) * scale)))
+    writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, size)
+    want, flagged, written = set(show.tolist()), 0, 0
+    for i, img in enumerate(frames(clip, info)):
+        if i > show[-1]:
+            break
+        if i not in want:
+            continue
+        img = img.copy()
+        labels = [f"f{i}"]
+        if person is not None:
+            seen = bool(person["detected"][i]) if "detected" in person else True
+            _box(img, person["bbox"][i], PERSON_COLOR, 6 if seen else 2)
+            labels.append("person: detected" if seen else "person: interpolated")
+        if plate is not None and bool(plate["found"][i]):
+            c = (int(plate["hub_x"][i]), int(plate["hub_y"][i]))
+            cv2.ellipse(img, c, (int(plate["a"][i]), int(plate["b"][i])),
+                        float(plate["angle"][i]), 0, 360, PLATE_COLOR, 4)
+            cv2.circle(img, c, 8, (0, 0, 255), -1)
+        for p, color in zip(poses, POSE_COLORS):
+            if boxes:
+                _box(img, p["bbox"][i], color, 2)
+                _box(img, p["pose_bbox"][i], color, 6)
+            _skeleton(img, p["keypoints"][i], color)
+        if dist is not None:
+            worst = float(np.nanmax(dist[i]))
+            labels.append(f"max diff {worst:.1f} px")
+        img = cv2.resize(img[y0:y1, x0:x1], size, interpolation=cv2.INTER_AREA)
+        for line, s in enumerate(labels):
+            _text(img, s, line)
+        if dist is not None and worst > flag_px:
+            flagged += 1
+            cv2.rectangle(img, (0, 0), (img.shape[1] - 1, img.shape[0] - 1), (0, 0, 255), 8)
+        writer.write(img)
+        written += 1
+    writer.release()
+    return {"frames": written, "flagged": flagged}

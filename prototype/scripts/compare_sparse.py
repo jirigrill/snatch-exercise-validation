@@ -12,7 +12,7 @@ from pathlib import Path
 
 import numpy as np
 
-from snatch import pose
+from snatch import person, pose
 from snatch.angles import JOINTS, mid_y, sagittal_angles
 from snatch.phases import find_reps
 from snatch.signals import smooth_keypoints
@@ -40,7 +40,7 @@ for r in reps0:
 
 for every in map(int, sys.argv[3:]):
     raw = pose.run(frames(clip, info), info.n_frames,
-                   det_boxes=pose.sparse_detections(ref["bbox"], every))
+                   person.sparse_detections(ref["bbox"], every))
     ang, reps, sd = analyse(raw["keypoints"], fps)
     px = np.linalg.norm(raw["keypoints"] - ref["keypoints"], axis=2)
     print(f"\n=== detector every {every} frames "

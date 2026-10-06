@@ -2,8 +2,7 @@ import numpy as np
 import pytest
 
 from snatch import pose
-from snatch.pose import (pick_lifter, range_mask, resume_state, sparse_detections,
-                         track_box)
+from snatch.pose import range_mask, resume_state, track_box
 
 
 def test_track_box_extends_a_truncated_detection_to_last_frames_keypoints():
@@ -28,26 +27,11 @@ def test_track_box_without_previous_frame_is_the_detection():
     assert track_box(det, None, None) == pytest.approx(det)
 
 
-def test_pick_lifter_prefers_the_box_overlapping_the_previous_one():
-    boxes = np.array([[0, 0, 100, 100], [500, 500, 900, 900]], float)
-    prev = np.array([10, 10, 110, 110], float)
-    assert pick_lifter(boxes, prev) == pytest.approx(boxes[0])
-    assert pick_lifter(boxes, None) == pytest.approx(boxes[1])
-
-
 def test_track_box_without_a_detection_uses_last_frames_keypoints():
     prev_kps = np.array([[150.0, 120.0], [200.0, 600.0]])
     prev_scores = np.array([0.9, 0.8])
     out = track_box(None, prev_kps, prev_scores, pad=0.1, min_score=0.3)
     assert out == pytest.approx([145.0, 72.0, 205.0, 648.0])
-
-
-def test_sparse_detection_mask_keeps_every_nth_box():
-    boxes = np.arange(40, dtype=float).reshape(10, 4)
-    out = sparse_detections(boxes, every=4)
-    kept = ~np.isnan(out).any(1)
-    assert np.flatnonzero(kept).tolist() == [0, 4, 8]
-    assert out[4] == pytest.approx(boxes[4])
 
 
 def test_resume_state_takes_last_seen_box_and_last_frames_keypoints():
@@ -74,111 +58,54 @@ def test_range_mask_rejects_ranges_outside_the_clip():
         range_mask(10, [(5, 11)])
 
 
-def test_run_with_ranges_poses_only_inside_and_restarts_tracking(monkeypatch):
-    calls = []
-
-    def det(img):
-        return np.array([[0.0, 0.0, 10.0, 10.0]])
-
+def _fake_model(calls):
     def fake_pose(img, bboxes):
         calls.append((int(img[0, 0, 0]), bboxes[0].tolist()))
-        k = np.full((1, 17, 2), 50.0)  # far outside the detection: tracking shows
-        return k, np.ones((1, 17))
+        return np.full((1, 17, 2), 50.0), np.ones((1, 17))  # far outside the box: tracking shows
+    return fake_pose
 
-    monkeypatch.setattr(pose, "load_models", lambda device: (det, fake_pose))
-    images = (np.full((2, 2, 3), i, np.uint8) for i in range(10))
-    out = pose.run(images, 10, ranges=[(2, 4), (7, 9)])
+
+def _images(n):
+    return (np.full((2, 2, 3), i, np.uint8) for i in range(n))
+
+
+def test_run_with_ranges_poses_only_inside_and_restarts_tracking(monkeypatch):
+    calls = []
+    monkeypatch.setattr(pose, "load_model", lambda device: _fake_model(calls))
+    boxes = np.tile([0.0, 0.0, 10.0, 10.0], (10, 1))
+    out = pose.run(_images(10), 10, boxes, ranges=[(2, 4), (7, 9)])
     assert [f for f, _ in calls] == [2, 3, 7, 8]
     posed = ~np.isnan(out["keypoints"][:, 0, 0])
     assert np.flatnonzero(posed).tolist() == [2, 3, 7, 8]
-    # first frame of each range: plain detection; second: follows the pose
+    # first frame of each range: the box alone; second: the box merged with the pose
     assert calls[0][1] == calls[2][1] == [0.0, 0.0, 10.0, 10.0]
     assert calls[1][1] != calls[0][1] and calls[3][1] == calls[1][1]
 
 
-def test_sparse_run_keeps_following_the_lifter_not_the_largest_box(monkeypatch):
-    lifter = np.array([100.0, 100.0, 200.0, 200.0])
-    bystander = np.array([300.0, 0.0, 500.0, 400.0])  # larger, appears later
-    seen = []
-
-    def det(img):
-        i = int(img[0, 0, 0])
-        return np.array([lifter] if i < 8 else [lifter, bystander])
-
-    def fake_pose(img, bboxes):
-        seen.append(bboxes[0].tolist())
-        return np.full((1, 17, 2), 150.0), np.ones((1, 17))
-
-    monkeypatch.setattr(pose, "load_models", lambda device: (det, fake_pose))
-    images = (np.full((2, 2, 3), i, np.uint8) for i in range(24))
-    sparse = [(i, i + 1) for i in range(0, 24, 8)]
-    out = pose.run(images, 24, ranges=sparse, restart_gap=8)
-    assert all(b[0] < 250 for b in seen)  # every crop is the lifter's
-    assert out["bbox"][16].tolist() == lifter.tolist()
-
-
-def test_det_every_runs_the_detector_only_every_nth_frame_and_follows_keypoints(monkeypatch):
-    det_calls, crops = [], []
-
-    def det(img):
-        det_calls.append(int(img[0, 0, 0]))
-        return np.array([[0.0, 0.0, 10.0, 10.0]])
-
-    def fake_pose(img, bboxes):
-        crops.append(bboxes[0].tolist())
-        return np.full((1, 17, 2), 5.0), np.ones((1, 17))
-
-    monkeypatch.setattr(pose, "load_models", lambda device: (det, fake_pose))
-    images = (np.full((2, 2, 3), i, np.uint8) for i in range(10))
-    out = pose.run(images, 10, det_every=4)
-    assert det_calls == [0, 4, 8]
-    assert len(crops) == 10  # every frame is still posed
-    assert out["n_people"].tolist() == [1, 0, 0, 0, 1, 0, 0, 0, 1, 0]
-    assert np.isnan(out["bbox"][1]).all() and not np.isnan(out["bbox"][4]).any()
-    assert crops[1] == crops[2] != crops[0]  # follows the keypoints, not the detection
-
-
-def test_det_every_detects_again_after_a_tracking_restart(monkeypatch):
-    det_calls = []
-
-    def det(img):
-        det_calls.append(int(img[0, 0, 0]))
-        return np.array([[0.0, 0.0, 10.0, 10.0]])
-
-    monkeypatch.setattr(pose, "load_models", lambda device: (
-        det, lambda img, bboxes: (np.full((1, 17, 2), 5.0), np.ones((1, 17)))))
-    images = (np.full((2, 2, 3), i, np.uint8) for i in range(10))
-    pose.run(images, 10, ranges=[(1, 3), (6, 8)], det_every=4)
-    assert det_calls == [1, 6]  # a new range restarts tracking: detect at once
-
-
-def test_interpolate_boxes_draws_a_line_between_detections_and_holds_the_ends():
-    boxes = np.full((9, 4), np.nan, np.float32)
-    boxes[2] = [0, 0, 10, 10]
-    boxes[6] = [4, 8, 14, 18]
-    out = pose.interpolate_boxes(boxes)
-    assert out[2].tolist() == [0, 0, 10, 10] and out[6].tolist() == [4, 8, 14, 18]
-    assert out[4].tolist() == [2, 4, 12, 14]  # halfway
-    assert out[0].tolist() == out[2].tolist() and out[8].tolist() == out[6].tolist()
-
-
-def test_interpolate_boxes_without_any_box_stays_nan():
-    assert np.isnan(pose.interpolate_boxes(np.full((3, 4), np.nan, np.float32))).all()
-
-
-def test_detect_boxes_runs_the_detector_every_nth_frame_and_follows_the_lifter():
-    lifter = np.array([100.0, 100.0, 200.0, 200.0])
-    bystander = np.array([300.0, 0.0, 500.0, 400.0])
+def test_sparse_run_with_restart_gap_keeps_following_the_previous_pose(monkeypatch):
     calls = []
+    monkeypatch.setattr(pose, "load_model", lambda device: _fake_model(calls))
+    boxes = np.tile([0.0, 0.0, 10.0, 10.0], (24, 1))
+    sparse = [(i, i + 1) for i in range(0, 24, 8)]
+    pose.run(_images(24), 24, boxes, ranges=sparse, restart_gap=8)
+    assert calls[0][1] == [0.0, 0.0, 10.0, 10.0]
+    assert calls[1][1] != calls[0][1] and calls[2][1] == calls[1][1]  # not reset at each sample
+    calls.clear()
+    pose.run(_images(24), 24, boxes, ranges=sparse)  # default: restart at each sample
+    assert all(c[1] == [0.0, 0.0, 10.0, 10.0] for c in calls)
 
-    def det(img):
-        i = int(img[0, 0, 0])
-        calls.append(i)
-        return np.array([lifter] if i < 4 else [lifter, bystander])
 
-    images = (np.full((2, 2, 3), i, np.uint8) for i in range(10))
-    boxes, n_people = pose.detect_boxes(images, 10, 4, det)
-    assert calls == [0, 4, 8]
-    assert n_people.tolist() == [1, 0, 0, 0, 2, 0, 0, 0, 2, 0]
-    assert boxes[4].tolist() == boxes[8].tolist() == lifter.tolist()  # not the larger bystander
-    assert np.isnan(boxes[1]).all()
+def test_run_without_a_box_follows_the_previous_keypoints(monkeypatch):
+    calls = []
+    monkeypatch.setattr(pose, "load_model", lambda device: _fake_model(calls))
+    boxes = np.full((4, 4), np.nan)
+    boxes[0] = [0.0, 0.0, 10.0, 10.0]
+    out = pose.run(_images(4), 4, boxes)
+    assert [f for f, _ in calls] == [0, 1, 2, 3]
+    assert np.isnan(out["bbox"][1]).all() and not np.isnan(out["bbox"][0]).any()
+    assert calls[1][1] == calls[2][1] != calls[0][1]
+
+
+def test_run_rejects_boxes_of_the_wrong_length():
+    with pytest.raises(ValueError):
+        pose.run(_images(3), 3, np.zeros((2, 4)))
