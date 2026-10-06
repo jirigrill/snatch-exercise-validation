@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
 
-from snatch.pose import pick_lifter, resume_state, sparse_detections, track_box
+from snatch import pose
+from snatch.pose import (pick_lifter, range_mask, resume_state, sparse_detections,
+                         track_box)
 
 
 def test_track_box_extends_a_truncated_detection_to_last_frames_keypoints():
@@ -60,3 +62,56 @@ def test_resume_state_takes_last_seen_box_and_last_frames_keypoints():
 
 def test_resume_state_from_scratch_is_empty():
     assert resume_state({}, 0) == (None, None, None)
+
+
+def test_range_mask_marks_half_open_ranges():
+    assert np.flatnonzero(range_mask(10, [(1, 3), (6, 8)])).tolist() == [1, 2, 6, 7]
+    assert range_mask(4, None).all()
+
+
+def test_range_mask_rejects_ranges_outside_the_clip():
+    with pytest.raises(ValueError):
+        range_mask(10, [(5, 11)])
+
+
+def test_run_with_ranges_poses_only_inside_and_restarts_tracking(monkeypatch):
+    calls = []
+
+    def det(img):
+        return np.array([[0.0, 0.0, 10.0, 10.0]])
+
+    def fake_pose(img, bboxes):
+        calls.append((int(img[0, 0, 0]), bboxes[0].tolist()))
+        k = np.full((1, 17, 2), 50.0)  # far outside the detection: tracking shows
+        return k, np.ones((1, 17))
+
+    monkeypatch.setattr(pose, "load_models", lambda device: (det, fake_pose))
+    images = (np.full((2, 2, 3), i, np.uint8) for i in range(10))
+    out = pose.run(images, 10, ranges=[(2, 4), (7, 9)])
+    assert [f for f, _ in calls] == [2, 3, 7, 8]
+    posed = ~np.isnan(out["keypoints"][:, 0, 0])
+    assert np.flatnonzero(posed).tolist() == [2, 3, 7, 8]
+    # first frame of each range: plain detection; second: follows the pose
+    assert calls[0][1] == calls[2][1] == [0.0, 0.0, 10.0, 10.0]
+    assert calls[1][1] != calls[0][1] and calls[3][1] == calls[1][1]
+
+
+def test_sparse_run_keeps_following_the_lifter_not_the_largest_box(monkeypatch):
+    lifter = np.array([100.0, 100.0, 200.0, 200.0])
+    bystander = np.array([300.0, 0.0, 500.0, 400.0])  # larger, appears later
+    seen = []
+
+    def det(img):
+        i = int(img[0, 0, 0])
+        return np.array([lifter] if i < 8 else [lifter, bystander])
+
+    def fake_pose(img, bboxes):
+        seen.append(bboxes[0].tolist())
+        return np.full((1, 17, 2), 150.0), np.ones((1, 17))
+
+    monkeypatch.setattr(pose, "load_models", lambda device: (det, fake_pose))
+    images = (np.full((2, 2, 3), i, np.uint8) for i in range(24))
+    sparse = [(i, i + 1) for i in range(0, 24, 8)]
+    out = pose.run(images, 24, ranges=sparse, restart_gap=8)
+    assert all(b[0] < 250 for b in seen)  # every crop is the lifter's
+    assert out["bbox"][16].tolist() == lifter.tolist()

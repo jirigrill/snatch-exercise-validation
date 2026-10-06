@@ -85,16 +85,37 @@ def resume_state(part: dict[str, np.ndarray], done: int):
     return prev, part["keypoints"][done - 1], part["scores"][done - 1]
 
 
+def range_mask(n_frames: int, ranges: list[tuple[int, int]] | None) -> np.ndarray:
+    """True for frames to process: inside any [start, end) range, or all if None."""
+    if ranges is None:
+        return np.ones(n_frames, bool)
+    mask = np.zeros(n_frames, bool)
+    for start, end in ranges:
+        if not 0 <= start < end <= n_frames:
+            raise ValueError(f"range {start}:{end} outside 0:{n_frames}")
+        mask[start:end] = True
+    return mask
+
+
 def run(images: Iterable[np.ndarray], n_frames: int, pose_device: str = "mps",
         det_boxes: np.ndarray | None = None, progress=None,
         resume: dict[str, np.ndarray] | None = None, done: int = 0,
-        checkpoint=None, checkpoint_every: int = 500
+        checkpoint=None, checkpoint_every: int = 500,
+        ranges: list[tuple[int, int]] | None = None, restart_gap: int = 1,
         ) -> dict[str, np.ndarray]:
     """Detect (unless det_boxes are given), pick the lifter, track, pose.
 
     resume/done: continue from a partial result holding `done` finished frames.
     checkpoint(result, frames_done) is called every `checkpoint_every` frames.
+    ranges: only pose frames inside these [start, end) ranges (per-rep runs);
+    output stays indexed by clip frame, NaN outside. Tracking restarts (as at
+    frame 0) when more than `restart_gap` frames passed since the last posed
+    one: between rep ranges the previous pose is too old to follow. A sparse
+    pass (every Nth frame) sets restart_gap=N so it keeps following the
+    lifter's box; restarting each sample picks the largest box, which can be
+    someone else (20261005_9).
     """
+    active = range_mask(n_frames, ranges)
     det, pose = load_models(pose_device)
     kps = np.full((n_frames, 17, 2), np.nan, np.float32)
     scores = np.zeros((n_frames, 17), np.float32)
@@ -108,11 +129,16 @@ def run(images: Iterable[np.ndarray], n_frames: int, pose_device: str = "mps",
         for k, v in out.items():
             v[:done] = resume[k][:done]
         prev, prev_kps, prev_scores = resume_state(out, done)
+    last = int(np.flatnonzero(active)[-1]) + 1 if active.any() else 0
+    last_posed = done - 1 if done else -1
     for i, img in enumerate(images):
-        if i >= n_frames:
+        if i >= last:
             break
-        if i < done:
+        if i < done or not active[i]:
             continue
+        if last_posed >= 0 and i - last_posed > restart_gap:
+            prev = prev_kps = prev_scores = None
+        last_posed = i
         if det_boxes is None:
             boxes = np.asarray(det(img)).reshape(-1, 4)
             n_people[i] = len(boxes)

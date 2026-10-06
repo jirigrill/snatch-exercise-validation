@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snatch pipeline: vids/ → prototype/out/&lt;clip&gt;/</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root { --bg:#f7f7f5; --card:#fff; --ink:#1d1d1f; --mute:#6b6b70; --line:#e2e2de;
+          --pose:#2f6fde; --plate:#d9822b; --ana:#2e9e6a; --new:#8a4fd1; --src:#888; --sel:#fff6d6; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+         background:var(--bg); color:var(--ink); }
+  header { padding:20px 24px 8px; }
+  header h1 { margin:0; font-size:20px; }
+  header p { margin:4px 0 0; color:var(--mute); }
+  nav { display:flex; gap:6px; flex-wrap:wrap; padding:8px 24px 0; position:sticky; top:0;
+        background:var(--bg); z-index:2; border-bottom:1px solid var(--line); }
+  nav button { border:1px solid var(--line); background:var(--card); padding:7px 12px;
+               border-radius:8px 8px 0 0; border-bottom:none; cursor:pointer; font:inherit; }
+  nav button.on { background:var(--ink); color:#fff; }
+  main { display:grid; grid-template-columns:minmax(0,1fr) 470px; gap:18px; padding:18px 24px 40px; }
+  @media (max-width:1000px) { main { grid-template-columns:1fr; } aside { position:static !important; max-height:none !important; } }
+  section { display:none; } section.on { display:block; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .card h2 { margin:0 0 6px; font-size:16px; }
+  .hint { color:var(--mute); font-size:13px; margin:0 0 10px; }
+  .where { border-left:4px solid var(--ink); background:#f2f2ef; }
+  .where .crumb { font-size:13px; color:var(--mute); margin-bottom:4px; }
+  .where .crumb b { color:var(--ink); }
+  .mermaid { text-align:center; overflow-x:auto; }
+  .mermaid .node, .mermaid .clickable { cursor:pointer; }
+  aside { position:sticky; top:60px; align-self:start; max-height:calc(100vh - 80px); overflow:auto; }
+  aside .card { min-height:200px; }
+  .tag { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
+  .t-pose{background:var(--pose)} .t-plate{background:var(--plate)} .t-ana{background:var(--ana)} .t-new{background:var(--new)} .t-src{background:var(--src)}
+  code, pre { font:12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre { background:#f2f2ef; border:1px solid var(--line); border-radius:8px; padding:10px; overflow-x:auto; white-space:pre; margin:4px 0 0; }
+  .d h3 { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--mute); margin:12px 0 2px; }
+  .d p { margin:2px 0; }
+  .time { display:inline-block; background:#fff6d6; border:1px solid #f0e2a8; border-radius:6px; padding:1px 8px; font-size:13px; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr.file { cursor:pointer; } tr.file:hover { background:#fafaf7; } tr.sel { background:var(--sel); }
+  .warn { border-left:4px solid var(--plate); background:#fff8f0; padding:8px 12px; border-radius:6px; font-size:14px; }
+  .ev { cursor:pointer; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Snatch pipeline: <code>vids/&lt;clip&gt;.MOV</code> → <code>prototype/out/&lt;clip&gt;/</code></h1>
+  <p>Example clip: <code>20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg</code> (10.4 s, 2498 frames at 240 fps). Click any box, file or event: the panel on the right explains it.</p>
+</header>
+<nav>
+  <button data-tab="overview" class="on">1 · Overview</button>
+  <button data-tab="pose">2 · Pose</button>
+  <button data-tab="plate">3 · Plate</button>
+  <button data-tab="analysis">4 · Angles &amp; phases</button>
+  <button data-tab="reps">5 · Rep list (new)</button>
+  <button data-tab="files">6 · Files in out/&lt;clip&gt;/</button>
+</nav>
+<main>
+<div>
+  <section id="overview" class="on">
+    <div class="card">
+      <h2>The whole pipeline</h2>
+      <p class="hint">Times are for the example clip (2498 frames) on this Mac. ① and ② don't depend on each other. ③ and ④ need both. ⑤ (dashed) is new: it is only needed for clips with several reps, and lets ① skip the frames between reps.</p>
+      <pre class="mermaid">
+flowchart TB
+  V["vids/clip.MOV<br/>the phone video"]:::src --> D["Decode video<br/>snatch/video.py<br/>⏱ part of each step"]:::src
+  D --> P["① Find the body<br/>extract_pose.py<br/>⏱ ~15 min (~1 min with saved boxes)"]:::pose
+  D --> T["② Find the plate<br/>track_plate.py<br/>⏱ ~1 min"]:::plate
+  P --> RP[("raw_pose.npz")]:::pose
+  T --> PL[("plate.npz")]:::plate
+  RP --> A["③ Angles, phases v1, pictures<br/>analyze.py<br/>⏱ ~15 s"]:::ana
+  PL --> A
+  RP --> C["④ Phases v2<br/>compare_phases.py<br/>⏱ ~1 s"]:::ana
+  PL --> C
+  PL -.-> RL["⑤ Rep list, for clips with several reps<br/>find_reps.py · rep_sheets.py<br/>⏱ seconds; +4 min/clip if the plate fails<br/>then ① runs on the rep frames only"]:::new
+  classDef new fill:#efe6fb,stroke:#8a4fd1,stroke-dasharray:4 3
+  classDef pose fill:#e6efff,stroke:#2f6fde
+  classDef plate fill:#fdeedd,stroke:#d9822b
+  classDef ana fill:#e3f5ec,stroke:#2e9e6a
+  classDef src fill:#eee,stroke:#999
+  click V call show("video_file")
+  click D call show("decode")
+  click P call show("pose")
+  click RP call show("raw_pose")
+  click T call show("plate")
+  click PL call show("plate_npz")
+  click A call show("analyze")
+  click C call show("compare")
+  click RL call show("reps_step")
+      </pre>
+    </div>
+    <div class="card">
+      <h2>Commands for one clip</h2>
+<pre>cd prototype
+clip=20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg
+uv run python scripts/extract_pose.py   ../vids/$clip.MOV out/$clip      # ①
+uv run python scripts/track_plate.py    ../vids/$clip.MOV out/$clip      # ②  add "ellipse" for ±30° views, "--radius 70:140" for 2026-10-05
+uv run python scripts/analyze.py        ../vids/$clip.MOV out/$clip      # ③
+uv run python scripts/compare_phases.py out/$clip                        # ④</pre>
+    </div>
+  </section>
+
+  <section id="pose">
+    <div class="card where" data-step="pose"></div>
+    <div class="card">
+      <h2>Inside ①: from start to saved file</h2>
+      <p class="hint">The middle part repeats for every frame of the video. Click a box.</p>
+      <pre class="mermaid">
+flowchart TB
+  O["Read the options<br/>(--reps, --every, --name, det.npz)"] --> Rs{"Saved progress<br/>from an earlier run?"}
+  Rs -- yes --> Ld["Load it, continue<br/>from that frame"]
+  Rs -- no --> F
+  Ld --> F["Next frame"]
+  F --> G{"Is this frame<br/>one we want?"}
+  G -- no --> N["Skip it<br/>(stays empty)"]
+  N --> F
+  G -- yes --> Rg{"Long pause since<br/>the last frame we did?"}
+  Rg -- yes --> Fg["Forget who the lifter was"]
+  Rg -- no --> Dq
+  Fg --> Dq{"Boxes given<br/>(det.npz)?"}
+  Dq -- yes --> Ru["Reuse the saved box"]
+  Dq -- no --> Y["Find all people<br/>(YOLOX)"]
+  Y --> L["Choose the lifter"]
+  Ru --> Cr
+  L --> Cr["Draw the box to look in<br/>(box + last body points + 10%)"]
+  Cr --> M["Find 17 body points<br/>(RTMPose)"]
+  M --> Ck{"500 frames since<br/>the last save?"}
+  Ck -- yes --> Sv["Save progress"]
+  Ck -- no --> F
+  Sv --> F
+  F -- "no frames left" --> S[("Save raw_pose.npz<br/>+ run details")]
+  S --> Dp["Delete the progress file"]
+  classDef p fill:#e6efff,stroke:#2f6fde
+  class O,Ld,Y,L,Ru,Cr,M,Sv,S,Dp p
+  click O call show("options")
+  click Rs call show("resume")
+  click Ld call show("resume")
+  click F call show("decode")
+  click G call show("ranges")
+  click N call show("ranges")
+  click Rg call show("restart")
+  click Fg call show("restart")
+  click Dq call show("reuse")
+  click Ru call show("reuse")
+  click Y call show("yolox")
+  click L call show("pick")
+  click Cr call show("trackbox")
+  click M call show("rtmpose")
+  click Ck call show("checkpoint")
+  click Sv call show("checkpoint")
+  click S call show("raw_pose")
+  click Dp call show("resume")
+      </pre>
+    </div>
+  </section>
+
+  <section id="plate">
+    <div class="card where" data-step="plate"></div>
+    <div class="card">
+      <h2>Inside ②: from frames to the plate's centre</h2>
+      <p class="hint">The video is read three times: once to find circles, twice to fit the plate's edge. Click a box.</p>
+      <pre class="mermaid">
+flowchart TB
+  F["All frames"] --> H["1. Find round shapes<br/>in every frame"]
+  H --> R["2. Guess the plate's size"]
+  R --> VT["3. Pick one smooth path<br/>through all frames"]
+  VT --> A["4. Fit the plate's edge<br/>closely (first try)"]
+  A --> B["5. Fit the edge again,<br/>more strictly"]
+  B --> S["6. Centre = bar end<br/>size = metres scale"]
+  S --> ST{"7. Does the result<br/>look sane?"}
+  ST -- yes --> OK["status: ok"]
+  ST -- no --> CK["status: check"]
+  classDef p fill:#fdeedd,stroke:#d9822b
+  class H,R,VT,A,B,S p
+  click F call show("decode")
+  click H call show("hough")
+  click R call show("r0")
+  click VT call show("viterbi")
+  click A call show("outlineA")
+  click B call show("outlineB")
+  click S call show("plate_npz")
+  click ST call show("status")
+  click OK call show("status")
+  click CK call show("status")
+      </pre>
+    </div>
+    <div class="card warn">
+      <b>Why 2026-10-05 failed:</b> the camera was about 1.8× further away, so the plate looks smaller
+      (radius ~96 px). Step 1 only looks for circles of 110–260 px, so it never saw the plate and
+      followed the medicine balls instead. Fix: <code>--radius 70:140</code>. Checked on
+      <code>20261005_2</code> (now ok) and <code>20261001_3</code> (result unchanged).
+    </div>
+  </section>
+
+  <section id="analysis">
+    <div class="card where" data-step="analyze"></div>
+    <div class="card where" data-step="compare"></div>
+    <div class="card">
+      <h2>Inside ③ and ④: from points to phases</h2>
+      <p class="hint">Click a box.</p>
+      <pre class="mermaid">
+flowchart TB
+  RP[("raw_pose.npz")] --> SM["Smooth the body points"]
+  PL[("plate.npz")] --> V2
+  SM --> AN["Work out joint angles"]
+  SM --> V1
+  AN --> V1["③ Phases v1<br/>(follows the wrists)"]
+  AN --> V2["④ Phases v2<br/>(follows the plate)"]
+  V1 --> J1["phases.json<br/>+ angle plot, stills, video"]
+  V2 --> J2["phases_v2.json<br/>+ v1 vs v2 table"]
+  classDef a fill:#e3f5ec,stroke:#2e9e6a
+  class SM,AN,V1,V2,J1,J2 a
+  click RP call show("raw_pose")
+  click PL call show("plate_npz")
+  click SM call show("smooth")
+  click AN call show("angles")
+  click V1 call show("v1")
+  click V2 call show("v2")
+  click J1 call show("analyze_out")
+  click J2 call show("compare")
+      </pre>
+    </div>
+    <div class="card">
+      <h2>One rep: the four moments that are marked</h2>
+      <p class="hint">Click a dot.</p>
+      <svg viewBox="0 0 800 190" style="width:100%;height:190px">
+        <rect x="300" y="18" width="430" height="130" fill="#e3f5ec" opacity=".6"/>
+        <text x="515" y="34" text-anchor="middle" font-size="12" fill="#2e9e6a">bar above the nose = one rep</text>
+        <line x1="20" y1="150" x2="780" y2="150" stroke="#999"/>
+        <path d="M20,140 L110,140 C170,138 200,110 240,95 C255,90 262,96 270,88 C290,60 300,45 330,42 C360,42 380,58 410,64 C440,66 460,60 500,48 L730,46 C760,60 770,120 780,140"
+              fill="none" stroke="#1d1d1f" stroke-width="2.5"/>
+        <text x="25" y="132" font-size="11" fill="#6b6b70">bar height</text>
+        <text x="770" y="168" font-size="11" fill="#6b6b70" text-anchor="end">time →</text>
+        <g class="ev" onclick="show('ev_setup')"><circle cx="110" cy="140" r="8" fill="#2f6fde"/><text x="110" y="172" text-anchor="middle" font-size="13">setup</text></g>
+        <g class="ev" onclick="show('ev_transition')"><circle cx="262" cy="94" r="8" fill="#8a4fd1"/><text x="262" y="172" text-anchor="middle" font-size="13">transition</text></g>
+        <g class="ev" onclick="show('ev_catch')"><circle cx="410" cy="64" r="8" fill="#d9822b"/><text x="410" y="172" text-anchor="middle" font-size="13">catch</text></g>
+        <g class="ev" onclick="show('ev_lockout')"><circle cx="500" cy="48" r="8" fill="#2e9e6a"/><text x="500" y="172" text-anchor="middle" font-size="13">lockout</text></g>
+      </svg>
+    </div>
+  </section>
+
+  <section id="reps">
+    <div class="card where" data-step="reps_step"></div>
+    <div class="card">
+      <h2>Inside ⑤: cutting clips with several reps into reps</h2>
+      <p class="hint">Click a box.</p>
+      <pre class="mermaid">
+flowchart TB
+  PL[("plate.npz")] --> Q{"Is the plate<br/>track ok?"}
+  Q -- yes --> H["Find lifts from<br/>the plate's height"]
+  Q -- no --> SP["Quick body pass<br/>(every 8th frame)"]
+  SP --> W["Find lifts from<br/>the wrists' height"]
+  H --> CSV["Proposed rep list<br/>out/reps_proposed.csv"]
+  W --> CSV
+  CSV --> SH["Pictures of each rep<br/>to check by eye"]
+  SH --> R["Checked rep list<br/>docs/reps.csv"]
+  R --> EP["① again, but only<br/>on the rep frames"]
+  classDef n fill:#efe6fb,stroke:#8a4fd1
+  class Q,H,SP,W,CSV,SH,R,EP n
+  click PL call show("plate_npz")
+  click Q call show("status")
+  click H call show("lifts_plate")
+  click SP call show("sparse")
+  click W call show("lifts_pose")
+  click CSV call show("reps_step")
+  click SH call show("rep_sheets")
+  click R call show("reps_csv")
+  click EP call show("ranges")
+      </pre>
+    </div>
+  </section>
+
+  <section id="files">
+    <div class="card">
+      <h2>Files in <code>prototype/out/20261001_3_…_0deg/</code></h2>
+      <p class="hint">Click a row.</p>
+      <table>
+        <thead><tr><th>File</th><th>Made by</th><th>What it is</th></tr></thead>
+        <tbody>
+          <tr class="file" data-k="raw_pose"><td><code>raw_pose.npz</code></td><td>① extract_pose.py</td><td>17 body points for every frame</td></tr>
+          <tr class="file" data-k="plate_npz"><td><code>plate.npz</code>, <code>plate.csv</code></td><td>② track_plate.py</td><td>plate centre and size for every frame</td></tr>
+          <tr class="file" data-k="plate_check"><td><code>plate_check.jpg</code></td><td>② track_plate.py</td><td>close-ups of the found plate edge</td></tr>
+          <tr class="file" data-k="bar_path"><td><code>bar_path.png</code></td><td>② track_plate.py</td><td>path of the bar end</td></tr>
+          <tr class="file" data-k="analyze_out"><td><code>angles.csv</code>, <code>angles.png</code></td><td>③ analyze.py</td><td>joint angles for every frame</td></tr>
+          <tr class="file" data-k="v1"><td><code>phases.json</code></td><td>③ analyze.py</td><td>phase frames, v1</td></tr>
+          <tr class="file" data-k="analyze_out"><td><code>phase_sheet.jpg</code>, <code>grabs/</code></td><td>③ analyze.py</td><td>stills at the phase frames</td></tr>
+          <tr class="file" data-k="analyze_out"><td><code>overlay.mp4</code></td><td>③ analyze.py</td><td>video with skeleton drawn on (not in git)</td></tr>
+          <tr class="file" data-k="compare"><td><code>phases_v2.json</code>, <code>phases_v1_v2.md</code></td><td>④ compare_phases.py</td><td>phase frames, v2; v1 vs v2</td></tr>
+          <tr class="file" data-k="ranges"><td><code>raw_pose_reps.npz</code></td><td>① with <code>--reps</code></td><td>body points on rep frames only (one-off test)</td></tr>
+          <tr class="file" data-k="rep_check"><td><code>rep_pose_check.md</code></td><td>compare_rep_pose.py</td><td>result of that test</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2>Other scripts (they write elsewhere)</h2>
+      <table>
+        <tr><td><code>measure_hold.py</code></td><td><code>out/&lt;clip&gt;/hold.json</code>: how steady a held bar is (standup clip only)</td></tr>
+        <tr><td><code>review_phases.py</code></td><td><code>out/review13/</code>: sheets for checking phases by eye</td></tr>
+        <tr><td><code>fps_estimate.py</code></td><td><code>out/fps_estimate.*</code>: would a lower frame rate be enough?</td></tr>
+        <tr><td><code>find_reps.py</code>, <code>rep_sheets.py</code></td><td><code>out/reps_proposed.csv</code>, <code>out/reps_check/</code>: tab 5</td></tr>
+        <tr><td><code>build_ladder.py</code></td><td><code>vids/ladder/</code>: copies of the videos at 120/60/30 fps</td></tr>
+      </table>
+    </div>
+  </section>
+</div>
+
+<aside><div class="card" id="detail"></div></aside>
+</main>
+
+<script>
+// Every description: what / in / how (pseudocode) / out / time. Plain English.
+const D = {
+  video_file: { t:"The phone video", tag:"src",
+    what:"The original recording from the iPhone. It is never changed.",
+    in:"Nothing: this is where everything starts.",
+    how:`iPhone slow-motion, 240 pictures (frames) per second
+1080 × 1920 pixels, stored lying on its side
+with a note saying "turn me upright"`,
+    out:"<code>vids/&lt;clip&gt;.MOV</code>",
+    time:"—" },
+  decode: { t:"Decode the video (snatch/video.py)", tag:"src",
+    what:"Turns the compressed video into one picture per frame, the right way up, so the other steps can look at them.",
+    in:"<code>vids/&lt;clip&gt;.MOV</code>",
+    how:`ask ffmpeg to unpack the video
+turn every picture upright
+keep every frame, never drop or repeat one
+hand the pictures out one at a time`,
+    out:"Upright pictures, numbered 0, 1, 2 … (frame 100 means the same moment in every output file).",
+    time:"Not a separate step: it runs inside ①, ② and ③ (a few seconds per pass)." },
+  pose: { t:"① Find the body (extract_pose.py)", tag:"pose",
+    what:"For every frame, finds where the lifter's joints are: 17 points like shoulders, hips, knees and wrists.",
+    in:"<code>vids/&lt;clip&gt;.MOV</code>. Optional: <code>--reps docs/reps.csv</code> (only rep frames) or <code>--every 8</code> (every 8th frame). Optional: an earlier <code>raw_pose.npz</code> to reuse its boxes.",
+    how:`read options (--reps / --every / --name / det.npz)
+if a progress file exists: load it, continue from there
+
+for each frame
+    if frame is not wanted (outside ranges / off the grid)   skip
+    if long gap since the last frame we did                  forget the lifter
+    find all people (or reuse boxes from det.npz)
+    choose the lifter: box overlapping last frame's box,
+                       else the biggest
+    crop = lifter box + last frame's body points + 10%
+    find 17 body points in the crop
+    every 500 frames: save progress
+
+save points + run details (and frame_ranges)
+delete the progress file`,
+    out:"<code>raw_pose.npz</code>",
+    time:"The slow step. Measured per frame: finding people (YOLOX) ~330 ms, body points (RTMPose) ~16 ms, decoding ~3 ms. So ~350 ms per frame: example clip (2498 frames) ~15 min, 3-rep clip (~4900 frames) ~28 min. With boxes reused from an earlier run (<code>det.npz</code>) only ~20 ms per frame: ~1–2 min. <code>--every 8</code> does 1/8 of the frames: ~2–4 min." },
+  options: { t:"Read the options", tag:"pose",
+    what:"Decides what this run does: which video, where to write, which frames, and which file name.",
+    in:"The command line: video, output folder, and optional <code>--reps</code>, <code>--every N</code>, <code>--name</code>, <code>det.npz</code>.",
+    how:`--reps file   → frames = the rep ranges of this clip
+--every N     → frames = every Nth frame
+neither       → every frame
+--name        → output file name (default raw_pose)
+3rd argument  → reuse the boxes saved in that file`,
+    out:"The list of frames to do, and the settings for the run.", time:"Instant." },
+  resume: { t:"Saved progress: load it, delete it", tag:"pose",
+    what:"A long run can be stopped (crash, sleep) and started again with the same command. It carries on instead of starting over.",
+    in:"<code>raw_pose_partial.npz</code> in the output folder, if it exists.",
+    how:`if the progress file exists
+    load the points found so far
+    continue from the frame where it stopped
+when the run finishes
+    delete the progress file`,
+    out:"The run continues from the saved frame. After a finished run no progress file is left.", time:"Instant." },
+  reuse: { t:"Reuse saved boxes (det.npz)", tag:"pose",
+    what:"Finding the people is the slow part. If a boxes file from an earlier run is given, it is used instead, and only the body-point model runs.",
+    in:"An earlier <code>raw_pose.npz</code> as the third argument.",
+    how:`if boxes were given
+    take this frame's lifter box from the file
+    (no box for this frame: none)
+else
+    find all people and choose the lifter`,
+    out:"The lifter's box for the frame.", time:"Saves ~330 ms per frame: the whole run drops from ~15 min to ~1–2 min." },
+  checkpoint: { t:"Save progress", tag:"pose",
+    what:"Every 500 frames, saves everything found so far, so a crash does not lose the whole run.",
+    in:"The results so far.",
+    how:`when the frame number is a multiple of 500
+    write them to a temporary file
+    rename it to raw_pose_partial.npz
+    (so a half-written file is never used)`,
+    out:"<code>raw_pose_partial.npz</code>. Counted in clip frames, so a sparse run saves less often.", time:"Under a second." },
+  raw_pose: { t:"raw_pose.npz", tag:"pose",
+    what:"The output of ①: where each body point is in every frame, and how sure the model is.",
+    in:"Made by ①.",
+    how:`for every frame:
+    17 points, each with x, y in pixels
+    17 confidence values, 0 (guess) to 1 (sure)
+    the box that was used around the lifter
+    how many people were in the picture
+once per clip: fps, size, rotation, model name,
+    run time (seconds), machine, frame_ranges`,
+    out:"Read by ③, ④ and tab 5. Frames that were skipped are left empty.",
+    time:"—" },
+  ranges: { t:"Only some frames (--reps / --every)", tag:"new",
+    what:"Lets ① skip frames nobody needs, e.g. the walking around between reps.",
+    in:"<code>--reps docs/reps.csv</code>: the start and end frame of each rep. <code>--every 8</code>: every 8th frame.",
+    how:`if frame is inside a rep (or is every 8th)
+    process it
+else
+    skip it, leave it empty`,
+    out:"The same file layout as a full run, so later steps don't need to change.",
+    time:"Saves time in proportion: a 20 s clip with 3 × 4 s reps takes ~60% of the full time. Tested on the example clip: the result is the same as a full run (after the first 0.15 s of each rep)." },
+  restart: { t:"Forget who the lifter was", tag:"pose",
+    what:"After a long pause between processed frames, the last known position is too old to trust, so the lifter is chosen again from scratch.",
+    in:"The number of the last frame that was processed.",
+    how:`if more frames were skipped than allowed
+    forget the previous box and body points
+    (the next frame picks the biggest person)`,
+    out:"A fresh start for the next frame.",
+    time:"None." },
+  yolox: { t:"Find all people (YOLOX)", tag:"pose",
+    what:"A ready-made AI model that draws a box around every person in the picture.",
+    in:"One upright picture.",
+    how:`look at the whole picture
+return one box per person`,
+    out:"A list of boxes (one per person).",
+    time:"The most expensive operation: ~330 ms per frame, about 95% of ①'s time (runs on the CPU)." },
+  pick: { t:"Choose the lifter", tag:"pose",
+    what:"When there are several people, picks the one who is lifting.",
+    in:"The boxes from YOLOX and the lifter's box from the previous frame.",
+    how:`if a box overlaps last frame's lifter box
+    take the one that overlaps most
+else
+    take the biggest box`,
+    out:"One box: the lifter.",
+    time:"Instant." },
+  trackbox: { t:"Draw the box to look in", tag:"pose",
+    what:"Makes sure the whole body is inside the box, including legs hidden behind the plate.",
+    in:"The lifter's box and last frame's body points.",
+    how:`start with the lifter's box
+grow it to include last frame's body points
+add 10% margin`,
+    out:"The area of the picture the body-point model will look at.",
+    time:"Instant." },
+  rtmpose: { t:"Find 17 body points (RTMPose)", tag:"pose",
+    what:"A ready-made AI model that finds joints inside the box.",
+    in:"The picture and the box.",
+    how:`cut the box out of the picture
+resize it to 288 × 384
+find nose, eyes, ears, shoulders, elbows,
+     wrists, hips, knees, ankles`,
+    out:"17 points with x, y and a confidence value.",
+    time:"Fast: ~16 ms per frame (runs on the Mac's GPU)." },
+  plate: { t:"② Find the plate (track_plate.py)", tag:"plate",
+    what:"Follows the near weight plate through the video. Its centre is the end of the bar, and its known size (45 cm) turns pixels into metres.",
+    in:"<code>vids/&lt;clip&gt;.MOV</code>. Options: <code>ellipse</code> for camera at ±30°; <code>--radius 70:140</code> for a camera further away (2026-10-05).",
+    how:`find round shapes in every frame
+choose the one smooth path that is the plate
+fit the plate's edge exactly, twice
+centre of the edge = bar end
+check the result looks sane → ok / check`,
+    out:"<code>plate.npz</code>, <code>plate.csv</code>, <code>plate_check.jpg</code>, <code>bar_path.png</code>",
+    time:"~50 s for the example clip, ~2 min for a 3-rep clip." },
+  plate_npz: { t:"plate.npz / plate.csv", tag:"plate",
+    what:"The output of ②: where the plate is in every frame.",
+    in:"Made by ②.",
+    how:`for every frame:
+    found or not
+    centre x, y in pixels (= bar end)
+    size of the plate's edge
+    pixels per metre
+once per clip: status "ok" or "check: why"`,
+    out:"Read by ③, ④ and tab 5 (only trusted when status is ok).",
+    time:"—" },
+  plate_check: { t:"plate_check.jpg", tag:"plate",
+    what:"Close-ups of the plate at ~18 moments, with the found edge drawn on. Green = edge fitted, yellow = only roughly found.",
+    in:"Made by ②.", how:`pick ~18 frames spread over the clip
+crop around the found centre
+draw the edge and centre`,
+    out:"A picture to check by eye that ② followed the plate and not something else.", time:"—" },
+  bar_path: { t:"bar_path.png", tag:"plate",
+    what:"Left: the path of the bar end drawn over the video. Right: its height and side position over time. Each rep shows as a hump.",
+    in:"Made by ②.", how:`draw centre positions coloured by time
+plot height and sideways position against time`,
+    out:"A picture to check by eye.", time:"—" },
+  hough: { t:"1. Find round shapes", tag:"plate",
+    what:"Looks for anything circle-shaped of about the plate's size in every frame.",
+    in:"Every frame, shrunk to half size to be quick.",
+    how:`for each frame
+    find up to 8 circles with radius between r_min and r_max
+    for each circle: how dark is the inside?
+    (bumper plates are black, balls and logos usually aren't)`,
+    out:"A short list of possible plates per frame.",
+    time:"About a third of ②'s time.<br><b>Note:</b> if the plate is smaller than r_min, it is never on the list. That is what happened on 2026-10-05." },
+  r0: { t:"2. Guess the plate's size", tag:"plate",
+    what:"Works out the usual size of the plate in this clip, so circles of a different size can be ignored.",
+    in:"All the circle lists from step 1.",
+    how:`for each frame take the best dark circle
+plate size = the middle value of all of them`,
+    out:"One radius, r0. Later steps only accept circles within ±15% of it.",
+    time:"Instant." },
+  viterbi: { t:"3. Pick one smooth path", tag:"plate",
+    what:"Out of all the circles in all frames, picks the one chain that moves like a real plate: smoothly, never jumping.",
+    in:"Circle lists and r0.",
+    how:`try every way of linking circles frame to frame
+penalties:
+    wrong size, too bright, low on the list
+    big moves between frames
+    (a move of more than 30 px per frame is not allowed)
+    "not found" in a frame costs a little
+keep the chain with the lowest total penalty`,
+    out:"For every frame: which circle is the plate, or none.",
+    time:"A few seconds." },
+  outlineA: { t:"4. Fit the plate's edge (first try)", tag:"plate",
+    what:"The circle from step 3 is rough. This finds the real edge of the plate at full size.",
+    in:"The chosen circle in each frame, the full-size picture.",
+    how:`look outwards from the centre in many directions
+find where it turns from dark plate to background
+fit a circle (or an ellipse) through those points
+ignoring points that don't fit
+size must stay within 6% of step 3`,
+    out:"An exact edge and centre per frame.",
+    time:"About a third of ②'s time." },
+  outlineB: { t:"5. Fit the edge again, more strictly", tag:"plate",
+    what:"A plate has a front face and a thicker rim, which look like two circles of nearly the same size. This second pass stops the fit flipping between them.",
+    in:"The edges from step 4.",
+    how:`smooth the plate size over time
+fit the edge again, size within 2.5% of that`,
+    out:"The final edge and centre per frame.",
+    time:"About a third of ②'s time." },
+  status: { t:"7. Does the result look sane?", tag:"plate",
+    what:"Checks the plate track before anything trusts it.",
+    in:"The final track.",
+    how:`if plate found in fewer than 90% of frames  → check
+if the bar moved up less than 40 cm         → check
+if the centre jumps (plates can't teleport)  → check
+otherwise                                    → ok`,
+    out:"<code>ok</code> or <code>check: …why</code>, stored in plate.npz. Phases v2 and tab 5 use the plate only if ok.",
+    time:"Instant." },
+  analyze: { t:"③ Angles, phases v1, pictures (analyze.py)", tag:"ana",
+    what:"Turns the body points into joint angles, finds the phases of each rep (v1, using the wrists), and makes pictures and a video to check the result.",
+    in:"<code>raw_pose.npz</code>; <code>plate.npz</code> if present (to draw the bar); the video (for the stills).",
+    how:`smooth the body points
+work out hip, knee, elbow and trunk angles
+find each rep and its phases (v1)
+save angles, phases and pictures
+draw skeleton and bar on the video`,
+    out:"<code>angles.csv</code>, <code>angles.png</code>, <code>phases.json</code>, <code>phase_sheet.jpg</code>, <code>grabs/</code>, <code>overlay.mp4</code>",
+    time:"~15 s (mostly making the video)." },
+  analyze_out: { t:"Outputs of ③", tag:"ana",
+    what:"What analyze.py writes.",
+    in:"Made by ③.",
+    how:`angles.csv       angle of each joint in every frame
+angles.png       the angles plotted, phases marked
+phases.json      frame of each phase, per rep (v1)
+phase_sheet.jpg  one still per phase
+grabs/           the same stills, full size
+overlay.mp4      the video with skeleton drawn on`,
+    out:"Files to read and check by eye.", time:"—" },
+  compare: { t:"④ Phases v2 (compare_phases.py)", tag:"ana",
+    what:"Finds the phases again with the plate instead of the wrists (v2, the final method), and lists how far v1 and v2 differ.",
+    in:"<code>raw_pose.npz</code>, <code>plate.npz</code> (status must be ok).",
+    how:`smooth the body points
+find phases with the plate height (v2)
+find phases with the wrist height (v1)
+write v2, and a table of the differences`,
+    out:"<code>phases_v2.json</code>, <code>phases_v1_v2.md</code>",
+    time:"~1 s." },
+  smooth: { t:"Smooth the body points", tag:"ana",
+    what:"The model's points shake slightly from frame to frame. This removes the shake but keeps real movement.",
+    in:"The body points from <code>raw_pose.npz</code>.",
+    how:`fill short gaps by drawing a line across them
+for every point, x and y:
+    replace each value by a smooth curve
+    fitted over 0.1 s around it (25 frames)`,
+    out:"Smoothed body points.", time:"Instant." },
+  angles: { t:"Work out joint angles", tag:"ana",
+    what:"Angles at the joints on the lifter's right side (the camera side).",
+    in:"Smoothed body points.",
+    how:`hip   = angle shoulder – hip – knee
+knee  = angle hip – knee – ankle
+elbow = angle shoulder – elbow – wrist
+trunk = lean of hip→shoulder from upright`,
+    out:"Four angles per frame.", time:"Instant." },
+  v1: { t:"Phases v1 (follows the wrists)", tag:"ana",
+    what:"Finds each rep and marks four moments in it: setup, transition, catch, lockout. Uses the wrists as the bar's height.",
+    in:"Smoothed body points and angles.",
+    how:`a rep = wrists above the nose for long enough
+for each rep:
+    setup      = when the bar starts to rise
+    transition = the small knee re-bend in the pull
+    catch      = lowest hip under the bar
+    lockout    = legs straight and staying straight`,
+    out:"<code>phases.json</code>. Click the dots on the rep picture below for each moment.",
+    time:"Instant." },
+  v2: { t:"Phases v2 (follows the plate)", tag:"ana",
+    what:"The same as v1, but the bar's height comes from the plate, not the wrists. From the side the hands are hidden behind the plate, so the wrists are the least reliable points. v2 is the final method (accepted after review in #13).",
+    in:"Smoothed body points, angles, and the plate centre (needs plate status ok).",
+    how:`same rules as v1
+with "wrist height" replaced by "plate centre height"`,
+    out:"<code>phases_v2.json</code>.", time:"Instant." },
+  ev_setup: { t:"setup (the bar leaves the floor)", tag:"ana",
+    what:"The start of the lift.", in:"Bar height.",
+    how:`find a moment mid-pull (bar still below the hips)
+go back in time while the bar is still rising
+the first frame of that rise = setup`,
+    out:"One frame number.", time:"—" },
+  ev_transition: { t:"transition (knee re-bend)", tag:"ana",
+    what:"In a good pull the knees straighten, bend slightly again as the bar passes them, then straighten fully. This is the moment of that slight bend.",
+    in:"Knee angle, bar height.",
+    how:`after the bar passes the knees,
+before the legs are fully straight:
+    find the deepest dip in the knee angle
+    (must be at least a few degrees)
+none if there is no dip`,
+    out:"One frame number, or none.", time:"—" },
+  ev_catch: { t:"catch (lowest point under the bar)", tag:"ana",
+    what:"The lifter drops under the bar and catches it overhead.", in:"Hip height.",
+    how:`between full leg straightening and
+the end of the rep:
+    the frame where the hip is lowest`,
+    out:"One frame number.", time:"—" },
+  ev_lockout: { t:"lockout (standing with the bar)", tag:"ana",
+    what:"The lifter has stood up with the bar overhead.", in:"Knee angle.",
+    how:`after the catch:
+    the first frame where the knee is
+    (almost) as straight as it gets for the rest of the rep`,
+    out:"One frame number.", time:"—" },
+  reps_step: { t:"⑤ Rep list (find_reps.py, rep_sheets.py)", tag:"new",
+    what:"Clips from 2026-10-05 have 2–3 reps each. Instead of cutting the video files, this writes down where each rep starts and ends. The original videos are kept as they are.",
+    in:"<code>plate.npz</code> where the plate track is ok; otherwise a quick body pass (<code>raw_pose_sparse.npz</code>).",
+    how:`for each clip
+    if plate ok: find lifts from the plate's height
+    else:        find lifts from the wrists' height
+    add a margin before and after each lift
+    compare the number found with the number in the file name
+write the proposed list and a check picture per clip`,
+    out:"<code>out/reps_proposed.csv</code>, <code>out/reps_check/</code>. A person checks it and copies it into <code>docs/reps.csv</code>; the script never writes there.",
+    time:"find_reps: a few seconds for all clips. Quick body pass if needed: ~4 min per clip. rep_sheets: ~20 s per clip." },
+  lifts_plate: { t:"Find lifts from the plate's height", tag:"new",
+    what:"Uses the plate's height above the floor to see when the bar is lifted.",
+    in:"<code>plate.npz</code> (status ok).",
+    how:`floor = the plate's usual resting height
+a lift = plate higher than 10 cm above the floor,
+         reaching at least 60 cm
+join two lifts less than 0.25 s apart (a bounce)
+margin: 1 s before and after`,
+    out:"Start and end frame of each lift.", time:"Instant." },
+  sparse: { t:"Quick body pass (every 8th frame)", tag:"new",
+    what:"When the plate can't be trusted, the reps are found from the body. Doing every 8th frame is enough for that and is 8 times faster.",
+    in:"The video.",
+    how:`run ① on every 8th frame only
+(keep following the same person between them)`,
+    out:"<code>raw_pose_sparse.npz</code>",
+    time:"~3.5–5 min per clip." },
+  lifts_pose: { t:"Find lifts from the wrists' height", tag:"new",
+    what:"Uses the wrists as the bar when the plate is not available.",
+    in:"<code>raw_pose_sparse.npz</code>.",
+    how:`a lift = wrists go above the chest
+start = last moment before, with wrists below the knees
+end   = first moment after, with wrists below the hips
+margin: 1.5 s before, 2 s after (less exact than the plate)
+if no lift found: look for holds (wrists above mid-thigh)`,
+    out:"Start and end frame of each lift.", time:"Instant." },
+  rep_sheets: { t:"Pictures of each rep", tag:"new",
+    what:"One strip of 8 stills per rep, to check by eye that the start and end are right.",
+    in:"<code>out/reps_proposed.csv</code> (or <code>docs/reps.csv</code>), the video.",
+    how:`for each rep take frames at:
+    margin start, lift start, 4 points inside,
+    lift end, margin end
+put them side by side with the frame number`,
+    out:"<code>out/reps_check/&lt;clip&gt;_rep&lt;k&gt;.jpg</code>", time:"~20 s per clip." },
+  reps_csv: { t:"Checked rep list (docs/reps.csv)", tag:"new",
+    what:"The list of reps a person has checked. This is what later steps use.",
+    in:"A copy of the proposed list, corrected by hand.",
+    how:`one row per rep:
+    clip, rep number
+    start and end frame of the lift
+    start and end frame with margin
+    where it was found (plate / wrists)
+    power or squat, made or missed, why missed
+    checked yes/no, notes`,
+    out:"Read by ① with <code>--reps</code>.", time:"Checking by hand: a minute or two per clip." },
+  rep_check: { t:"rep_pose_check.md", tag:"new",
+    what:"A one-off test: does running ① only on the rep frames give the same answer as running it on the whole clip?",
+    in:"<code>raw_pose.npz</code> (whole clip) and <code>raw_pose_reps.npz</code> (rep frames only).",
+    how:`compare every body point, frame by frame
+compare the phases found from each`,
+    out:"Result: identical after the first 0.15 s of the rep; all phases the same.", time:"~1 s." },
+};
+// summary card at the top of each tab = the overview item it zooms into
+const TABSTEP = { pose:"pose", plate:"plate", analyze:"analyze", compare:"compare", reps_step:"reps_step" };
+const TAGS = {pose:"t-pose", plate:"t-plate", ana:"t-ana", new:"t-new", src:"t-src"};
+const LABEL = { pose:"① Find the body", plate:"② Find the plate", analyze:"③ Angles, phases v1, pictures",
+                compare:"④ Phases v2", reps_step:"⑤ Rep list (dashed box)" };
+
+function body(d) {
+  return `<div class="d">
+    <p>${d.what}</p>
+    <h3>Input</h3><p>${d.in}</p>
+    <h3>What it does</h3><pre>${d.how}</pre>
+    <h3>Output</h3><p>${d.out}</p>
+    <h3>Time</h3><p><span class="time">⏱ ${d.time}</span></p></div>`;
+}
+function show(k) {
+  const d = D[k]; if (!d) return;
+  document.getElementById("detail").innerHTML =
+    `<h2><span class="tag ${TAGS[d.tag]}"></span>${d.t}</h2>${body(d)}`;
+  document.querySelectorAll("tr.file").forEach(r => r.classList.toggle("sel", r.dataset.k === k));
+}
+window.show = show;
+document.querySelectorAll(".where").forEach(el => {
+  const k = el.dataset.step, d = D[k];
+  el.innerHTML = `<div class="crumb">Overview → <b>${LABEL[k]}</b></div>
+    <h2><span class="tag ${TAGS[d.tag]}"></span>${d.t}</h2>${body(d)}`;
+});
+document.querySelectorAll("tr.file").forEach(r => r.onclick = () => show(r.dataset.k));
+
+mermaid.initialize({ startOnLoad:false, securityLevel:"loose", theme:"neutral",
+                     flowchart:{ curve:"basis", htmlLabels:true } });
+const rendered = new Set();
+async function render(id) {
+  if (rendered.has(id)) return;
+  rendered.add(id);
+  await mermaid.run({ nodes: document.querySelectorAll(`#${id} .mermaid`) });
+}
+const FIRST = { overview:"pose", pose:"pose", plate:"plate", analysis:"analyze", reps:"reps_step", files:"raw_pose" };
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("section").forEach(s => s.classList.toggle("on", s.id === b.dataset.tab));
+  render(b.dataset.tab);
+  show(FIRST[b.dataset.tab]);
+});
+render("overview");
+show("pose");
+</script>
+</body>
+</html>

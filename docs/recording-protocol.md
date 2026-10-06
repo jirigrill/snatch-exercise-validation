@@ -24,7 +24,7 @@ Don't chase misses: lift normally at heavy loads and take the misses that come. 
 4. Phone **level**: use the camera's level indicator. A 1° tilt shifts the bar by about 1.7 cm per metre of rise (marker doc N4).
 5. Frame: the whole lifter and the near plate stay in frame from setup to lockout, with headroom above the bar at full lockout and floor below the feet.
 6. Near side: the **outermost large plate must be a 450 mm bumper** (scale assumption in `plate.npz`). Change plates go inside the bumpers. Collars should be a plain colour.
-7. Lighting: steady. Avoid a skylight or window behind the lifter, which caused the exposure shift in 20261001_7_jiri_v2_powersnatch_5kg_2rep_success_-30deg. Keep the background uncluttered and no one else in frame.
+7. Lighting: steady. Avoid a skylight or window behind the lifter, which caused the exposure shift in 20261001_7_jiri_v2_powersnatch_5kg_2rep_success_-30deg. Keep the background uncluttered and no one else in frame. **Plate size and background**: keep the camera at about 4 m. On 2026-10-05 it was further away, the plate looked smaller (radius ~96 px, default search 110–260 px), and the tracker followed the medicine balls on the shelf behind it; it passed on `20261005_2` once run with `--radius 70:140`. Round objects behind the plate still make tracking harder, so avoid them. Reps of that session were found from pose instead (`docs/reps.csv`, column `source`).
 8. Don't move the tripod during a session. If it gets bumped, re-level it and log a note.
 
 ## Positioning the camera (5 m tape, no protractor)

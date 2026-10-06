@@ -1,0 +1,37 @@
+clip,rep,start_frame,end_frame,pose_start,pose_end,fps,peak_m,source,variant,outcome,fail_cause,checked,notes
+20261001_1_jiri_v1_powersnatch_bar_1rep_success_0deg,1,1488,2304,1248,2544,240,,phases.json v1 setup..overhead_end (no plate),power,made,,no,
+20261001_2_jiri_v1_standup_5kg_1rep_success_0deg,1,951,2142,711,2382,240,0.68,plate hub,hold,made,,no,
+20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg,1,801,1891,561,2131,240,1.67,plate hub,power,made,,no,
+20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg,1,978,2103,738,2343,240,1.69,plate hub,power,made,,no,
+20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg,1,948,2003,708,2243,240,1.69,plate hub,power,made,,no,
+20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg,2,2478,3514,2238,3754,240,1.69,plate hub,power,made,,no,
+20261001_6_jiri_v1_powersnatch_5kg_1rep_success_-30deg,1,1072,1881,712,2361,240,,"pose, wrists above chest (sparse frames)",power,made,,no,"plate check: 42 jumps (frames 37, 47, 94, 103,"
+20261001_7_jiri_v2_powersnatch_5kg_2rep_success_-30deg,1,1048,1809,688,2289,240,,"pose, wrists above chest (sparse frames)",power,made,,no,"plate check: 119 jumps (frames 3, 117, 118, 15"
+20261001_7_jiri_v2_powersnatch_5kg_2rep_success_-30deg,2,2552,3377,2192,3857,240,,"pose, wrists above chest (sparse frames)",power,made,,no,"plate check: 119 jumps (frames 3, 117, 118, 15"
+20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg,1,867,1927,627,2167,240,1.67,plate hub,power,made,,no,
+20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg,2,2365,3474,2125,3714,240,1.66,plate hub,power,made,,no,
+20261005_1_jiri_v2_standup_squatsnatch_2rep_success_0deg,1,328,473,292,521,24,,"pose, wrists above chest (sparse frames)",squat+hold,made,,no,plate check: found in only 50% of frames; hub 
+20261005_1_jiri_v2_standup_squatsnatch_2rep_success_0deg,2,614,731,578,779,24,,"pose, wrists above chest (sparse frames)",squat+hold,made,,no,plate check: found in only 50% of frames; hub 
+20261005_2_jiri_v2_powersnatch_5kg_3rep_success_0deg,1,960,1577,600,2057,240,,"pose, wrists above chest (sparse frames)",power,made,,no,plate check: found in only 88% of frames; 111 
+20261005_2_jiri_v2_powersnatch_5kg_3rep_success_0deg,2,2304,3009,1944,3489,240,,"pose, wrists above chest (sparse frames)",power,made,,no,plate check: found in only 88% of frames; 111 
+20261005_2_jiri_v2_powersnatch_5kg_3rep_success_0deg,3,3752,4553,3392,4943,240,,"pose, wrists above chest (sparse frames)",power,made,,no,plate check: found in only 88% of frames; 111 
+20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg,1,720,1449,360,1929,240,,"pose, wrists above chest (sparse frames)",power,made,,no,"plate check: 133 jumps (frames 507, 516, 707, "
+20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg,2,2216,2985,1856,3465,240,,"pose, wrists above chest (sparse frames)",power,made,,no,"plate check: 133 jumps (frames 507, 516, 707, "
+20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg,3,3600,4361,3240,4841,240,,"pose, wrists above chest (sparse frames)",power,made,,no,"plate check: 133 jumps (frames 507, 516, 707, "
+20261005_4_jiri_v2_squatsnatch_5kg_3rep_success_0deg,1,856,1681,496,2161,240,,"pose, wrists above chest (sparse frames)",squat,made,,no,plate check: found in only 88% of frames; 162 
+20261005_4_jiri_v2_squatsnatch_5kg_3rep_success_0deg,2,2456,3353,2096,3833,240,,"pose, wrists above chest (sparse frames)",squat,made,,no,plate check: found in only 88% of frames; 162 
+20261005_4_jiri_v2_squatsnatch_5kg_3rep_success_0deg,3,3976,4897,3616,5314,240,,"pose, wrists above chest (sparse frames)",squat,made,,no,plate check: found in only 88% of frames; 162 
+20261005_5_jiri_v2_squatsnatch_5kg_3rep_success_0deg,1,840,1585,480,2065,240,,"pose, wrists above chest (sparse frames)",squat,made,,no,plate check: found in only 89% of frames; 185 
+20261005_5_jiri_v2_squatsnatch_5kg_3rep_success_0deg,2,2496,3305,2136,3785,240,,"pose, wrists above chest (sparse frames)",squat,made,,no,plate check: found in only 89% of frames; 185 
+20261005_5_jiri_v2_squatsnatch_5kg_3rep_success_0deg,3,4016,4953,3656,5433,240,,"pose, wrists above chest (sparse frames)",squat,made,,no,plate check: found in only 89% of frames; 185 
+20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg,1,1064,2073,704,2553,240,,"pose, wrists above mid-thigh (no overhead phase; sparse frames)",power,made,,no,"found 2 lifts, name says 3"
+20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg,2,2856,3473,2496,3953,240,,"pose, wrists above mid-thigh (no overhead phase; sparse frames)",power,made,,no,"found 2 lifts, name says 3"
+20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg,1,1160,1401,800,1881,240,,"pose, wrists above chest (sparse frames)",power,missed,faraway,no,
+20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg,2,2704,2977,2344,3457,240,,"pose, wrists above chest (sparse frames)",power,missed,faraway,no,
+20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg,3,4056,4281,3696,4761,240,,"pose, wrists above chest (sparse frames)",power,missed,faraway,no,
+20261005_8_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg,1,896,1569,536,2049,240,,"pose, wrists above chest (sparse frames)",power,missed,faraway,no,
+20261005_8_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg,2,2440,3137,2080,3617,240,,"pose, wrists above chest (sparse frames)",power,missed,faraway,no,
+20261005_8_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg,3,3840,4505,3480,4985,240,,"pose, wrists above chest (sparse frames)",power,missed,faraway,no,
+20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg,1,976,1633,616,2113,240,,"pose, wrists above chest (sparse frames)",power,missed,not_fast_under,no,
+20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg,2,2624,3361,2264,3841,240,,"pose, wrists above chest (sparse frames)",power,missed,not_fast_under,no,
+20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg,3,4496,5169,4136,5632,240,,"pose, wrists above chest (sparse frames)",power,missed,not_fast_under,no,

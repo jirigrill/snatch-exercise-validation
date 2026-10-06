@@ -1,13 +1,26 @@
 """Decode a clip (rotation applied) and save raw RTMPose-x output to .npz.
 
 usage: uv run python scripts/extract_pose.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg [det.npz]
+       [--reps ../docs/reps.csv | --every N] [--name raw_pose]
 
 Partial progress is saved to raw_pose_partial.npz every 500 frames; rerunning
 the same command resumes from it.
 
 With det.npz (an earlier raw_pose.npz), its saved lifter boxes are reused and
 only the pose model runs (the CPU-bound detector takes ~0.4-0.7 s/frame).
+
+With --reps, only the clip's pose_start:pose_end ranges from reps.csv are
+posed (each rep plus padding; rests between reps are skipped). Arrays stay
+indexed by clip frame, NaN outside the ranges; the ranges are saved as
+frame_ranges.
+
+With --every N, only every Nth frame is posed, following the lifter's box
+from sample to sample (a quick pass to find reps where the plate track
+fails; snatch.reps). --name sets the
+output file (<name>.npz, default raw_pose), e.g. to keep a full run.
 """
+
+import csv
 
 import platform
 import sys
@@ -19,14 +32,40 @@ import numpy as np
 from snatch import pose
 from snatch.video import frames, probe
 
-clip, out_dir = sys.argv[1], Path(sys.argv[2])
-det = np.load(sys.argv[3]) if len(sys.argv) > 3 else None
+args = sys.argv[1:]
+
+
+def option(flag: str) -> str | None:
+    if flag not in args:
+        return None
+    i = args.index(flag)
+    value = args[i + 1]
+    del args[i:i + 2]
+    return value
+
+
+reps_csv = option("--reps")
+every = option("--every")
+name = option("--name") or "raw_pose"
+clip, out_dir = args[0], Path(args[1])
+det = np.load(args[2]) if len(args) > 2 else None
 det_boxes = None if det is None else det["bbox"]
 out_dir.mkdir(parents=True, exist_ok=True)
 info = probe(clip)
 print(info, flush=True)
+ranges = None
+if reps_csv is not None:
+    with open(reps_csv, newline="") as f:
+        ranges = [(int(r["pose_start"]), int(r["pose_end"])) for r in csv.DictReader(f)
+                  if r["clip"] == Path(clip).stem]
+    if not ranges:
+        sys.exit(f"no rows for {Path(clip).stem} in {reps_csv}")
+    print("ranges", ranges, flush=True)
+if every is not None:
+    ranges = [(i, i + 1) for i in range(0, info.n_frames, int(every))]
+    print(f"every {every}th frame: {len(ranges)} frames", flush=True)
 
-partial = out_dir / "raw_pose_partial.npz"
+partial = out_dir / f"{name}_partial.npz"
 resume, done = None, 0
 if partial.exists():
     p = np.load(partial)
@@ -43,20 +82,23 @@ def progress(i):
 
 
 def checkpoint(result, n):
-    tmp = out_dir / "raw_pose_tmp.npz"  # gitignored; rename keeps partial atomic
+    tmp = out_dir / f"{name}_tmp.npz"  # gitignored; rename keeps partial atomic
     np.savez(tmp, done=n, **result)
     tmp.replace(partial)
 
 
 raw = pose.run(frames(clip, info), info.n_frames, det_boxes=det_boxes,
-               progress=progress, resume=resume, done=done, checkpoint=checkpoint)
+               progress=progress, resume=resume, done=done, checkpoint=checkpoint,
+               ranges=ranges, restart_gap=int(every) if every else 1)
 elapsed = time.time() - t0
 if det is not None:
     raw["n_people"] = det["n_people"]
 meta = dict(fps=info.fps, width=info.width, height=info.height,
             rotation=info.rotation, model=pose.MODEL_NAME,
             clip=Path(clip).name, seconds=elapsed, machine=platform.platform())
+if ranges is not None:
+    meta["frame_ranges"] = np.asarray(ranges, np.int64)
 arrays: dict[str, np.ndarray] = raw | {k: np.asarray(v) for k, v in meta.items()}
-np.savez_compressed(out_dir / "raw_pose.npz", allow_pickle=False, **arrays)
+np.savez_compressed(out_dir / f"{name}.npz", allow_pickle=False, **arrays)
 partial.unlink(missing_ok=True)
 print(f"done {info.n_frames} frames in {elapsed:.0f}s", flush=True)

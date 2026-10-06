@@ -21,8 +21,16 @@ from snatch.video import frames, probe
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-clip, out = sys.argv[1], Path(sys.argv[2])
-model = sys.argv[3] if len(sys.argv) > 3 else "circle"
+args = sys.argv[1:]
+# --radius LO:HI  plate radius range in px (default 110:260, camera at ~4 m);
+# 2026-10-05 was filmed from further away: plate radius ~100 px
+radius = (110.0, 260.0)
+if "--radius" in args:
+    i = args.index("--radius")
+    radius = tuple(float(x) for x in args[i + 1].split(":"))
+    del args[i:i + 2]
+clip, out = args[0], Path(args[1])
+model = args[2] if len(args) > 2 else "circle"
 out.mkdir(parents=True, exist_ok=True)
 info = probe(clip)
 t0 = time.time()
@@ -34,7 +42,9 @@ def progress(stage, i):
 
 
 res = plate.detect(lambda: frames(clip, info), info.n_frames, progress=progress,
-                   model=model)
+                   model=model, r_min=radius[0], r_max=radius[1],
+                   # per-frame travel limit, scaled for 20261005_1 (4K, 24 fps)
+                   max_step_px=plate.MAX_STEP_PX * 240 / info.fps * info.width / 1080)
 n, fps = info.n_frames, info.fps
 found = res["found"]
 print(f"found {found.sum()}/{n} frames ({found.mean():.1%}), ellipse fit "

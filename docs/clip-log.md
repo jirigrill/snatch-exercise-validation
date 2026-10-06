@@ -21,6 +21,24 @@ Originals in `vids/` (gitignored, content never edited; renamed from iPhone name
 
 Pooled reps: main set 6 side-on plate reps; degraded 3 off-axis plate reps; baseline 1 bar-only rep.
 
+## Rep list (`docs/reps.csv`)
+One row per rep (per lift for the standing-hold clip). Originals are not cut: a rep is a frame range in its clip, and per-rep pose runs only those frames (`extract_pose.py --reps docs/reps.csv`); rests between reps are skipped, frame numbers stay those of the original clip.
+
+| Column | Meaning |
+|---|---|
+| `start_frame`, `end_frame` | lift-off to bar back on the floor ([start, end), clip frames) |
+| `pose_start`, `pose_end` | frames posed: the lift plus padding (1 s each side for the plate hub; 1.5 s before / 2 s after for pose, which finds lifts ~0.4 s late and up to ~0.9 s early) |
+| `source` | how the lift was found: plate hub (track passed its check), pose (wrists above the chest on a sparse pass, every 8th frame; every 2nd for the 24 fps clip), or phases.json v1 (bar-only clip) |
+| `variant`, `outcome`, `fail_cause` | copied from the file name, **per clip**: correct them per rep |
+| `checked` | `no` until someone has looked at the rep; set to `yes` after checking the boundaries and the labels |
+
+Made by `prototype/scripts/find_reps.py` → `prototype/out/reps_proposed.csv` (the script never writes `docs/reps.csv`), with a hub/pose plot per clip in `prototype/out/reps_check/`; `scripts/rep_sheets.py <rep list>` adds an image strip per rep there (pose start, liftoff, 4 frames in the lift, bar down, pose end) to check the boundaries by eye.
+
+Checks:
+- On the 7 clips of 2026-10-01 with a snatch, both the hub and the pose method find the known reps.
+- Per-rep pose = full-clip pose: `20261001_3` posed on its rep range only gives bit-identical keypoints from 0.15 s after the range start, and the same v2 phase frames (`prototype/out/20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg/rep_pose_check.md`).
+- 2026-10-05: the plate track failed its check on every clip tried with the default settings: the camera was further away, so the plate (radius ~96 px) was below the tracker's default minimum (110 px) and it followed the medicine balls behind it (see `recording-protocol.md`). With `track_plate.py --radius 70:140` it works (checked on `20261005_2`; the other clips are not re-run yet). Until then all reps of that session come from pose, and phase definition v2, which needs the hub, is not available for them.
+
 ## Model scope
 All candidate pose models are run on these clips to compare performance, including ones whose licences block commercial use (see `research/09-pose-model-licensing.md`). Blocked-model results are research-only and must be labelled as such.
 
