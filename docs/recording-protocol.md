@@ -42,11 +42,14 @@ Don't chase misses: lift normally at heavy loads and take the misses that come. 
 
 ## Spike session (D1 view, D2 arm bend), before the gate set
 
-One phone, one session, a light to moderate load (the same load for all sets). Power snatches are fine here: D1 and D2 test the pull, which is nearly the same in both variants. The deep squat catch is tested in the gate set.
+One phone, one session, a light to moderate load (the same load for all sets). Power snatches are fine here: D1 and D2 test the pull, which is nearly the same in both variants. The deep squat catch is tested in the gate set; the one squat-snatch set below is only for building squat-snatch phase detection.
 
 - **D1 views:** interleave sets of 3–5 reps: side → 30° → 45° → side → 30° → 45°, so fatigue spreads evenly across the views.
 - **D2 arm bend:** in the side-on sets, alternate reps pulled with straight arms and reps with a deliberate early arm bend. Log which is which in `notes`.
 - **Static metric test:** from each camera position, film the loaded bar standing still, then rolled a measured 50 cm along the floor, then still again. No lifter is needed.
+- **Vertical static test:** from each camera position, film the loaded bar standing still on the floor, then still on blocks or a box of known height (measure the hub height above the floor with the tape in both positions). This checks vertical accuracy in cm for peak height (B6) and drop (B8), which the horizontal roll doesn't test (`research/32-reference-layers.md` § 4). The error is reported; it is not part of the D1 go rule.
+- **Squat snatches, side-on (required):** at least one set of 3–5 squat snatches in the side-on view, at the same load. Phase detection for the squat snatch (#26) is needed before gate 1, and all clips so far are power snatches.
+- **Body height:** measure each lifter once with the tape (barefoot or in lifting shoes, logged which) and record it in `height_cm`. It is the ground truth for checking the height estimate from video (`research/32-reference-layers.md`).
 - Log the spike clips in the same log with `session` = `SP1` and the view in `notes`. These clips are never part of the gate.
 
 **D1 go:** an oblique view shows the near hip and knee at the transition, or the wrist in the pull, **and** the rectified hub moves 50 ± 1 cm in the static test. Otherwise side-on stays.
@@ -70,6 +73,7 @@ Keep this in `docs/sensitivity-log.csv`. It is created with the first session an
 | `date`, `session` | date; session id (S1, S2 …) |
 | `lifter` | L1, L2 (no names) |
 | `bodyweight_kg` | at the session |
+| `height_cm` | tape-measured body height, once per lifter (repeat the value on each row); state barefoot or lifting shoes in the session note |
 | `load_kg`, `pct_1rm` | bar + plates; percentage of the lifter's current best snatch (state which 1RM in the session note) |
 | `attempt_in_session` | 1, 2, 3 … (fatigue) |
 | `variant` | `squat` / `power` |
