@@ -32,7 +32,7 @@ from pathlib import Path
 import numpy as np
 
 from snatch import overlay, pose
-from snatch.video import frames, probe
+from snatch.video import frames, probe, timestamps
 
 args = sys.argv[1:]
 
@@ -103,7 +103,7 @@ raw = pose.run(frames(clip, info), info.n_frames, person["bbox"],
                ranges=ranges, restart_gap=int(every) if every else 1)
 elapsed = time.time() - t0
 raw["n_people"] = person["n_people"]
-meta = dict(fps=info.fps, width=info.width, height=info.height,
+meta = dict(fps=info.fps, t=timestamps(clip, info.fps), width=info.width, height=info.height,
             rotation=info.rotation, model=pose.MODEL_NAME,
             clip=Path(clip).name, seconds=elapsed, machine=platform.platform(),
             person_file=person_path.name, det_every=person["det_every"])

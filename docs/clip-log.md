@@ -61,7 +61,7 @@ Original iPhone names, for matching back to the phone library. The `.aae` sideca
 | 20261001_6_jiri_v1_powersnatch_5kg_1rep_success_-30deg | IMG_4585.MOV |
 | 20261001_7_jiri_v2_powersnatch_5kg_2rep_success_-30deg | IMG_4586.MOV |
 | 20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg | IMG_4587.MOV |
-| 20261005_1_jiri_v2_standup_squatsnatch_2rep_success_0deg | jiri | side | 2 | not in name | 799 | 33.3 s | 2026-10-05 | squat | made; 4K 24 fps; name also says standup |
+| 20261005_1_jiri_v2_standup_squatsnatch_2rep_success_0deg | jiri | side | 2 | not in name | 799 | 33.3 s | 2026-10-05 | squat | made; 4K 24 fps; name also says standup. **Removed 2026-10-06** (video and out/): 24 fps is too coarse |
 | 20261005_2_jiri_v2_powersnatch_5kg_3rep_success_0deg | jiri | side | 3 | bar + 5 kg | 4943 | 24.6 s | 2026-10-05 | power | made |
 | 20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg | jiri | side | 3 | bar + 5 kg | 4922 | 24.6 s | 2026-10-05 | power | made |
 | 20261005_4_jiri_v2_squatsnatch_5kg_3rep_success_0deg | jiri | side | 3 | bar + 5 kg | 5314 | 26.6 s | 2026-10-05 | squat | made |

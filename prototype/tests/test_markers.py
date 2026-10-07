@@ -79,3 +79,23 @@ def test_no_spread_at_240_fps_gives_no_verdict():
     assert verdict(max_err=0.0, spread=0.0) == "n/a"
     assert group_verdict(["n/a", "marginal"]) == "marginal"
     assert group_verdict(["n/a", "n/a"]) == "n/a"
+
+
+def test_peak_velocity_and_turnover_with_dropped_frames():
+    # the clip above with one frame in 6 dropped (as the 2026-10-05 clips):
+    # with the real frame times the markers come out as without the drops
+    vy = _path([(10, 0), (50, 2.0), (70, -1.0), (80, 0)])
+    hub_y = 500 - np.cumsum(vy) / FPS * PPM
+    keep = np.array([i for i in range(len(hub_y)) if i % 6 != 5])
+    t = keep / FPS
+    at = lambda f: int(np.searchsorted(keep, f))  # noqa: E731
+    r = _rep()
+    rep = Rep(at(r.setup), at(r.transition), at(r.catch), at(r.lockout),
+              at(r.overhead_start), at(r.overhead_end))
+    rate = (len(t) - 1) / t[-1]
+    m = bar_markers(np.zeros(len(keep)), hub_y[keep], PPM, rate, rep, t=t)
+    assert m.peak_v_m_s == pytest.approx(2.0, abs=0.06)
+    assert m.turnover_s == pytest.approx(0.20, abs=0.02)
+    assert m.turnover_to_bar_catch_s == pytest.approx(0.30, abs=0.02)
+    wrong = bar_markers(np.zeros(len(keep)), hub_y[keep], PPM, rate, rep)  # frame / mean rate
+    assert abs(wrong.peak_v_m_s - 2.0) > 0.1

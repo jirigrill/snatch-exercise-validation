@@ -1,0 +1,31 @@
+{
+ "definition": "v2 (hub height for wrist height)",
+ "fps": 200.414051,
+ "side": "r",
+ "reps": [
+  {
+   "setup": 4468,
+   "transition": null,
+   "catch": 4707,
+   "lockout": 4707,
+   "overhead_start": 4673,
+   "overhead_end": 4726,
+   "setup_s": 22.292,
+   "transition_s": null,
+   "catch_s": 23.488,
+   "lockout_s": 23.488,
+   "overhead_start_s": 23.321,
+   "overhead_end_s": 23.583
+  }
+ ],
+ "hub_found_at_event": [
+  {
+   "setup": true,
+   "transition": null,
+   "catch": true,
+   "lockout": true,
+   "overhead_start": true,
+   "overhead_end": true
+  }
+ ]
+}

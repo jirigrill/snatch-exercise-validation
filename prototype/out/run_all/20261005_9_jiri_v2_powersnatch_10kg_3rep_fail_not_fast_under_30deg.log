@@ -1,0 +1,117 @@
+=== plate: uv run python scripts/track_plate.py ../vids/20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg.MOV out/20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg ellipse --radius 70:140
+candidates 0/5632 0s
+candidates 500/5632 11s
+candidates 1000/5632 22s
+candidates 1500/5632 33s
+candidates 2000/5632 43s
+candidates 2500/5632 54s
+candidates 3000/5632 65s
+candidates 3500/5632 75s
+[rawvideo @ 0xa9b01f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4794 >= 4794
+candidates 4000/5632 86s
+candidates 4500/5632 97s
+candidates 5000/5632 107s
+candidates 5500/5632 118s
+outline A 0/5632 125s
+outline A 500/5632 133s
+outline A 1000/5632 140s
+outline A 1500/5632 151s
+outline A 2000/5632 160s
+outline A 2500/5632 170s
+outline A 3000/5632 180s
+outline A 3500/5632 190s
+[rawvideo @ 0x86b01f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4794 >= 4794
+outline A 4000/5632 200s
+outline A 4500/5632 211s
+outline A 5000/5632 221s
+outline A 5500/5632 231s
+outline B 0/5632 234s
+outline B 500/5632 242s
+outline B 1000/5632 250s
+outline B 1500/5632 258s
+outline B 2000/5632 266s
+outline B 2500/5632 274s
+outline B 3000/5632 282s
+outline B 3500/5632 290s
+[rawvideo @ 0x76b01f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4794 >= 4794
+outline B 4000/5632 296s
+outline B 4500/5632 300s
+outline B 5000/5632 307s
+outline B 5500/5632 314s
+found 5631/5632 frames (100.0%), ellipse fit 5599, r0 97.6 px, 316s
+status ok (vertical travel 1.73 m)
+[rawvideo @ 0x9f501f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4794 >= 4794
+wrote out/20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg/plate.npz
+=== person: uv run python scripts/extract_person.py ../vids/20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg.MOV out/20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg
+ClipInfo(width=1080, height=1920, fps=240.0, n_frames=5632, rotation=-90)
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/yolox_x_8xb8-300e_humanart-a39d44ed.onnx with onnxruntime backend
+detector frame 0/5632 1s
+detector frame 2400/5632 59s
+[rawvideo @ 0xa8301b980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4794 >= 4794
+detector frame 4800/5632 120s
+done 235 detections on 5632 frames in 140s
+=== pose: uv run python scripts/extract_pose.py ../vids/20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg.MOV out/20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg
+ClipInfo(width=1080, height=1920, fps=240.0, n_frames=5632, rotation=-90)
+2026-10-06 22:28:03.063 python3[20048:31747848] 2026-10-06 22:28:03.063555 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to improve perf.
+2026-10-06 22:28:03.063 python3[20048:31747848] 2026-10-06 22:28:03.063607 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/rtmpose-x_simcc-body7_pt-body7_700e-384x288-71d7b7e9_20230629.onnx with onnxruntime backend
+frame 0/5632 3s
+frame 200/5632 9s
+frame 400/5632 15s
+frame 600/5632 20s
+frame 800/5632 26s
+frame 1000/5632 31s
+frame 1200/5632 37s
+frame 1400/5632 42s
+frame 1600/5632 48s
+frame 1800/5632 53s
+frame 2000/5632 59s
+frame 2200/5632 65s
+frame 2400/5632 70s
+frame 2600/5632 76s
+frame 2800/5632 82s
+frame 3000/5632 87s
+frame 3200/5632 93s
+frame 3400/5632 98s
+frame 3600/5632 104s
+frame 3800/5632 109s
+[rawvideo @ 0xb3b01f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4794 >= 4794
+frame 4000/5632 115s
+frame 4200/5632 120s
+frame 4400/5632 126s
+frame 4600/5632 132s
+frame 4800/5632 138s
+frame 5000/5632 144s
+frame 5200/5632 149s
+frame 5400/5632 155s
+frame 5600/5632 161s
+done 5632 frames in 162s
+=== analyze: uv run python scripts/analyze.py ../vids/20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg.MOV out/20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg
+[rawvideo @ 0x91f01f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4794 >= 4794
+[{"setup": 908, "transition": 1031, "catch": 1140, "lockout": 1330, "overhead_start": 1124, "overhead_end": 1561}, {"setup": 2578, "transition": 2694, "catch": 2801, "lockout": 3014, "overhead_start": 2771, "overhead_end": 3275}, {"setup": 4452, "transition": 4544, "catch": 4642, "lockout": 4871, "overhead_start": 4618, "overhead_end": 5084}]
+wrote ['.rerun_plate', '.rerun_pose', 'angles.csv', 'angles.png', 'bar_path.png', 'grabs', 'overlay.mp4', 'person.npz', 'phase_sheet.jpg', 'phases.json', 'plate.csv', 'plate.npz', 'plate_check.jpg', 'raw_pose.npz', 'raw_pose_sparse.npz']
+=== compare: uv run python scripts/compare_phases.py out/20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg
+# 20261005_9_jiri_v2_powersnatch_10kg_3rep_fail_not_fast_under_30deg — phase times, v1 (wrist) vs v2 (hub)
+
+reps: v1 3, v2 3; hub found in 100.0% of frames
+
+| rep | event | v1 | v2 | v2 − v1 (frames) | v2 − v1 (ms) |
+|---|---|---|---|---|---|
+| 1 | setup | f908 (3.783 s) | f914 (3.808 s) | +6 | +25 |
+| 1 | transition | f1031 (4.296 s) | f1031 (4.296 s) | +0 | +0 |
+| 1 | catch | f1140 (4.750 s) | f1140 (4.750 s) | +0 | +0 |
+| 1 | lockout | f1330 (5.542 s) | f1330 (5.542 s) | +0 | +0 |
+| 1 | overhead_start | f1124 (4.683 s) | f1099 (4.579 s) | -25 | -104 |
+| 1 | overhead_end | f1561 (6.504 s) | f1567 (6.529 s) | +6 | +25 |
+| 2 | setup | f2578 (10.742 s) | f2568 (10.700 s) | -10 | -42 |
+| 2 | transition | f2694 (11.225 s) | f2694 (11.225 s) | +0 | +0 |
+| 2 | catch | f2801 (11.671 s) | f2801 (11.671 s) | +0 | +0 |
+| 2 | lockout | f3014 (12.558 s) | f3014 (12.558 s) | +0 | +0 |
+| 2 | overhead_start | f2771 (11.546 s) | f2759 (11.496 s) | -12 | -50 |
+| 2 | overhead_end | f3275 (13.646 s) | f3295 (13.729 s) | +20 | +83 |
+| 3 | setup | f4452 (18.550 s) | f4435 (18.479 s) | -17 | -71 |
+| 3 | transition | f4544 (18.933 s) | f4544 (18.933 s) | +0 | +0 |
+| 3 | catch | f4642 (19.342 s) | f4642 (19.342 s) | +0 | +0 |
+| 3 | lockout | f4871 (20.296 s) | f4871 (20.296 s) | +0 | +0 |
+| 3 | overhead_start | f4618 (19.242 s) | f4604 (19.183 s) | -14 | -58 |
+| 3 | overhead_end | f5084 (21.183 s) | f5101 (21.254 s) | +17 | +71 |

@@ -1,0 +1,75 @@
+{
+ "definition": "v2 (hub height for wrist height)",
+ "fps": 199.887591,
+ "side": "r",
+ "reps": [
+  {
+   "setup": 920,
+   "transition": 1032,
+   "catch": 1140,
+   "lockout": 1330,
+   "overhead_start": 1099,
+   "overhead_end": 1567,
+   "setup_s": 4.592,
+   "transition_s": 5.15,
+   "catch_s": 5.7,
+   "lockout_s": 6.658,
+   "overhead_start_s": 5.487,
+   "overhead_end_s": 7.838
+  },
+  {
+   "setup": 2590,
+   "transition": 2693,
+   "catch": 2802,
+   "lockout": 3014,
+   "overhead_start": 2758,
+   "overhead_end": 3295,
+   "setup_s": 12.967,
+   "transition_s": 13.471,
+   "catch_s": 14.025,
+   "lockout_s": 15.083,
+   "overhead_start_s": 13.8,
+   "overhead_end_s": 16.479
+  },
+  {
+   "setup": 4437,
+   "transition": 4544,
+   "catch": 4645,
+   "lockout": 4873,
+   "overhead_start": 4604,
+   "overhead_end": 5101,
+   "setup_s": 22.196,
+   "transition_s": 22.725,
+   "catch_s": 23.229,
+   "lockout_s": 24.379,
+   "overhead_start_s": 23.025,
+   "overhead_end_s": 25.521
+  }
+ ],
+ "hub_found_at_event": [
+  {
+   "setup": true,
+   "transition": true,
+   "catch": true,
+   "lockout": true,
+   "overhead_start": true,
+   "overhead_end": true
+  },
+  {
+   "setup": true,
+   "transition": true,
+   "catch": true,
+   "lockout": true,
+   "overhead_start": true,
+   "overhead_end": true
+  },
+  {
+   "setup": true,
+   "transition": true,
+   "catch": true,
+   "lockout": true,
+   "overhead_start": true,
+   "overhead_end": true
+  }
+ ]
+}

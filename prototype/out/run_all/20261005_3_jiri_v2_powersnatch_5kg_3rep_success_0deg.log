@@ -1,0 +1,65 @@
+=== person: uv run python scripts/extract_person.py ../vids/20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg.MOV out/20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg
+ClipInfo(width=1080, height=1920, fps=240.0, n_frames=4922, rotation=-90)
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/yolox_x_8xb8-300e_humanart-a39d44ed.onnx with onnxruntime backend
+detector frame 0/4922 1s
+detector frame 2400/4922 74s
+[rawvideo @ 0xc7101f700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4765 >= 4765
+[rawvideo @ 0xc7101f700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4785 >= 4785
+detector frame 4800/4922 150s
+done 206 detections on 4922 frames in 154s
+=== pose: uv run python scripts/extract_pose.py ../vids/20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg.MOV out/20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg
+ClipInfo(width=1080, height=1920, fps=240.0, n_frames=4922, rotation=-90)
+2026-10-06 22:01:40.857 python3[3174:31677420] 2026-10-06 22:01:40.857108 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to improve perf.
+2026-10-06 22:01:40.857 python3[3174:31677420] 2026-10-06 22:01:40.857198 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/rtmpose-x_simcc-body7_pt-body7_700e-384x288-71d7b7e9_20230629.onnx with onnxruntime backend
+frame 0/4922 6s
+frame 200/4922 13s
+frame 400/4922 20s
+frame 600/4922 27s
+frame 800/4922 35s
+frame 1000/4922 43s
+frame 1200/4922 51s
+frame 1400/4922 58s
+frame 1600/4922 64s
+frame 1800/4922 69s
+frame 2000/4922 75s
+frame 2200/4922 81s
+frame 2400/4922 86s
+frame 2600/4922 92s
+frame 2800/4922 97s
+frame 3000/4922 102s
+frame 3200/4922 108s
+frame 3400/4922 113s
+frame 3600/4922 118s
+frame 3800/4922 123s
+[rawvideo @ 0x79d01b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4765 >= 4765
+[rawvideo @ 0x79d01b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4785 >= 4785
+frame 4000/4922 129s
+frame 4200/4922 134s
+frame 4400/4922 139s
+frame 4600/4922 144s
+frame 4800/4922 150s
+done 4922 frames in 153s
+=== analyze: uv run python scripts/analyze.py ../vids/20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg.MOV out/20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg
+[rawvideo @ 0x81b01b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4765 >= 4765
+[rawvideo @ 0x81b01b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4785 >= 4785
+[{"setup": 711, "transition": 764, "catch": 894, "lockout": 1080, "overhead_start": 843, "overhead_end": 1322}, {"setup": 2197, "transition": null, "catch": 2387, "lockout": 2581, "overhead_start": 2340, "overhead_end": 2814}, {"setup": 3574, "transition": 3638, "catch": 3735, "lockout": 3977, "overhead_start": 3712, "overhead_end": 4227}]
+wrote ['.rerun_pose', 'angles.csv', 'angles.png', 'bar_path.png', 'grabs', 'overlay.mp4', 'person.npz', 'phase_sheet.jpg', 'phases.json', 'plate.csv', 'plate.npz', 'plate_check.jpg', 'raw_pose.npz', 'raw_pose_sparse.npz']
+=== compare: uv run python scripts/compare_phases.py out/20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg
+Traceback (most recent call last):
+  File "/Users/jiri.grill/Developer/snatch-excercise-validation/prototype/scripts/compare_phases.py", line 32, in <module>
+    v2 = find_reps_v2(hub_y=smooth(plate["hub_y"], fps), **common)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jiri.grill/Developer/snatch-excercise-validation/prototype/src/snatch/phases.py", line 140, in find_reps_v2
+    return find_reps(wrist_y=hub_y, nose_y=nose_y, hip_y=hip_y, knee=knee,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jiri.grill/Developer/snatch-excercise-validation/prototype/src/snatch/phases.py", line 119, in find_reps
+    peak = setup + int(np.argmax(knee[setup:oh_start + 1]))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jiri.grill/Developer/snatch-excercise-validation/prototype/.venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py", line 1352, in argmax
+    return _wrapfunc(a, 'argmax', axis=axis, out=out, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jiri.grill/Developer/snatch-excercise-validation/prototype/.venv/lib/python3.12/site-packages/numpy/_core/fromnumeric.py", line 54, in _wrapfunc
+    return bound(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^^
+ValueError: attempt to get argmax of an empty sequence

@@ -1,0 +1,81 @@
+=== plate: uv run python scripts/track_plate.py ../vids/20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg.MOV out/20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg --radius 70:140
+candidates 0/4024 0s
+candidates 500/4024 10s
+candidates 1000/4024 20s
+candidates 1500/4024 29s
+candidates 2000/4024 40s
+candidates 2500/4024 52s
+candidates 3000/4024 63s
+candidates 3500/4024 75s
+candidates 4000/4024 86s
+[rawvideo @ 0x98740b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4807 >= 4807
+outline A 0/4024 91s
+outline A 500/4024 96s
+outline A 1000/4024 101s
+outline A 1500/4024 106s
+outline A 2000/4024 111s
+outline A 2500/4024 116s
+outline A 3000/4024 119s
+outline A 3500/4024 122s
+outline A 4000/4024 127s
+[rawvideo @ 0xaa3023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4807 >= 4807
+outline B 0/4024 127s
+outline B 500/4024 131s
+outline B 1000/4024 135s
+outline B 1500/4024 140s
+outline B 2000/4024 144s
+outline B 2500/4024 149s
+outline B 3000/4024 153s
+outline B 3500/4024 157s
+outline B 4000/4024 161s
+[rawvideo @ 0xbab01f700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4807 >= 4807
+found 4024/4024 frames (100.0%), ellipse fit 4024, r0 98.7 px, 162s
+status ok (vertical travel 0.68 m)
+[rawvideo @ 0x90301b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4807 >= 4807
+wrote out/20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg/plate.npz
+=== person: uv run python scripts/extract_person.py ../vids/20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg.MOV out/20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg
+ClipInfo(width=1080, height=1920, fps=240.0, n_frames=4024, rotation=-90)
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/yolox_x_8xb8-300e_humanart-a39d44ed.onnx with onnxruntime backend
+detector frame 0/4024 1s
+detector frame 2400/4024 59s
+[rawvideo @ 0xab901f700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4807 >= 4807
+done 168 detections on 4024 frames in 98s
+=== pose: uv run python scripts/extract_pose.py ../vids/20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg.MOV out/20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg
+ClipInfo(width=1080, height=1920, fps=240.0, n_frames=4024, rotation=-90)
+2026-10-06 22:15:14.938 python3[13623:31718374] 2026-10-06 22:15:14.937972 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to improve perf.
+2026-10-06 22:15:14.938 python3[13623:31718374] 2026-10-06 22:15:14.938025 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/rtmpose-x_simcc-body7_pt-body7_700e-384x288-71d7b7e9_20230629.onnx with onnxruntime backend
+frame 0/4024 3s
+frame 200/4024 9s
+frame 400/4024 14s
+frame 600/4024 20s
+frame 800/4024 25s
+frame 1000/4024 31s
+frame 1200/4024 36s
+frame 1400/4024 42s
+frame 1600/4024 47s
+frame 1800/4024 53s
+frame 2000/4024 58s
+frame 2200/4024 63s
+frame 2400/4024 69s
+frame 2600/4024 74s
+frame 2800/4024 80s
+frame 3000/4024 85s
+frame 3200/4024 90s
+frame 3400/4024 96s
+frame 3600/4024 101s
+frame 3800/4024 107s
+frame 4000/4024 112s
+[rawvideo @ 0x8e701f700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4807 >= 4807
+done 4024 frames in 113s
+=== analyze: uv run python scripts/analyze.py ../vids/20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg.MOV out/20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg
+[rawvideo @ 0x93301f700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4807 >= 4807
+[]
+wrote ['.rerun_plate', '.rerun_pose', 'angles.csv', 'angles.png', 'bar_path.png', 'grabs', 'overlay.mp4', 'person.npz', 'phases.json', 'plate.csv', 'plate.npz', 'plate_check.jpg', 'raw_pose.npz', 'raw_pose_sparse.npz']
+=== compare: uv run python scripts/compare_phases.py out/20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg
+# 20261005_6_jiri_v2_powersnatch_10kg_3rep_success_0deg — phase times, v1 (wrist) vs v2 (hub)
+
+reps: v1 0, v2 0; hub found in 100.0% of frames
+
+| rep | event | v1 | v2 | v2 − v1 (frames) | v2 − v1 (ms) |
+|---|---|---|---|---|---|

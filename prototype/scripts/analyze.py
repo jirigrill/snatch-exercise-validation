@@ -26,7 +26,7 @@ from snatch.angles import COCO, JOINTS, mid_y, sagittal_angles
 from snatch.phases import find_reps, find_reps_v2
 from snatch.signals import smooth, smooth_keypoints
 from snatch.spread import PHASES, phase_values, spread_table
-from snatch.video import frames, probe
+from snatch.video import frame_times, frames, mean_rate, probe
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
@@ -40,8 +40,10 @@ NAMES = {v: k for k, v in COCO.items()}
 clip, out = sys.argv[1], Path(sys.argv[2])
 with_spread = sys.argv[3:] == ["spread"]
 raw = np.load(out / "raw_pose.npz")
-kps, scores, fps = raw["keypoints"], raw["scores"], float(raw["fps"])
+kps, scores = raw["keypoints"], raw["scores"]
 n = len(kps)
+t = frame_times(raw)  # real frame times: 2026-10-05 drops frames
+fps = mean_rate(t)  # for windows in frames
 
 kps_s = smooth_keypoints(kps, fps)
 ang_raw = sagittal_angles(kps, SIDE)
@@ -52,7 +54,7 @@ reps = find_reps(
     nose_y=mid_y(kps_s, "nose"),
     hip_y=mid_y(kps_s, "hip"),
     knee=ang_s["knee"], fps=fps,
-    knee_y=mid_y(kps_s, "knee"),
+    knee_y=mid_y(kps_s, "knee"), t=t,
 )
 
 # --- per-frame series with raw model output -------------------------------
@@ -63,7 +65,7 @@ with open(out / "angles.csv", "w", newline="") as f:
                + [f"{NAMES[k]}_{c}" for k in range(17) for c in ("x", "y", "score")]
                + ["n_people"])
     for i in range(n):
-        w.writerow([i, f"{i / fps:.5f}"]
+        w.writerow([i, f"{t[i]:.5f}"]
                    + [f"{ang_raw[j][i]:.3f}" for j in JOINTS]
                    + [f"{ang_s[j][i]:.3f}" for j in JOINTS]
                    + [v for k in range(17) for v in
@@ -77,7 +79,7 @@ sds = {k: spread_table(v) for k, v in vals.items()}
 near = [COCO[f"{SIDE}_{p}"] for p in ("shoulder", "elbow", "wrist", "hip", "knee", "ankle")]
 (out / "phases.json").write_text(json.dumps({
     "fps": fps, "side": SIDE,
-    "reps": [asdict(r) | {f"{k}_s": (None if v is None else round(v / fps, 3))
+    "reps": [asdict(r) | {f"{k}_s": (None if v is None else round(float(t[min(v, n - 1)]), 3))
                           for k, v in asdict(r).items()} for r in reps],
     **({"values": vals, "sd": sds} if with_spread else {}),
     "near_side_score_at_phase": {
@@ -109,7 +111,6 @@ if with_spread:
 print(json.dumps([asdict(r) for r in reps]))
 
 # --- angle plot with phase marks ------------------------------------------
-t = np.arange(n) / fps
 fig, axes = plt.subplots(len(JOINTS) + 1, 1, figsize=(14, 12), sharex=True)
 for ax, j in zip(axes, JOINTS):
     ax.plot(t, ang_raw[j], lw=0.4, color="0.7", label="raw")
@@ -127,7 +128,7 @@ for r in reps:
         fr = getattr(r, ph)
         if fr is not None:
             for a in axes:
-                a.axvline(fr / fps, color=colors[ph], lw=1)
+                a.axvline(t[fr], color=colors[ph], lw=1)
 axes[0].legend(handles=[Line2D([], [], color=c, label=p) for p, c in colors.items()],
                loc="upper right", fontsize=8, ncol=4)
 axes[-1].set_xlabel("time (s)")
@@ -174,7 +175,7 @@ if plate_ok:
     reps_v2 = find_reps_v2(
         hub_y=smooth(plate["hub_y"], fps), nose_y=mid_y(kps_s, "nose"),
         hip_y=mid_y(kps_s, "hip"), knee=ang_s["knee"], fps=fps,
-        knee_y=mid_y(kps_s, "knee"))
+        knee_y=mid_y(kps_s, "knee"), t=t)
 hold = json.loads((out / "hold.json").read_text()) if (out / "hold.json").exists() else None
 events = [(getattr(r, ph), v, ph) for v, rs in (("v1", reps), ("v2", reps_v2))
           for r in rs for ph in PHASES if getattr(r, ph) is not None]

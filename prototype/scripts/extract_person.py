@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 
 from snatch import overlay, person
-from snatch.video import frames, probe
+from snatch.video import frames, probe, timestamps
 
 args = sys.argv[1:]
 
@@ -55,7 +55,7 @@ res = person.detect(
     progress=lambda i: print(f"detector frame {i}/{info.n_frames} {time.time() - t0:.0f}s",
                              flush=True) if i % 800 == 0 else None)
 elapsed = time.time() - t0
-meta = dict(fps=info.fps, width=info.width, height=info.height, rotation=info.rotation,
+meta = dict(fps=info.fps, t=timestamps(clip, info.fps), width=info.width, height=info.height, rotation=info.rotation,
             model=person.DETECTOR_NAME, clip=Path(clip).name, seconds=elapsed,
             machine=platform.platform(), det_every=det_every)
 arrays: dict[str, np.ndarray] = res | {k: np.asarray(v) for k, v in meta.items()}

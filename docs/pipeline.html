@@ -80,7 +80,7 @@ flowchart TB
   PL --> A
   RP --> C["④ Phases v2<br/>compare_phases.py<br/>⏱ ~1 s"]:::ana
   PL --> C
-  PL -.-> RL["⑤ Rep list, for clips with several reps<br/>find_reps.py · rep_sheets.py<br/>⏱ seconds; +4 min/clip if the plate fails<br/>then ① runs on the rep frames only"]:::new
+  PL -.-> RL["⑤ Rep list, for clips with several reps<br/>find_reps.py · rep_sheets.py<br/>⏱ seconds; +~2 min/clip if the plate fails<br/>then ① runs on the rep frames only"]:::new
   classDef new fill:#efe6fb,stroke:#8a4fd1,stroke-dasharray:4 3
   classDef person fill:#fff3c4,stroke:#c9a400
   classDef pose fill:#e6efff,stroke:#2f6fde
@@ -343,7 +343,7 @@ flowchart TB
         <tr><td><code>measure_hold.py</code></td><td><code>out/&lt;clip&gt;/hold.json</code>: how steady a held bar is (standup clip only)</td></tr>
         <tr><td><code>review_phases.py</code></td><td><code>out/review13/</code>: sheets for checking phases by eye</td></tr>
         <tr><td><code>fps_estimate.py</code></td><td><code>out/fps_estimate.*</code>: would a lower frame rate be enough?</td></tr>
-        <tr><td><code>find_reps.py</code>, <code>rep_sheets.py</code></td><td><code>out/reps_proposed.csv</code>, <code>out/reps_check/</code>: tab 5</td></tr>
+        <tr><td><code>find_reps.py</code>, <code>rep_sheets.py</code></td><td><code>out/reps_proposed.csv</code>, <code>out/reps_check/</code>: tab 6</td></tr>
         <tr><td><code>build_ladder.py</code></td><td><code>vids/ladder/</code>: copies of the videos at 120/60/30 fps</td></tr>
       </table>
     </div>
@@ -371,8 +371,8 @@ with a note saying "turn me upright"`,
 turn every picture upright
 keep every frame, never drop or repeat one
 hand the pictures out one at a time`,
-    out:"Upright pictures, numbered 0, 1, 2 … (frame 100 means the same moment in every output file).",
-    time:"Not a separate step: it runs inside ①, ② and ③ (a few seconds per pass)." },
+    out:"Upright pictures, numbered 0, 1, 2 … (frame 100 means the same moment in every output file). Each output file also stores <code>t</code>, the real time of every frame: the 2026-10-05 clips are tagged 240 fps but drop 2 frames about every 12 (~200 fps on average), so frame ÷ 240 is not the time there. Times and speeds in ③ and ④ use <code>t</code>.",
+    time:"Not a separate step: it runs inside ⓪, ①, ②, ③ and the overlay video (a few seconds per pass)." },
   pose: { t:"① Find the body (extract_pose.py)", tag:"pose",
     what:"For every frame, finds where the lifter's joints are: 17 points like shoulders, hips, knees and wrists. It looks only inside the lifter's box that ⓪ saved.",
     in:"<code>vids/&lt;clip&gt;.MOV</code> and <code>out/&lt;clip&gt;/person.npz</code> (run ⓪ first). Optional: <code>--reps docs/reps.csv</code> (only rep frames) or <code>--every 8</code> (every 8th frame).",
@@ -440,6 +440,7 @@ if --overlay: make overlay_person.mp4`,
     bbox      lifter box x1, y1, x2, y2 (straight line between detections)
     detected  True where the detector really ran
     n_people  people seen (0 where it did not run)
+    t         real time of the frame (s)
 once per clip: fps, size, model, det_every, run time`,
     out:"Read by ①, and by the overlay video.", time:"—" },
   detect_every: { t:"Every 24th frame?", tag:"person",
@@ -487,9 +488,10 @@ crop to everything drawn (--zoom), write the video`,
     17 confidence values, 0 (guess) to 1 (sure)
     the box that was used around the lifter
     how many people were in the picture
+    t: real time of the frame (s)
 once per clip: fps, size, rotation, model name,
     run time (seconds), machine, frame_ranges`,
-    out:"Read by ③, ④ and tab 5. Frames that were skipped are left empty.",
+    out:"Read by ③, ④ and tab 6. Frames that were skipped are left empty.",
     time:"—" },
   ranges: { t:"Only some frames (--reps / --every)", tag:"new",
     what:"Lets ① skip frames nobody needs, e.g. the walking around between reps.",
@@ -558,8 +560,9 @@ check the result looks sane → ok / check`,
     centre x, y in pixels (= bar end)
     size of the plate's edge
     pixels per metre
+    t: real time of the frame (s)
 once per clip: status "ok" or "check: why"`,
-    out:"Read by ③, ④ and tab 5 (only trusted when status is ok).",
+    out:"Read by ③, ④ and tab 6 (only trusted when status is ok).",
     time:"—" },
   plate_check: { t:"plate_check.jpg", tag:"plate",
     what:"Close-ups of the plate at ~18 moments, with the found edge drawn on. Green = edge fitted, yellow = only roughly found.",
@@ -624,7 +627,7 @@ fit the edge again, size within 2.5% of that`,
 if the bar moved up less than 40 cm         → check
 if the centre jumps (plates can't teleport)  → check
 otherwise                                    → ok`,
-    out:"<code>ok</code> or <code>check: …why</code>, stored in plate.npz. Phases v2 and tab 5 use the plate only if ok.",
+    out:"<code>ok</code> or <code>check: …why</code>, stored in plate.npz. Phases v2 and tab 6 use the plate only if ok.",
     time:"Instant." },
   analyze: { t:"③ Angles, phases v1, pictures (analyze.py)", tag:"ana",
     what:"Turns the body points into joint angles, finds the phases of each rep (v1, using the wrists), and makes pictures and a video to check the result.",
@@ -725,7 +728,7 @@ the end of the rep:
     compare the number found with the number in the file name
 write the proposed list and a check picture per clip`,
     out:"<code>out/reps_proposed.csv</code>, <code>out/reps_check/</code>. A person checks it and copies it into <code>docs/reps.csv</code>; the script never writes there.",
-    time:"find_reps: a few seconds for all clips. Quick body pass if needed: ~4 min per clip. rep_sheets: ~20 s per clip." },
+    time:"find_reps: a few seconds for all clips. Quick body pass if needed: ~2 min per clip (mostly ⓪). rep_sheets: ~20 s per clip." },
   lifts_plate: { t:"Find lifts from the plate's height", tag:"new",
     what:"Uses the plate's height above the floor to see when the bar is lifted.",
     in:"<code>plate.npz</code> (status ok).",
@@ -737,11 +740,11 @@ margin: 1 s before and after`,
     out:"Start and end frame of each lift.", time:"Instant." },
   sparse: { t:"Quick body pass (every 8th frame)", tag:"new",
     what:"When the plate can't be trusted, the reps are found from the body. Doing every 8th frame is enough for that and is 8 times faster.",
-    in:"The video.",
-    how:`run ① on every 8th frame only
+    in:"The video and <code>person.npz</code> (run ⓪ first).",
+    how:`run ① with --every 8 --name raw_pose_sparse
 (keep following the same person between them)`,
     out:"<code>raw_pose_sparse.npz</code>",
-    time:"~3.5–5 min per clip." },
+    time:"~2 min per clip, nearly all of it ⓪ (estimate; it was 3.5–5 min when the detector ran inside ①)." },
   lifts_pose: { t:"Find lifts from the wrists' height", tag:"new",
     what:"Uses the wrists as the bar when the plate is not available.",
     in:"<code>raw_pose_sparse.npz</code>.",

@@ -1,0 +1,20 @@
+[{"setup": 672, "transition": 737, "catch": 843, "lockout": 843, "overhead_start": 817, "overhead_end": 884}, {"setup": 1405, "transition": 1471, "catch": 1600, "lockout": 1600, "overhead_start": 1546, "overhead_end": 1601}]
+wrote ['angles.csv', 'angles.png', 'bar_path.png', 'grabs', 'overlay.mp4', 'person.npz', 'phase_sheet.jpg', 'phases.json', 'phases_v1_v2.md', 'phases_v2.json', 'plate.csv', 'plate.npz', 'plate_check.jpg', 'raw_pose.npz', 'raw_pose_sparse.npz']
+# 20261005_13_jiri_v2_powersnatch_5kg_3rep_fail_not_fast_under_30deg — phase times, v1 (wrist) vs v2 (hub)
+
+reps: v1 2, v2 4; hub found in 69.9% of frames
+
+| rep | event | v1 | v2 | v2 − v1 (frames) | v2 − v1 (ms) |
+|---|---|---|---|---|---|
+| 1 | setup | f672 (3.350 s) | f114 (0.550 s) | -558 | -2800 |
+| 1 | transition | f737 (3.671 s) | — | — | — |
+| 1 | catch | f843 (4.196 s) | f198 (0.958 s) | -645 | -3238 |
+| 1 | lockout | f843 (4.196 s) | f198 (0.958 s) | -645 | -3238 |
+| 1 | overhead_start | f817 (4.062 s) | f126 (0.608 s) | -691 | -3454 |
+| 1 | overhead_end | f884 (4.392 s) | f199 (0.963 s) | -685 | -3429 |
+| 2 | setup | f1405 (7.004 s) | f225 (1.087 s) | -1180 | -5917 |
+| 2 | transition | f1471 (7.329 s) | — | — | — |
+| 2 | catch | f1600 (7.975 s) | f388 (1.917 s) | -1212 | -6058 |
+| 2 | lockout | f1600 (7.975 s) | f722 (3.592 s) | -878 | -4383 |
+| 2 | overhead_start | f1546 (7.708 s) | f233 (1.129 s) | -1313 | -6579 |
+| 2 | overhead_end | f1601 (7.979 s) | f744 (3.700 s) | -857 | -4279 |

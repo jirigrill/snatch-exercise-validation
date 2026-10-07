@@ -60,8 +60,12 @@ def overhead_runs(above: np.ndarray, min_len: int) -> list[tuple[int, int]]:
 
 
 def liftoff_frame(wrist_y: np.ndarray, end: int, fps: float,
-                  still_px_s: float) -> int:
-    rise_px_s = -np.diff(wrist_y, prepend=wrist_y[0]) * fps
+                  still_px_s: float, t: np.ndarray | None = None) -> int:
+    """`t`: frame times (s), for clips with dropped frames; default i / fps."""
+    if t is None:
+        rise_px_s = -np.diff(wrist_y, prepend=wrist_y[0]) * fps
+    else:
+        rise_px_s = -np.diff(wrist_y, prepend=wrist_y[0]) / np.diff(t, prepend=t[0] - 1 / fps)
     i = end
     while i > 0 and rise_px_s[i] <= still_px_s:  # skip a stall at the top
         i -= 1
@@ -109,13 +113,21 @@ def find_reps(*, wrist_y: np.ndarray, nose_y: np.ndarray, hip_y: np.ndarray,
               knee: np.ndarray, fps: float,
               knee_y: np.ndarray | None = None, min_overhead_s: float = 0.25,
               still_px_s: float = 50.0, min_dip_deg: float = 3.0,
-              tol_deg: float = 5.0, prominence_from_setup: bool = False
-              ) -> list[Rep]:
+              tol_deg: float = 5.0, prominence_from_setup: bool = False,
+              t: np.ndarray | None = None) -> list[Rep]:
+    """`fps`: the mean rate, for the windows in frames; `t`: frame times (s),
+    for the liftoff speed on clips with dropped frames (default i / fps)."""
     reps = []
     runs = overhead_runs(wrist_y < nose_y, int(min_overhead_s * fps))
     for oh_start, oh_end in runs:
+        # overhead from the clip's start (bar already up, or a wrong plate
+        # track): no pull before it to time, so no rep
+        if not (wrist_y[:oh_start + 1] > hip_y[:oh_start + 1]).any():
+            continue
         anchor = pull_anchor_frame(wrist_y, hip_y, oh_start)
-        setup = liftoff_frame(wrist_y, anchor, fps, still_px_s)
+        setup = liftoff_frame(wrist_y, anchor, fps, still_px_s, t)
+        if setup > oh_start:
+            continue
         peak = setup + int(np.argmax(knee[setup:oh_start + 1]))
         search_from = setup
         if knee_y is not None:  # re-bend only once the bar is above the knees
@@ -134,9 +146,9 @@ def find_reps(*, wrist_y: np.ndarray, nose_y: np.ndarray, hip_y: np.ndarray,
 
 def find_reps_v2(*, hub_y: np.ndarray, nose_y: np.ndarray, hip_y: np.ndarray,
                  knee: np.ndarray, fps: float, knee_y: np.ndarray | None = None,
-                 **thresholds: float) -> list[Rep]:
+                 t: np.ndarray | None = None, **thresholds: float) -> list[Rep]:
     """Phase definition v2: v1 timed from the plate hub, not the wrists,
     with the transition's prominence measured from setup."""
     return find_reps(wrist_y=hub_y, nose_y=nose_y, hip_y=hip_y, knee=knee,
-                     fps=fps, knee_y=knee_y, prominence_from_setup=True,
+                     fps=fps, knee_y=knee_y, prominence_from_setup=True, t=t,
                      **thresholds)

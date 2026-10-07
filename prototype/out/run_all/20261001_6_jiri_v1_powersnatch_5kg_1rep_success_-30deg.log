@@ -1,0 +1,19 @@
+=== person: uv run python scripts/extract_person.py ../vids/20261001_6_jiri_v1_powersnatch_5kg_1rep_success_-30deg.MOV out/20261001_6_jiri_v1_powersnatch_5kg_1rep_success_-30deg
+ClipInfo(width=1080, height=1920, fps=240.0, n_frames=2455, rotation=-90)
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/yolox_x_8xb8-300e_humanart-a39d44ed.onnx with onnxruntime backend
+detector frame 0/2455 1s
+detector frame 2400/2455 50s
+done 103 detections on 2455 frames in 51s
+=== compare: uv run python scripts/compare_phases.py out/20261001_6_jiri_v1_powersnatch_5kg_1rep_success_-30deg
+# 20261001_6_jiri_v1_powersnatch_5kg_1rep_success_-30deg — phase times, v1 (wrist) vs v2 (hub)
+
+reps: v1 1, v2 1; hub found in 93.3% of frames
+
+| rep | event | v1 | v2 | v2 − v1 (frames) | v2 − v1 (ms) |
+|---|---|---|---|---|---|
+| 1 | setup | f1043 (4.346 s) | f1037 (4.321 s) | -6 | -25 |
+| 1 | transition | — | — | — | — |
+| 1 | catch | f1323 (5.513 s) | f1323 (5.513 s) | +0 | +0 |
+| 1 | lockout | f1589 (6.621 s) | f1589 (6.621 s) | +0 | +0 |
+| 1 | overhead_start | f1221 (5.088 s) | f1211 (5.046 s) | -10 | -42 |
+| 1 | overhead_end | f1781 (7.421 s) | f1803 (7.513 s) | +22 | +92 |

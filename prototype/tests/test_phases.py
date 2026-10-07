@@ -140,6 +140,13 @@ def test_find_reps_on_two_synthetic_reps():
         assert r.lockout < r.overhead_end
 
 
+def test_find_reps_skips_a_clip_that_starts_overhead():
+    wrist, nose, knee, hip = (a[250:] for a in _synthetic_clip())  # starts mid-hold
+    reps = find_reps(wrist_y=wrist, nose_y=nose, hip_y=hip, knee=knee, fps=FPS)
+    assert len(reps) == 1
+    assert reps[0].setup == pytest.approx(510 - 250, abs=2)
+
+
 def test_v2_times_phases_from_the_hub_not_the_wrists():
     hub, nose, knee, hip = _synthetic_clip()
     wrists = np.full_like(hub, 950.0)  # hidden behind the plate: never rise

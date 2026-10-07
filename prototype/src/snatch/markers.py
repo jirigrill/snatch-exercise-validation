@@ -53,12 +53,14 @@ class BarMarkers:
 
 
 def bar_markers(hub_x: np.ndarray, hub_y: np.ndarray, px_per_m: float,
-                fps: float, rep: Rep) -> BarMarkers:
+                fps: float, rep: Rep, t: np.ndarray | None = None) -> BarMarkers:
+    """`t`: frame times (s), for clips with dropped frames; default i / fps."""
+    t = np.arange(len(hub_y)) / fps if t is None else t
     cm = 100 / px_per_m
     s = rep.setup
     peak = s + int(np.argmin(hub_y[s:rep.catch + 1]))
     bar_catch = peak + int(np.argmax(hub_y[peak:rep.lockout + 1]))
-    vy = -np.gradient(hub_y) * fps / px_per_m
+    vy = -np.gradient(hub_y, t) / px_per_m
     v_peak = s + int(np.argmax(vy[s:peak + 1]))
     v_low = v_peak + int(np.argmin(vy[v_peak:bar_catch + 1]))
     x1 = x2 = math.nan
@@ -75,8 +77,8 @@ def bar_markers(hub_x: np.ndarray, hub_y: np.ndarray, px_per_m: float,
         xnet_cm=float(hub_x[bar_catch] - hub_x[s]) * cm,
         drop_cm=float(hub_y[bar_catch] - hub_y[peak]) * cm,
         peak_v_m_s=float(vy[v_peak]),
-        turnover_s=(v_low - v_peak) / fps,
-        turnover_to_bar_catch_s=(bar_catch - v_peak) / fps,
+        turnover_s=float(t[v_low] - t[v_peak]),
+        turnover_to_bar_catch_s=float(t[bar_catch] - t[v_peak]),
     )
 
 

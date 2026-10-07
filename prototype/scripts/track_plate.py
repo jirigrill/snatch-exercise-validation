@@ -17,7 +17,7 @@ import matplotlib
 import numpy as np
 
 from snatch import overlay, plate
-from snatch.video import frames, probe
+from snatch.video import frames, probe, timestamps
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
@@ -79,7 +79,7 @@ if len(jumps):
     reasons.append(f"{len(jumps)} jumps (frames {', '.join(map(str, jumps[:12]))})")
 status = "ok" if not reasons else "check: " + "; ".join(reasons)
 print(f"status {status} (vertical travel {travel_m:.2f} m)", flush=True)
-meta = dict(fps=fps, width=info.width, height=info.height, clip=Path(clip).name,
+meta = dict(fps=fps, t=timestamps(clip, info.fps), width=info.width, height=info.height, clip=Path(clip).name,
             plate_diameter_m=plate.PLATE_DIAMETER_M, status=status, model=model,
             travel_m=travel_m, jumps=jumps)
 arrays: dict[str, np.ndarray] = res | {k: np.asarray(v) for k, v in meta.items()}

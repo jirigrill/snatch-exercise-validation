@@ -1,0 +1,28 @@
+[rawvideo @ 0xbbd023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4759 >= 4759
+[rawvideo @ 0xbbd023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4777 >= 4777
+[{"setup": 934, "transition": 1053, "catch": 1180, "lockout": 1380, "overhead_start": 1132, "overhead_end": 1566}, {"setup": 2255, "transition": 2361, "catch": 2501, "lockout": 2682, "overhead_start": 2442, "overhead_end": 2878}, {"setup": 3492, "transition": null, "catch": 3701, "lockout": 3886, "overhead_start": 3651, "overhead_end": 4114}]
+wrote ['angles.csv', 'angles.png', 'bar_path.png', 'grabs', 'overlay.mp4', 'person.npz', 'phase_sheet.jpg', 'phases.json', 'phases_v1_v2.md', 'phases_v2.json', 'plate.csv', 'plate.npz', 'plate_check.jpg', 'raw_pose.npz', 'raw_pose_sparse.npz']
+# 20261005_11_jiri_v2_powersnatch_5kg_3rep_success_30deg — phase times, v1 (wrist) vs v2 (hub)
+
+reps: v1 3, v2 3; hub found in 91.2% of frames
+
+| rep | event | v1 | v2 | v2 − v1 (frames) | v2 − v1 (ms) |
+|---|---|---|---|---|---|
+| 1 | setup | f934 (4.658 s) | f142 (0.683 s) | -792 | -3975 |
+| 1 | transition | f1053 (5.254 s) | — | — | — |
+| 1 | catch | f1180 (5.892 s) | f383 (1.879 s) | -797 | -4012 |
+| 1 | lockout | f1380 (6.908 s) | f383 (1.879 s) | -997 | -5029 |
+| 1 | overhead_start | f1132 (5.650 s) | f148 (0.708 s) | -984 | -4942 |
+| 1 | overhead_end | f1566 (7.825 s) | f384 (1.883 s) | -1182 | -5942 |
+| 2 | setup | f2255 (11.271 s) | f637 (3.163 s) | -1618 | -8108 |
+| 2 | transition | f2361 (11.796 s) | — | — | — |
+| 2 | catch | f2501 (12.496 s) | f791 (3.929 s) | -1710 | -8567 |
+| 2 | lockout | f2682 (13.408 s) | f999 (4.971 s) | -1683 | -8438 |
+| 2 | overhead_start | f2442 (12.208 s) | f876 (4.358 s) | -1566 | -7850 |
+| 2 | overhead_end | f2878 (14.392 s) | f1003 (4.996 s) | -1875 | -9396 |
+| 3 | setup | f3492 (17.458 s) | f4431 (22.154 s) | +939 | +4696 |
+| 3 | transition | — | — | — | — |
+| 3 | catch | f3701 (18.504 s) | f4442 (22.208 s) | +741 | +3704 |
+| 3 | lockout | f3886 (19.433 s) | f4442 (22.208 s) | +556 | +2775 |
+| 3 | overhead_start | f3651 (18.246 s) | f4437 (22.179 s) | +786 | +3933 |
+| 3 | overhead_end | f4114 (20.575 s) | f4499 (22.496 s) | +385 | +1921 |

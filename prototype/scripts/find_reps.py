@@ -25,7 +25,7 @@ import numpy as np
 from snatch.angles import COCO
 from snatch.reps import (Lift, find_lifts, find_pose_holds, find_pose_lifts,
                          height_above_floor, pose_range)
-from snatch.video import probe
+from snatch.video import mean_rate, probe, timestamps
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
@@ -78,6 +78,8 @@ for mov in sorted(vids.glob("*.MOV"), key=lambda p: [int(x) if x.isdigit() else 
                                                      for x in re.split(r"(\d+)", p.stem)]):
     clip = mov.stem
     info = probe(str(mov))
+    t = timestamps(str(mov), info.fps)  # 2026-10-05 drops frames: ~200 fps, tagged 240
+    fps = mean_rate(t)
     name = from_name(clip)
     notes = []
     plate_path = out / clip / "plate.npz"
@@ -85,16 +87,16 @@ for mov in sorted(vids.glob("*.MOV"), key=lambda p: [int(x) if x.isdigit() else 
     k = sparse_pose(out / clip)
     h = None
     if p is not None and str(p["status"]) == "ok":
-        h = height_above_floor(p["hub_y"], p["found"], p["px_per_m"], info.fps)
-        lifts, source, kind = find_lifts(h, info.fps), "plate hub", "plate"
+        h = height_above_floor(p["hub_y"], p["found"], p["px_per_m"], fps)
+        lifts, source, kind = find_lifts(h, fps), "plate hub", "plate"
     elif k is not None and (p is not None or "_bar_" not in clip):
         with np.errstate(all="ignore"):
             wrist, knee, hip = (ymean(k, "l_wrist", "r_wrist"), ymean(k, "l_knee", "r_knee"),
                                 ymean(k, "l_hip", "r_hip"))
-        lifts = find_pose_lifts(wrist, k[:, COCO["nose"], 1], knee, hip, info.fps)
+        lifts = find_pose_lifts(wrist, k[:, COCO["nose"], 1], knee, hip, fps)
         source, kind = "pose, wrists above chest (sparse frames)", "pose"
         if not lifts:
-            lifts = find_pose_holds(wrist, knee, hip, info.fps)
+            lifts = find_pose_holds(wrist, knee, hip, fps)
             source = "pose, wrists above mid-thigh (no overhead phase; sparse frames)"
         if p is not None:
             notes.append(f"plate {str(p['status'])[:40]}")
@@ -109,10 +111,10 @@ for mov in sorted(vids.glob("*.MOV"), key=lambda p: [int(x) if x.isdigit() else 
     if name["n_reps"] and len(lifts) != int(name["n_reps"]):
         notes.append(f"found {len(lifts)} lifts, name says {name['n_reps']}")
     for k, lf in enumerate(lifts, 1):
-        ps, pe = pose_range(lf, info.fps, info.n_frames, *PAD_S[kind])
+        ps, pe = pose_range(lf, fps, info.n_frames, *PAD_S[kind])
         rows.append({"clip": clip, "rep": k, "start_frame": lf.start,
                      "end_frame": lf.end, "pose_start": ps, "pose_end": pe,
-                     "fps": f"{info.fps:g}",
+                     "fps": f"{fps:.1f}",
                      "peak_m": "" if np.isnan(lf.peak_m) else f"{lf.peak_m:.2f}",
                      "source": source, "variant": name["variant"],
                      "outcome": name["outcome"], "fail_cause": name["fail_cause"],
@@ -121,14 +123,13 @@ for mov in sorted(vids.glob("*.MOV"), key=lambda p: [int(x) if x.isdigit() else 
         rows.append({"clip": clip, "rep": "", "source": source, "checked": "no",
                      "notes": "; ".join(notes + ["no lift found"])})
     if h is not None:
-        t = np.arange(len(h)) / info.fps
         fig, ax = plt.subplots(figsize=(12, 3))
         ax.plot(t, h, lw=0.8)
         for k, lf in enumerate(lifts, 1):
-            ps, pe = pose_range(lf, info.fps, info.n_frames, *PAD_S[kind])
-            ax.axvspan(ps / info.fps, pe / info.fps, color="0.9")
-            ax.axvspan(lf.start / info.fps, lf.end / info.fps, color="tab:green", alpha=0.3)
-            ax.text(lf.start / info.fps, 0.05, f"rep {k}\nf{lf.start}-{lf.end}", fontsize=8)
+            ps, pe = pose_range(lf, fps, info.n_frames, *PAD_S[kind])
+            ax.axvspan(t[ps], t[min(pe, len(t) - 1)], color="0.9")
+            ax.axvspan(t[lf.start], t[min(lf.end, len(t) - 1)], color="tab:green", alpha=0.3)
+            ax.text(t[lf.start], 0.05, f"rep {k}\nf{lf.start}-{lf.end}", fontsize=8)
         ax.set(xlabel="s", ylabel="hub above floor (m)",
                title=f"{clip} — {source}; green = lift, grey = pose range")
         fig.tight_layout()

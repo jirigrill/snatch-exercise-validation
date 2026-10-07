@@ -1,0 +1,108 @@
+=== plate: uv run python scripts/track_plate.py ../vids/20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg.MOV out/20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg --radius 70:140
+candidates 0/4790 0s
+candidates 500/4790 10s
+candidates 1000/4790 21s
+candidates 1500/4790 31s
+candidates 2000/4790 41s
+candidates 2500/4790 53s
+candidates 3000/4790 65s
+candidates 3500/4790 77s
+[rawvideo @ 0x9d3017700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4775 >= 4775
+[rawvideo @ 0x9d3017700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4783 >= 4783
+candidates 4000/4790 90s
+[rawvideo @ 0x9d3017700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4789 >= 4789
+[rawvideo @ 0x9d3017700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4795 >= 4795
+candidates 4500/4790 101s
+outline A 0/4790 112s
+outline A 500/4790 115s
+outline A 1000/4790 118s
+outline A 1500/4790 123s
+outline A 2000/4790 127s
+outline A 2500/4790 132s
+outline A 3000/4790 137s
+outline A 3500/4790 141s
+[rawvideo @ 0xbeb01f700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4775 >= 4775
+[rawvideo @ 0xbeb01f700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4783 >= 4783
+outline A 4000/4790 146s
+[rawvideo @ 0xbeb01f700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4789 >= 4789
+[rawvideo @ 0xbeb01f700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4795 >= 4795
+outline A 4500/4790 151s
+outline B 0/4790 154s
+outline B 500/4790 158s
+outline B 1000/4790 163s
+outline B 1500/4790 167s
+outline B 2000/4790 171s
+outline B 2500/4790 175s
+outline B 3000/4790 180s
+outline B 3500/4790 184s
+[rawvideo @ 0xba9023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4775 >= 4775
+[rawvideo @ 0xba9023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4783 >= 4783
+outline B 4000/4790 188s
+[rawvideo @ 0xba9023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4789 >= 4789
+[rawvideo @ 0xba9023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4795 >= 4795
+outline B 4500/4790 193s
+found 4790/4790 frames (100.0%), ellipse fit 4790, r0 99.1 px, 195s
+status ok (vertical travel 1.16 m)
+[rawvideo @ 0x7b101b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4775 >= 4775
+[rawvideo @ 0x7b101b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4783 >= 4783
+[rawvideo @ 0x7b101b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4789 >= 4789
+[rawvideo @ 0x7b101b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4795 >= 4795
+wrote out/20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg/plate.npz
+=== person: uv run python scripts/extract_person.py ../vids/20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg.MOV out/20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg
+ClipInfo(width=1080, height=1920, fps=240.0, n_frames=4790, rotation=-90)
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/yolox_x_8xb8-300e_humanart-a39d44ed.onnx with onnxruntime backend
+detector frame 0/4790 1s
+detector frame 2400/4790 58s
+[rawvideo @ 0xa5d023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4775 >= 4775
+[rawvideo @ 0xa5d023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4783 >= 4783
+[rawvideo @ 0xa5d023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4789 >= 4789
+[rawvideo @ 0xa5d023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4795 >= 4795
+done 200 detections on 4790 frames in 115s
+=== pose: uv run python scripts/extract_pose.py ../vids/20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg.MOV out/20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg
+ClipInfo(width=1080, height=1920, fps=240.0, n_frames=4790, rotation=-90)
+2026-10-06 22:19:03.930 python3[15967:31727920] 2026-10-06 22:19:03.930945 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to improve perf.
+2026-10-06 22:19:03.931 python3[15967:31727920] 2026-10-06 22:19:03.930997 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/rtmpose-x_simcc-body7_pt-body7_700e-384x288-71d7b7e9_20230629.onnx with onnxruntime backend
+frame 0/4790 4s
+frame 200/4790 9s
+frame 400/4790 14s
+frame 600/4790 20s
+frame 800/4790 25s
+frame 1000/4790 31s
+frame 1200/4790 36s
+frame 1400/4790 42s
+frame 1600/4790 47s
+frame 1800/4790 53s
+frame 2000/4790 58s
+frame 2200/4790 63s
+frame 2400/4790 69s
+frame 2600/4790 75s
+frame 2800/4790 81s
+frame 3000/4790 87s
+frame 3200/4790 92s
+frame 3400/4790 98s
+frame 3600/4790 103s
+frame 3800/4790 108s
+[rawvideo @ 0xa17023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4775 >= 4775
+[rawvideo @ 0xa17023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4783 >= 4783
+frame 4000/4790 114s
+[rawvideo @ 0xa17023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4789 >= 4789
+[rawvideo @ 0xa17023700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4795 >= 4795
+frame 4200/4790 119s
+frame 4400/4790 125s
+frame 4600/4790 130s
+done 4790 frames in 135s
+=== analyze: uv run python scripts/analyze.py ../vids/20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg.MOV out/20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg
+[rawvideo @ 0x79701b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4775 >= 4775
+[rawvideo @ 0x79701b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4783 >= 4783
+[rawvideo @ 0x79701b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4789 >= 4789
+[rawvideo @ 0x79701b700] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4795 >= 4795
+[]
+wrote ['.rerun_plate', '.rerun_pose', 'angles.csv', 'angles.png', 'bar_path.png', 'grabs', 'overlay.mp4', 'person.npz', 'phases.json', 'plate.csv', 'plate.npz', 'plate_check.jpg', 'raw_pose.npz', 'raw_pose_sparse.npz']
+=== compare: uv run python scripts/compare_phases.py out/20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg
+# 20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg — phase times, v1 (wrist) vs v2 (hub)
+
+reps: v1 0, v2 0; hub found in 100.0% of frames
+
+| rep | event | v1 | v2 | v2 − v1 (frames) | v2 − v1 (ms) |
+|---|---|---|---|---|---|
