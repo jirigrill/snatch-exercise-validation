@@ -73,7 +73,27 @@ The universal bands from `12` § 1, mapped to markers:
 | No outcome link | Not shown that distance from the model predicts misses or that moving toward it raises 1RM |
 | Cost | Months of optimal-control and muscle-model work, before gate 1 |
 
-The same approach appears in Nejadian & Rostami (2007, 2008), cited by Korayem, not read. No newer validated individual snatch model is known; a targeted literature search is still open.
+**Literature search (2026-10-07, web search, abstracts and one thesis read; not exhaustive).** No validated individual snatch model was found.
+
+| Source | What it is | Use for 1b |
+|---|---|---|
+| Nejadian & Rostami 2007, 2008 (several versions: Pontryagin, genetic algorithm, dynamic programming) | 5-link model minimizing joint torques; "good agreement" with other researchers' experimental trajectories | Same method and weakness as Korayem. Abstracts only; full text not read |
+| Jon et al. 2024, *Engineering Reports* (6-link anthropometric model, barbell trajectory) | Newer version of the same approach | Page returned 403; **not read** |
+| arXiv 2510.19841 (2025), minimal optimal-control model of the snatch pull | Vertical bar trajectory only; first and second pull; "agrees well" with video data | Abstract only: no personalization, sample size or error numbers stated. Bar vertical only, no body angles |
+| PMC10437953 (optimal force–velocity profile) | Barbell-level model; one personal parameter (threshold bar velocity); simulations on published data from 13 elite lifters; no new data | Bar force and speed only; no bar path or joint angles |
+| Butters, MSc thesis (UCLan; not checked whether peer-reviewed) | 20 experienced men at 85% 1RM, 3D motion capture; stepwise regression of segment lengths on start position | **Directly relevant**, below |
+
+**Butters thesis, the one empirical link between proportions and position:**
+- Femur length predicts start hip height (r² = 0.34, p < 0.01); shank-to-femur ratio adds r² = 0.20 (p = 0.05).
+- Relative femur length (0.45), relative trunk length (0.69) and shank-to-femur ratio (0.77) predict the ground-reaction-force angle at the start.
+- **No anthropometric variable predicted horizontal bar displacement from start to end of the first pull** (the B2-type marker).
+- Caveats: n = 20, one load, stepwise regression on many candidate predictors (overfitting risk; these r² are in-sample), mocap not video.
+
+**What this changes:**
+- Proportions explain **part** of the start position (hip height r² ≈ 0.3–0.5), not most of it. The layer 1b range at setup must be wide, and 1b can only be a coarse check, not a tight target.
+- Bar horizontal travel is **not** predicted by proportions here. That supports taking bar-path references from layers 1 and 3, not from a model.
+- Whatever the thesis says about *which* start position is optimal has not been extracted; its claim that hip height "has been identified as a key factor" for success is repeated from other sources and unchecked.
+- Still no model validated on individual lifters against made/missed outcomes. The decision stands: 1b geometry only, reported, tested against layer 3 on gate-1 data. Reading Jon 2024 and the Butters discussion in full is optional follow-up.
 
 **What is kept: geometry from limb lengths.** The main reason a universal template fails is proportions (`12` § "Why there is no universal perfect lift"). That part can be modelled without dynamics:
 
