@@ -77,23 +77,28 @@ The universal bands from `12` § 1, mapped to markers:
 
 | Source | What it is | Use for 1b |
 |---|---|---|
-| Nejadian & Rostami 2007, 2008 (several versions: Pontryagin, genetic algorithm, dynamic programming) | 5-link model minimizing joint torques; "good agreement" with other researchers' experimental trajectories | Same method and weakness as Korayem. Abstracts only; full text not read |
+| Nejadian & Rostami, ISBS 2007 (two papers, full text read: Pontryagin; genetic algorithm). A 2008 journal version and a dynamic-programming version exist, abstracts only | 5-link model (shank, thigh, trunk, upper arm, forearm; segment values from Chaffin & Anderson regression formulas) minimizing joint torque from lift-off to start of catch. Cases: 55 kg / 1.6 m / 90 kg bar; 70 kg / 1.7 m / 90 kg bar (GA) | Same method and weakness as Korayem. Validation is one simulated lifter vs the *shape* of Garhammer's (2001) trajectory ("typical toward–away–toward"); no error numbers, no real lifter. Both papers are 2–4 pages. Their claim that the result "can be produced by a real weightlifter" rests on the equations of motion, not on data |
 | Jon et al. 2024, *Engineering Reports* (6-link anthropometric model, barbell trajectory) | Newer version of the same approach | Page returned 403; **not read** |
 | arXiv 2510.19841 (2025), minimal optimal-control model of the snatch pull | Vertical bar trajectory only; first and second pull; "agrees well" with video data | Abstract only: no personalization, sample size or error numbers stated. Bar vertical only, no body angles |
 | PMC10437953 (optimal force–velocity profile) | Barbell-level model; one personal parameter (threshold bar velocity); simulations on published data from 13 elite lifters; no new data | Bar force and speed only; no bar path or joint angles |
 | Butters, MSc thesis (UCLan; not checked whether peer-reviewed) | 20 experienced men at 85% 1RM, 3D motion capture; stepwise regression of segment lengths on start position | **Directly relevant**, below |
 
-**Butters thesis, the one empirical link between proportions and position:**
-- Femur length predicts start hip height (r² = 0.34, p < 0.01); shank-to-femur ratio adds r² = 0.20 (p = 0.05).
-- Relative femur length (0.45), relative trunk length (0.69) and shank-to-femur ratio (0.77) predict the ground-reaction-force angle at the start.
-- **No anthropometric variable predicted horizontal bar displacement from start to end of the first pull** (the B2-type marker).
-- Caveats: n = 20, one load, stepwise regression on many candidate predictors (overfitting risk; these r² are in-sample), mocap not video.
+**Butters thesis (full text read, incl. discussion), the one empirical link between proportions and position:**
+- Design: 20 experienced men (age 29.5 ± 5.3 y, 77.5 ± 8.0 kg), **3 single lifts at 85% 1RM in one session**, 3D motion capture; stepwise regression of segment lengths on the start position (SP). Abbreviations: AFL = absolute femur length, MHBD = max horizontal bar displacement from SP to end of the first pull, GRF° = ground-reaction-force vector angle at SP.
+- Femur length (AFL) predicts start hip height (r² = 0.34, p < 0.01); shank-to-femur ratio adds r² = 0.20 (p = 0.05).
+- Relative femur length (0.45), relative trunk length (0.69) and shank-to-femur ratio (0.77) predict GRF° at the start.
+- **Correction to the first version of this note:** no *anthropometric* variable predicted MHBD, but **absolute hip height did** (r² = 0.37, adj. 0.34; b = −0.23: higher hips, less backward travel). So proportions reach bar path only **indirectly**: femur → hip height → MHBD. The thesis calls this suggestive, not tested.
+- Bar paths were mostly backward (toward the lifter) in the sample; lifters with different femur lengths reached similar bar paths with different hip heights.
+- **Case study (descriptive, one lifter, trials 1 vs 3):** hips rose between trials, torso leaned further over the bar, bar path went forward. Says the start position is "more than hip height": hip height, knee bend and torso lean together.
+- Limitations the thesis states: 3 lifts per lifter, so the start position may not be each lifter's repeatable one; male, one weight-class range, so no transfer to women or heavier lifters; marker placement reliability not tested. Added here: stepwise selection on many candidate predictors (in-sample r², overfitting risk). Made vs missed was **not** analysed, so nothing here shows a start position causes a miss.
+- Its recommendation (force angle at the start of about 1.5–2° "will result in the most optimal bar path") is the author's advice from correlations, not a tested threshold. Not used.
 
 **What this changes:**
 - Proportions explain **part** of the start position (hip height r² ≈ 0.3–0.5), not most of it. The layer 1b range at setup must be wide, and 1b can only be a coarse check, not a tight target.
-- Bar horizontal travel is **not** predicted by proportions here. That supports taking bar-path references from layers 1 and 3, not from a model.
-- Whatever the thesis says about *which* start position is optimal has not been extracted; its claim that hip height "has been identified as a key factor" for success is repeated from other sources and unchecked.
-- Still no model validated on individual lifters against made/missed outcomes. The decision stands: 1b geometry only, reported, tested against layer 3 on gate-1 data. Reading Jon 2024 and the Butters discussion in full is optional follow-up.
+- **The setup can't be judged from hip height alone**: the same hip height gives different bar paths for different femur lengths. 1b has to solve hip, knee, and torso angle together, not one number. This fits the layer 1b design (angles from constraints), and rules out a simple "hip height should be X% of body height" rule.
+- Bar travel in the first pull depends on proportions only through the start position. The bar-path markers still need measured references (layers 1 and 3), not a proportion formula.
+- Still no model validated on individual lifters against made/missed outcomes. The decision stands: 1b geometry only, reported, tested against layer 3 on gate-1 data.
+- **Still unread:** Jon 2024 (paywalled); the 2008 Nejadian journal version.
 
 **What is kept: geometry from limb lengths.** The main reason a universal template fails is proportions (`12` § "Why there is no universal perfect lift"). That part can be modelled without dynamics:
 
