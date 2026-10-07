@@ -16,6 +16,25 @@ Status: design note, nothing built · Date: 2026-10-07 · Ticket: none yet (numb
 - **A full model of the ideal snatch for one lifter is not usable** (Korayem 2010: circular optimum, thin validation, needs strength data a phone can't give). A **proportion model** (layer 1b: static key positions from segment lengths) is kept, reported only, and tested against layer 3 on gate-1 data.
 - **Order:** finish measurement first, but only to "good enough for the gate-1 markers", not "perfect" (§4).
 
+## Conclusion: can we model a "perfect snatch" for one athlete?
+
+**Not a validated one, with today's literature and one phone. A coarse, personalized "plausible zone": yes.** (Based on a web search plus full reads of Korayem, Nejadian & Rostami ×2, Butters, and abstracts of newer papers. Not a systematic review; Jon 2024 is unread.)
+
+| Part | Verdict | Why |
+|---|---|---|
+| Ideal bar trajectory | **No** | Models (Nejadian, Korayem, arXiv 2025) reproduce the known shape by design; validation is one simulated lifter vs a group-mean shape, no error numbers, no real athlete. Elite lifters succeed with all 4 bar-path types (Shah), so there is a family of acceptable paths, not one |
+| Ideal body movement (dynamics) | **No** | Needs per-joint torque–velocity data a phone can't give; the optimum depends on the chosen cost (min torque, min height, …); nobody has shown that distance from a model predicts misses |
+| Plausible static positions from proportions | **Partly** | Butters: femur and shank/femur ratio explain part of start hip height (r² ≈ 0.34–0.5, n = 20, in-sample); proportions reach bar path only through hip height. So: wide angle ranges for setup and catch, not a tight target |
+| Physical limits that hold for everyone | **Yes** | Layer 1: bar close, bar over the base at the catch, catch below the peak |
+| The lifter's own best heavy reps | **Yes** | Layer 3: answers "why did this rep fail", the question gate 1 tests |
+
+**Why a "perfect" model fails on logic, not only data:** "perfect" depends on a goal (minimum torque, minimum bar height, maximum load) and on strength, mobility and style. The models pick one criterion. The made-vs-missed literature finds few consistent differences (Garhammer, Mastalerz), so even a perfect model would have nothing proven to be checked against.
+
+**Consequence for the app:**
+- Use layers 1, 1b and 3. Layer 1b is reported only, and tested on gate-1 data: if its deltas separate made and missed lifts better than layer 3's, extend it; if not, drop it.
+- A Korayem-style dynamic model is out of scope until gate 1 passes and 1b has shown value.
+- It remains possible that someone has validated a model the search missed; nothing read suggests it.
+
 ## 1. The three layers
 
 | Layer | Reference | Catches | Blind to | Needs |
