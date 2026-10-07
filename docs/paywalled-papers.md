@@ -40,3 +40,9 @@ Save any PDFs to `.scratch/papers/` (gitignored) so they stay out of the repo.
 
 ## Books not accessed (not papers)
 Roman (1974 Russian; 1986/88 English), Vorobyev (1978/1988), Medvedev, Laputin & Oleshko, Zhekov (1976). See `research/10b-pass2-coaching.md` gaps.
+
+## Added 2026-10-07 (doc 32 literature search): not obtained
+| Paper | Why | Link |
+|---|---|---|
+| Jon et al. 2024, *Engineering Reports* — snatch dynamic analysis, 6-link anthropometric model | Newest individual snatch model; page returned 403 | https://onlinelibrary.wiley.com/doi/full/10.1002/eng2.12809 |
+| Optimal barbell force-velocity profiles to maximize weightlifting performance (2023, open access) | Bot-blocked for scripts; open it in a browser and save to `papers/` | https://pmc.ncbi.nlm.nih.gov/articles/PMC10437953/ |
