@@ -70,8 +70,10 @@ Bias = mean Δ. Median and max |Δ| are over all reps × offsets, detected reps 
 | B5 Xnet | cm | 5.9 | -0.0 | 0.1 | 0.3 | 0.1 | 0.04 | usable |
 | B8 drop | cm | 1.3 | -0.0 | 0.0 | 0.1 | 0.1 | 0.11 | usable |
 | C1 peak bar velocity | m/s | 0.16 | -0.03 | 0.03 | 0.05 | 0.05 | 0.30 | usable |
-| D4 turnover (to lowest bar velocity) | ms | 55 | 23 | 13 | 79 | 79 | 1.44 | unusable |
-| D4 turnover (to bar catch), alt. | ms | 48 | 16 | 12 | 87 | 87 | 1.83 | unusable |
+| D4 turnover (to lowest bar velocity) | ms | 55 | 23 | 12 | 79 | 79 | 1.44 | unusable |
+| D4 turnover (to bar catch), alt. | ms | 48 | 16 | 12 | 88 | 88 | 1.83 | unusable |
+
+D4 median 12 and alt. max 88 are exact ties, 12.5 and 87.5 ms: times lie on the 1/240 s grid. The first run printed 13 and 87 from float noise; since #44 the deltas are rounded to 9 decimals, so reruns are stable. Ratios and verdicts are unchanged.
 
 ### 60 fps (4 offsets × 6 reps)
 

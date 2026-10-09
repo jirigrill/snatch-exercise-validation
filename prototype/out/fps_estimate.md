@@ -1,6 +1,6 @@
 # Frame-rate estimate (#30): difference from 240 fps vs rep-to-rep spread
 
-6 reps from 20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg, 20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg, 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg, 20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg. Δ = lower rate − 240 fps, same rep. SD = rep-to-rep SD at 240 fps (phase marks: of the event's time after the rep's overhead start). Bias = mean Δ; median and max |Δ| over all reps and start offsets, detected reps only; offset 0 = the ladder file. ratio = max |Δ| / SD. A rep not detected at all makes the marker unusable (snatch.markers.verdict). Group verdict = most common marker verdict (plurality).
+6 reps from 20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg, 20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg, 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg, 20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg. Δ = lower rate − 240 fps, same rep. SD = rep-to-rep SD at 240 fps (phase marks: of the event's time after the rep's overhead start). Bias = mean Δ; median and max |Δ| over all reps and start offsets, detected reps only; offset 0 = the ladder file. ratio = max |Δ| / SD. A rep not detected at all makes the marker unusable (snatch.studies.markers.verdict). Group verdict = most common marker verdict (plurality).
 
 ## 120 fps (2 offsets × 6 reps)
 
@@ -32,8 +32,8 @@
 | B5 Xnet | cm | 5.9 | -0.0 | 0.1 | 0.3 | 0.1 | 0.04 | usable |
 | B8 drop | cm | 1.3 | -0.0 | 0.0 | 0.1 | 0.1 | 0.11 | usable |
 | C1 peak bar velocity | m/s | 0.16 | -0.03 | 0.03 | 0.05 | 0.05 | 0.30 | usable |
-| D4 turnover (to lowest bar velocity) | ms | 55 | 23 | 13 | 79 | 79 | 1.44 | unusable |
-| D4 turnover (to bar catch), alt. | ms | 48 | 16 | 12 | 87 | 87 | 1.83 | unusable |
+| D4 turnover (to lowest bar velocity) | ms | 55 | 23 | 12 | 79 | 79 | 1.44 | unusable |
+| D4 turnover (to bar catch), alt. | ms | 48 | 16 | 12 | 88 | 88 | 1.83 | unusable |
 
 ## 60 fps (4 offsets × 6 reps)
 
