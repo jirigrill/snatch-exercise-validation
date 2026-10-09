@@ -24,7 +24,7 @@ Don't chase misses: lift normally at heavy loads and take the misses that come. 
 4. Phone **level**: use the camera's level indicator. A 1° tilt shifts the bar by about 1.7 cm per metre of rise (marker doc N4).
 5. Frame: the whole lifter and the near plate stay in frame from setup to lockout, with headroom above the bar at full lockout and floor below the feet.
 6. Near side: the **outermost large plate must be a 450 mm bumper** (scale assumption in `plate.npz`). Change plates go inside the bumpers. Collars should be a plain colour.
-7. Lighting: steady. Avoid a skylight or window behind the lifter, which caused the exposure shift in 20261001_7_jiri_v2_powersnatch_5kg_2rep_success_-30deg. Keep the background uncluttered and no one else in frame. **Plate size and background**: keep the camera at about 4 m. On 2026-10-05 it was further away, the plate looked smaller (radius ~96 px, default search 110–260 px), and the tracker followed the medicine balls on the shelf behind it; it passed on `20261005_2` once run with `--radius 70:140`. Round objects behind the plate still make tracking harder, so avoid them. Reps of that session were found from pose instead (`docs/reps.csv`, column `source`).
+7. Lighting: steady. Avoid a skylight or window behind the lifter, which caused the exposure shift in 20261001_7_jiri_v2_powersnatch_5kg_2rep_success_-30deg. Keep the background uncluttered and no one else in frame. **Plate size and background**: at the protocol's 4 m the near plate has a radius of ~97 px (measured on 2026-10-07, `results/33-d1-views.md`). The default search range (110–260 px) was tuned on the 2026-10-01 clips, which were filmed from closer at an unmeasured distance. Clips filmed to the protocol need `--radius 70:140`. Without it the tracker followed the medicine balls on the shelf on 2026-10-05 and the dumbbell rack on 2026-10-07. Round objects behind the plate still make tracking harder, so avoid them. Reps of that session were found from pose instead (`docs/reps.csv`, column `source`).
 8. Don't move the tripod during a session. If it gets bumped, re-level it and log a note.
 
 ## Positioning the camera (5 m tape, no protractor)
@@ -58,6 +58,30 @@ One phone, one session, a light to moderate load (the same load for all sets). P
 
 After the spike, write the chosen view and the final cause list into this file **before** the first gate session.
 
+### Spike result (SP1, 2026-10-07; decided 2026-10-09)
+
+Recorded: 12 clips (`sensitivity-log.csv`). **Not recorded:** the static roll test and the vertical static test, and the second interleaved pass of views. The metric part of D1 is therefore untested.
+
+- **View: side-on (0°), camera on the right, 4 m from the bar centre.** D1 is a no-go (`results/33-d1-views.md`): 30° hides the near knee and wrist just as side-on does, and reads ~9% too large. 45° shows them, but the near plate can't be tracked reliably (far plate and background). 45° can be reopened only with the static tests filmed from 45° and a near-plate tracker.
+- **Plate search at 4 m:** use `--radius 70:140` (plate radius ~97 px).
+- **Scale for body measures:** use k from the far plate in each clip, not the tape geometry (`results/35-body-height.md`).
+- **Hidden near knee:** side-on, use the rebuilt knee (`results/36-skeleton-fill.md`: two circles from hip and ankle, with lengths from the lifter's own unoccluded frames) wherever the plate hides it. RTMPose's own guess there is biased (~3 cm back, 5–8° straighter) and invents knee re-bends.
+- **D2: provisional go** (`results/34-d2-arm-bend.md`). The shoulder-to-hub distance at bar-at-knee, relative to liftoff, separates 2 bent reps from 9 straight ones (0.828–0.846 vs 0.857–0.886). It doesn't flag the bar-far or behind-the-bar reps. The evidence is thin, and the bent reps were not taken overhead.
+
+**Final cause list for gate 1** (from `research/12-feasibility-grill.md` § 4):
+
+| Cause | Signature | Status |
+|---|---|---|
+| Shoulders behind the bar at liftoff | A4 | in |
+| Hips rise faster than shoulders (1st pull) | A5, A1 | in |
+| Bar not brought close in the 1st pull | B2 | in |
+| Bar swings away in the 2nd pull | B3, B1, B5 | in |
+| Incomplete extension | A10, A11 | in, side-on with the rebuilt knee (validated on 4 bar-only pulls; finding a real re-bend is untested) |
+| Early arm bend | A13: shoulder-to-hub ratio at bar-at-knee | in, provisional (D2) |
+| Slow or late turnover | D4, B8, C3 | in |
+| Catch too high or soft | A14, B8 | in |
+| Jump forward/back | E4 | more work, not in gate 1 |
+
 ## Per lift
 
 - **One snatch per clip.** Start recording before the setup and stop after the bar is set down.
@@ -79,6 +103,7 @@ Keep this in `docs/sensitivity-log.csv`. It is created with the first session an
 | `variant` | `squat` / `power` |
 | `result` | `made` / `miss` / `miss_deliberate` |
 | `miss_type` | `forward` (bar dropped in front) / `behind` (bar dropped behind) / `pressout` / `no_turnover` (the bar never gets overhead) / `other` (write it in the notes); blank if made |
+| `fault_deliberate` | a fault made on purpose in a completed lift, e.g. `arm_bend`, `bar_far`, `behind_bar`; blank if none. Ground truth for whether the app flags the fault. Not a miss: `result` stays `made` if the made rule holds |
 | `self_rating` | lifter's feel, 1–5, given **before** watching the video |
 | `notes` | anything unusual: foot slip, camera bumped, someone in frame |
 
