@@ -1,6 +1,6 @@
 """Add real frame times `t` to the per-frame npz files saved before they had them.
 
-usage: uv run python scripts/add_timestamps.py [out/<clip> ...]   (default: every out/<clip>
+usage: uv run python scripts/studies/add_timestamps.py [out/<clip> ...]   (default: every out/<clip>
            with a ../vids/<clip>.MOV)
 rewrites out/<clip>/{person,raw_pose*,plate}.npz with `t` (s, snatch.video.timestamps)
        added; every other array is kept as it is. Files that already have `t` are skipped.

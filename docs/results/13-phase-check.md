@@ -49,4 +49,4 @@ The wrist is never reliably visible. This supports v2's switch from wrist height
 | `prototype/out/review13/<clip>_rep<k>.jpg` | Contact sheets (event ±0.1 s) |
 | `prototype/out/review13/checklist.md` | Verdicts, visibility ticks, reviewer summary |
 | `prototype/out/review13/literature_check.md` | Timing vs literature |
-| `prototype/scripts/review_phases.py`, `check_phases_literature.py` | Generate the above |
+| `prototype/scripts/studies/review_phases.py`, `check_phases_literature.py` | Generate the above |

@@ -14,21 +14,30 @@ The measurement pipeline for the validation (see `../docs/STATUS.md` for what it
 | 3 | `analyze.py` | `raw_pose.npz`, `plate.npz` | `angles.csv`, `phases.json`, `phase_sheet.jpg`, `overlay.mp4` |
 | 4 | `compare_phases.py` | `raw_pose.npz`, `plate.npz` | `phases_v2.json` (the frozen phase definition) |
 
-## Other scripts, by purpose
+## Tools (`scripts/`)
 
-| Purpose | Scripts |
+| Script | What |
 |---|---|
-| Rep lists | `find_reps.py`, `rep_sheets.py` |
-| Frame-rate work (#14, #30) | `build_ladder.py`, `measure_hold.py`, `fps_estimate.py`, `add_timestamps.py` |
-| Phase checks (#13) | `review_phases.py`, `check_phases_literature.py` |
-| Spike session D1 (#23) | `d1_views.py`, `d1_near_plate.py`, `d1_sheets.py` |
-| Spike session D2 (#24) | `arm_bend.py` |
-| Spike session body height (#22) | `body_height.py`, `height_summary.py`, `segment_lengths.py` |
-| Spike session knee and wrist fill-in (#22) | `skeleton_validate.py`, `skeleton_paste.py`, `skeleton_loaded.py`, `skeleton_wrist.py`, `skeleton_camera.py`, `skeleton_sheets.py` |
-| Does a shortcut change the results? | `compare_sparse.py`, `compare_rep_pose.py`, `compare_pose_runs.py` |
-| Tools | `overlay_video.py`, `show_npz.py`, `bench.py` |
+| `find_reps.py`, `rep_sheets.py` | Propose a rep list from the plate hub; one image strip per rep to check it |
+| `overlay_video.py` | Boxes, skeleton and plate outline drawn on a clip |
+| `show_npz.py` | Print what is inside an `.npz` |
+| `bench.py` | Time the detector and the pose model |
 
-Each script's docstring gives its usage, inputs and outputs. The result a script produced is in `../docs/results/`.
+## Studies (`scripts/studies/`)
+
+One-off analyses. Each produced a result in `../docs/results/` and is kept so the result can be rerun.
+
+| Ticket | Scripts |
+|---|---|
+| #13 phase check | `review_phases.py`, `check_phases_literature.py` |
+| #14, #30 frame rate | `build_ladder.py`, `measure_hold.py`, `fps_estimate.py`, `add_timestamps.py` |
+| #23 D1 camera view | `d1_views.py`, `d1_near_plate.py`, `d1_sheets.py` |
+| #24 D2 arm bend | `arm_bend.py` |
+| #22 body height | `body_height.py`, `height_summary.py`, `segment_lengths.py` |
+| #22 knee and wrist fill-in | `skeleton_validate.py`, `skeleton_paste.py`, `skeleton_loaded.py`, `skeleton_wrist.py`, `skeleton_camera.py`, `skeleton_sheets.py` |
+| Does a shortcut change the results? | `compare_sparse.py`, `compare_rep_pose.py`, `compare_pose_runs.py` |
+
+Run them like the others, from `prototype/`: `uv run python scripts/studies/<script>.py`. Each docstring gives usage, inputs and outputs.
 
 ## Library (`src/snatch/`)
 

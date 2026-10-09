@@ -14,7 +14,7 @@ Ticket: [#22](https://github.com/jirigrill/snatch-exercise-validation/issues/22)
 
 ## 1. Method
 
-Code: `prototype/src/snatch/height.py` (+ `tests/test_height.py`), `prototype/scripts/{body_height,height_summary,segment_lengths}.py`. Per-clip output: `prototype/out/<clip>/height.json` and `height_sheet.jpg`.
+Code: `prototype/src/snatch/height.py` (+ `tests/test_height.py`), `prototype/scripts/studies/{body_height,height_summary,segment_lengths}.py`. Per-clip output: `prototype/out/<clip>/height.json` and `height_sheet.jpg`.
 
 | Step | What |
 |---|---|
@@ -127,17 +127,17 @@ The eye-based reading is ~1.3 cm above the direct one. At lockout the head is pu
 ```bash
 cd prototype
 P="20261007_3_jiri_v3_powersnatch_5kg_3rep_success_0deg_right 20261007_4_jiri_v3_squatsnatch_5kg_3rep_success_0deg_right 20261007_8_jiri_v3_powersnatch_7-5kg_3rep_success_0deg_right 20261007_9_jiri_v3_powersnatch_10kg_3rep_success_0deg_right 20261007_11_jiri_v3_powersnatch_5kg_3rep_fail-far-from-body_0deg_right 20261007_12_jiri_v3_powersnatch_5kg_3rep_fail-behind-bar_0deg_right"
-for c in $P; do uv run python scripts/body_height.py ../vids/spike/$c.MOV out/$c; done   # ~15 s each
+for c in $P; do uv run python scripts/studies/body_height.py ../vids/spike/$c.MOV out/$c; done   # ~15 s each
 L=20261007_7_jiri_v3_powersnatch_5kg_3rep_success_0deg_left
-uv run python scripts/body_height.py ../vids/spike/$L.MOV out/$L --side l
+uv run python scripts/studies/body_height.py ../vids/spike/$L.MOV out/$L --side l
 S=$(for c in $P; do printf "out/%s," $c; done); S=${S%,}
 for c in 20261007_1_jiri_v3_standup_bar_3rep_success_0deg_right 20261007_2_jiri_v3_powersnatch_bar_1rep_success_0deg_right; do
-  uv run python scripts/body_height.py ../vids/spike/$c.MOV out/$c --scale-from $S; done
+  uv run python scripts/studies/body_height.py ../vids/spike/$c.MOV out/$c --scale-from $S; done
 ALL="$(for c in $P; do printf "out/%s " $c; done) out/$L out/20261007_1_jiri_v3_standup_bar_3rep_success_0deg_right out/20261007_2_jiri_v3_powersnatch_bar_1rep_success_0deg_right"
-uv run python scripts/height_summary.py --scale-clips $S $ALL              # k from the far plate
-uv run python scripts/height_summary.py --scale-clips $S --k 0.829 $ALL    # tape + bar geometry (also 0.808, 0.824, 0.833)
-uv run python scripts/segment_lengths.py out/20261007_1_jiri_v3_standup_bar_3rep_success_0deg_right ...
-uv run python scripts/body_height.py ../vids/20261005_6_jiri_v2_standup_10kg_2rep_success_0deg.MOV out/20261005_6_jiri_v2_standup_10kg_2rep_success_0deg --k 0.811
+uv run python scripts/studies/height_summary.py --scale-clips $S $ALL              # k from the far plate
+uv run python scripts/studies/height_summary.py --scale-clips $S --k 0.829 $ALL    # tape + bar geometry (also 0.808, 0.824, 0.833)
+uv run python scripts/studies/segment_lengths.py out/20261007_1_jiri_v3_standup_bar_3rep_success_0deg_right ...
+uv run python scripts/studies/body_height.py ../vids/20261005_6_jiri_v2_standup_10kg_2rep_success_0deg.MOV out/20261005_6_jiri_v2_standup_10kg_2rep_success_0deg --k 0.811
 ```
 
 Run in zsh, `$P`/`$ALL` need `${=P}`; or run the block in bash.

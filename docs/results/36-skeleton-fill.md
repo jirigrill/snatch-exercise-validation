@@ -189,12 +189,12 @@ Rebuilt vs RTMPose's knee in hidden frames (median cm / p90; forward = rebuilt m
 
 ```bash
 cd prototype
-uv run python scripts/skeleton_camera.py      # camera / depth check            (~1 min) -> out/skeleton/camera.md
-uv run python scripts/skeleton_validate.py    # synthetic occlusion, C1/C2     (~10 s)  -> validate.md, validate_curves.png
-uv run python scripts/skeleton_wrist.py       # collar track, wrist offsets     (~1 min) -> collar_{1,2}.npz, wrist.md, wrist_sheet.jpg
-uv run python scripts/skeleton_paste.py --rerun   # pasted plate + RTMPose (~2 min; without --rerun it reuses paste_{1,2}.npz) -> paste.md, paste_sheet.jpg
-uv run python scripts/skeleton_loaded.py      # loaded clips: hidden %, agreement, re-bend, lengths, wrist (~30 s) -> loaded.md
-uv run python scripts/skeleton_sheets.py      # sheet_c1.jpg, sheet_loaded.jpg  (~1 min)
+uv run python scripts/studies/skeleton_camera.py      # camera / depth check            (~1 min) -> out/skeleton/camera.md
+uv run python scripts/studies/skeleton_validate.py    # synthetic occlusion, C1/C2     (~10 s)  -> validate.md, validate_curves.png
+uv run python scripts/studies/skeleton_wrist.py       # collar track, wrist offsets     (~1 min) -> collar_{1,2}.npz, wrist.md, wrist_sheet.jpg
+uv run python scripts/studies/skeleton_paste.py --rerun   # pasted plate + RTMPose (~2 min; without --rerun it reuses paste_{1,2}.npz) -> paste.md, paste_sheet.jpg
+uv run python scripts/studies/skeleton_loaded.py      # loaded clips: hidden %, agreement, re-bend, lengths, wrist (~30 s) -> loaded.md
+uv run python scripts/studies/skeleton_sheets.py      # sheet_c1.jpg, sheet_loaded.jpg  (~1 min)
 uv run pytest
 ```
 

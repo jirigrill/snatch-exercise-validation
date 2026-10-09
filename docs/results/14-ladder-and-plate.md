@@ -8,7 +8,7 @@ Ticket: [#14](https://github.com/jirigrill/snatch-exercise-validation/issues/14)
 - **Hold:** the standing hold in 20261001_2_jiri_v1_standup_5kg_1rep_success_0deg is **1.42 s (340 frames, f1151–f1490)**.
 - **Phase definition v2** (hub height in place of wrist height, plus the v2.1 transition rule chosen by the lifter after seeing 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg) is written down and frozen. On 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg it moves **setup ~0.3 s earlier** (v1 was late, see below). Transition, catch and lockout land on the same frames as v1.
 
-Code: `prototype/src/snatch/{ladder,plate}.py`, `prototype/scripts/{build_ladder,track_plate,measure_hold,compare_phases}.py`.
+Code: `prototype/src/snatch/{ladder,plate}.py`, `prototype/scripts/{track_plate,compare_phases}.py`, `prototype/scripts/studies/{build_ladder,measure_hold}.py`.
 
 ## 1. Frame-rate ladder
 
@@ -46,7 +46,7 @@ Every count is ⌈n / step⌉ and matches the original's `nb_frames`. The origin
 
 ```
 cd prototype
-uv run python scripts/build_ladder.py ../vids          # ~3 min per clip
+uv run python scripts/studies/build_ladder.py ../vids          # ~3 min per clip
 ```
 
 ## 2. Plate tracking
@@ -118,7 +118,7 @@ uv run python scripts/track_plate.py ../vids/20261001_6_jiri_v1_powersnatch_5kg_
 
 ## 3. Standing hold in 20261001_2_jiri_v1_standup_5kg_1rep_success_0deg (noise-floor sample)
 
-**1.417 s = 340 frames, f1151–f1490 (4.796–6.208 s).** Output: `prototype/out/20261001_2_jiri_v1_standup_5kg_1rep_success_0deg/hold.json`, from `scripts/measure_hold.py`.
+**1.417 s = 340 frames, f1151–f1490 (4.796–6.208 s).** Output: `prototype/out/20261001_2_jiri_v1_standup_5kg_1rep_success_0deg/hold.json`, from `scripts/studies/measure_hold.py`.
 
 Definition: the longest run where the hub is found and above the knee keypoints (bar off the floor, at the hips), and its smoothed height stays within a **2 cm band** (15 px at the plate's own scale). Horizontal sway is allowed, since it is part of standing still: the hub drifts 26 px ≈ 3.5 cm forward and back. During the hold, knee angle is 170.5–180° and the hub sits 64 px (~8.5 cm) below the hip keypoints.
 

@@ -1,6 +1,6 @@
 """Segment lengths (cm) from the near-side keypoints of the standing frames (body_height.py).
 
-usage: uv run python scripts/segment_lengths.py out/<clip> [out/<clip> ...] [--side r|l]
+usage: uv run python scripts/studies/segment_lengths.py out/<clip> [out/<clip> ...] [--side r|l]
 reads  out/<clip>/raw_pose.npz, out/<clip>/height.json (frames, px_per_m_mid)
 writes nothing; prints a markdown table (median over the clip's frames)
 

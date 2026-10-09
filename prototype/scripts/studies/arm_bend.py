@@ -1,6 +1,6 @@
 """D2 early arm bend: 2D shoulder-to-hub distance and elbow angle per rep.
 
-usage: uv run python scripts/arm_bend.py [--no-grabs] label=out/<clip> [label=out/<clip> …]
+usage: uv run python scripts/studies/arm_bend.py [--no-grabs] label=out/<clip> [label=out/<clip> …]
        e.g. straight30=out/20261007_9_… bent30=out/20261007_10_… straight25=out/20261007_3_…
 reads  out/<clip>/raw_pose.npz, plate.npz; the clip from ../vids/spike or ../vids
 writes out/<clip>/arm_bend.json (per rep), out/<clip>/arm_bend_sheet.jpg (frame

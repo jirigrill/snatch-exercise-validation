@@ -1,6 +1,6 @@
 """Plausibility check of v2 phase marks against published snatch phase cues (#13).
 
-usage: uv run python scripts/check_phases_literature.py
+usage: uv run python scripts/studies/check_phases_literature.py
 writes out/review13/literature_check.md
 
 Cues (Harbili 2012: phases from change in direction of knee angle and bar height;

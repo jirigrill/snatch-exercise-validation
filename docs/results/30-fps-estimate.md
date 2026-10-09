@@ -9,7 +9,7 @@ Ticket: [#30](https://github.com/jirigrill/snatch-exercise-validation/issues/30)
 - **The catch mark and turnover (D4) fail at every rate, 120 included.** That comes from how they are defined, not from the frame rate (see §2). They need a more stable definition before any rate can be judged.
 - **Approximation only.** Pose and plate were tracked at 240 fps and then thinned. #15 gives the exact answer.
 
-Code: `prototype/src/snatch/markers.py` (bar markers B2–B5, B8, C1, D4 and the verdict rule), `prototype/scripts/fps_estimate.py`. Output: `prototype/out/fps_estimate.{md,json}`.
+Code: `prototype/src/snatch/markers.py` (bar markers B2–B5, B8, C1, D4 and the verdict rule), `prototype/scripts/studies/fps_estimate.py`. Output: `prototype/out/fps_estimate.{md,json}`.
 
 ## 1. Method
 

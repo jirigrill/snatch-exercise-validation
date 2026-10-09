@@ -35,7 +35,7 @@ Ticket: [#18](https://github.com/jirigrill/snatch-exercise-validation/issues/18)
 - `A:` = column in `prototype/out/<clip>/angles.csv`.
 - `P:` = field in `plate.npz`.
 - `E:` = event frame in `phases_v2.json`: `setup`, `transition`, `catch`, `lockout`, `overhead_start`, `overhead_end`. These are v2 marks, frozen and accepted in #13.
-- `vy` = upward bar speed = −Δ`hub_y` · `fps` ÷ `px_per_m`, as already computed in `scripts/check_phases_literature.py`.
+- `vy` = upward bar speed = −Δ`hub_y` · `fps` ÷ `px_per_m`, as already computed in `scripts/studies/check_phases_literature.py`.
 - **bar catch** = the lowest hub point after peak height (Shah, PDF p. 8). It is **not** `E:catch`, which is the lowest hip; the two are −19…+31 frames apart (#13).
 - Image axes: the lifter faces +x (camera on the lifter's right, `snatch/angles.py`), so **"toward the lifter" = −x**. y grows downward.
 

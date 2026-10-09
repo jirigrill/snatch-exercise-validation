@@ -1,6 +1,6 @@
 """Build the 120/60/30 fps ladder for every clip and verify it frame by frame.
 
-usage: uv run python scripts/build_ladder.py ../vids [clip ...]
+usage: uv run python scripts/studies/build_ladder.py ../vids [clip ...]
 writes ../vids/ladder/<clip>_<fps>fps.MOV (gitignored, next to the
        originals, which are only read), out/ladder.json
 """

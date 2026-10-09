@@ -1,8 +1,8 @@
 """Synthetic plate on the bar-only clips: how good is RTMPose's own guess of a hidden knee?
 
-usage: uv run python scripts/skeleton_paste.py          (~2 min, RTMPose on ~1200 frames)
+usage: uv run python scripts/studies/skeleton_paste.py          (~2 min, RTMPose on ~1200 frames)
 reads  ../vids/spike/{C1,C2}.MOV, out/{C1,C2}/raw_pose.npz, person.npz,
-       out/skeleton/collar_{1,2}.npz (scripts/skeleton_wrist.py: the near collar),
+       out/skeleton/collar_{1,2}.npz (scripts/studies/skeleton_wrist.py: the near collar),
        a real near plate from ../vids/spike/<P3>.MOV (P3 = 20261007_3_..._5kg_..., frame
        PLATE_FRAME, outline from out/<P3>/plate.npz)
 writes out/skeleton/paste_{1,2}.npz (keypoints/scores of RTMPose on the pasted frames),

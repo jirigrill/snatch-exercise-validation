@@ -1,8 +1,8 @@
 """Frame grabs for the D1 visibility check (docs/results/33-d1-views.md).
 
-usage: uv run python scripts/d1_sheets.py ../vids/spike/<clip>.MOV out/<clip> [--near]
+usage: uv run python scripts/studies/d1_sheets.py ../vids/spike/<clip>.MOV out/<clip> [--near]
 reads  out/<clip>/raw_pose.npz, plate.npz (plate_near.npz with --near, where
-       present), d1_views.json (scripts/d1_views.py, run with the same plate)
+       present), d1_views.json (scripts/studies/d1_views.py, run with the same plate)
 writes out/<clip>/d1_sheet.jpg  one row per rep: setup, hub at knee,
            transition, mid 2nd pull, peak extension; lifter crop with the
            near side (yellow, dot red if score < 0.5), far side (grey) and the

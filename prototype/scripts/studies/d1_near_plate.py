@@ -1,6 +1,6 @@
 """Near-plate tracking for oblique views, with a pose prior (D1 diagnostic only).
 
-usage: uv run python scripts/d1_near_plate.py ../vids/spike/<clip>.MOV out/<clip> --radius LO:HI
+usage: uv run python scripts/studies/d1_near_plate.py ../vids/spike/<clip>.MOV out/<clip> --radius LO:HI
 reads  out/<clip>/raw_pose.npz
 writes out/<clip>/plate_near.npz (same fields as plate.npz), plate_near_check.jpg
 

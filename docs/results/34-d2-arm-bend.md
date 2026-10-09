@@ -27,7 +27,7 @@ Ticket: [#22](https://github.com/jirigrill/snatch-exercise-validation/issues/22)
 
 ## Method
 
-`snatch/armbend.py`, `scripts/arm_bend.py`:
+`snatch/armbend.py`, `scripts/studies/arm_bend.py`:
 - **Near side:** the right shoulder, elbow and wrist, smoothed.
 - **Hub:** from `plate.npz`. Side-on, the near wrist sits inside the plate outline in every pull frame (`36-skeleton-fill.md`), so the hub stands in for the hand.
 - **Events per v2 rep:**
@@ -74,7 +74,7 @@ Separation against all 9 straight reps (gap > 0 means no overlap):
 
 ```
 cd prototype
-uv run python scripts/arm_bend.py straight30=out/20261007_9_jiri_v3_powersnatch_10kg_3rep_success_0deg_right \
+uv run python scripts/studies/arm_bend.py straight30=out/20261007_9_jiri_v3_powersnatch_10kg_3rep_success_0deg_right \
   bent30=out/20261007_10_jiri_v3_powersnatch_10kg_3rep_fail-bend-elbows_0deg_right \
   straight25=out/20261007_3_jiri_v3_powersnatch_5kg_3rep_success_0deg_right \
   straight27=out/20261007_8_jiri_v3_powersnatch_7-5kg_3rep_success_0deg_right \
