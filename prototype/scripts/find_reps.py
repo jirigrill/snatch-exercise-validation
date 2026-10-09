@@ -4,8 +4,8 @@ usage: uv run python scripts/find_reps.py ../vids
 reads  out/<clip>/plate.npz; where its track failed the check, pose instead:
        out/<clip>/raw_pose_sparse.npz (extract_pose.py --every N) or
        raw_pose.npz taken at every 8th frame; out/<clip>/phases.json for the bar-only clip
-writes out/reps_proposed.csv  proposed rows; copy into docs/reps.csv and
-           correct there (docs/reps.csv is hand-checked: never written here)
+writes out/reps_proposed.csv  proposed rows, not hand-checked (a checked rep
+           list is deferred to the gate 1 set, #20)
        out/reps_check/<clip>.png  hub height with the proposed lifts shaded,
            to check the boundaries against
 

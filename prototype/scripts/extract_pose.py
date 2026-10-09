@@ -1,7 +1,7 @@
 """Pose the lifter in every frame (RTMPose-x) and save the raw output to .npz.
 
 usage: uv run python scripts/extract_pose.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg
-       [--reps ../docs/reps.csv | --every N] [--person person.npz] [--name raw_pose]
+       [--reps out/reps_proposed.csv | --every N] [--person person.npz] [--name raw_pose]
        [--overlay [--overlay-step 4]]
 reads  the lifter's box per frame from out/<clip>/person.npz (scripts/extract_person.py,
        run it first; --person names another file)
