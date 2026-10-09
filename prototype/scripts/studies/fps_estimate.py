@@ -101,7 +101,9 @@ for clip in CLIPS:
                 for k in keys:
                     if math.isnan(b[k]):
                         continue  # not detected at 240 fps either: not the lower rate's miss
-                    d = m[k] - b[k] if m else math.nan
+                    # round off float noise from per-frame timestamps (#44): times lie on the
+                    # 1/240 s grid, and a median of two grid values can be an exact .5 tie
+                    d = round(m[k] - b[k], 9) if m else math.nan
                     deltas[fps].setdefault(k, []).append(d)
                     if off == 0:
                         deltas0[fps].setdefault(k, []).append(d)
