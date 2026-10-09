@@ -18,7 +18,7 @@ The prior leans NO-GO (research #1–#8). A gate 1 failure ends the project.
 The pipeline works end to end and all spike session results are in. Test 1 is waiting for the full run on all clips (#15). Gate 1 is waiting for the camera view and cause list to be fixed (#25); its two blockers D1 (#23) and D2 (#24) are closed. D1 said side-on stays. D2 said provisional go, with thin evidence.
 
 **Next on the critical path.**
-1. #25 fix the view (side-on) and the cause list in `recording-protocol.md`. The issue label still says `blocked`, but #23 and #24 are closed. Check the label.
+1. #25 fix the view (side-on) and the cause list in `recording-protocol.md`. Unblocked on 2026-10-09.
 2. #15 run RTMPose-x on all clips and frame rates against the locked rule.
 3. #26 phase detection for squat snatch. The spike session has squat clips now.
 4. Record the gate set (#20), build the cause engine (#27), score gate 1 (#28).
@@ -73,6 +73,3 @@ Spike session side results: body height 174.5 ± 3 cm in shoes ([results/35](res
 
 Research #1–#8 (market, fit, competitors, graveyard, feasibility, economics, platform, LLM substitution) are closed. Their files are in [`research/`](research/). Their combined lean is NO-GO.
 
-## Known gaps
-
-- `docs/reps.csv` (the hand-checked rep list) is cited by `recording-protocol.md`, `clip-log.md`, `find_reps.py` and `extract_pose.py --reps`, but it is not in the repo and was never committed. Rep ranges exist only as proposals in `prototype/out/reps_proposed.csv`.

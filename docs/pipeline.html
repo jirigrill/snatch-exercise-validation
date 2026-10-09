@@ -297,7 +297,7 @@ flowchart TB
   H --> CSV["Proposed rep list<br/>out/reps_proposed.csv"]
   W --> CSV
   CSV --> SH["Pictures of each rep<br/>to check by eye"]
-  SH --> R["Checked rep list<br/>docs/reps.csv"]
+  SH --> R["Proposed rep list<br/>out/reps_proposed.csv"]
   R --> EP["① again, but only<br/>on the rep frames"]
   classDef n fill:#efe6fb,stroke:#8a4fd1
   class Q,H,SP,W,CSV,SH,R,EP n
@@ -375,7 +375,7 @@ hand the pictures out one at a time`,
     time:"Not a separate step: it runs inside ⓪, ①, ②, ③ and the overlay video (a few seconds per pass)." },
   pose: { t:"① Find the body (extract_pose.py)", tag:"pose",
     what:"For every frame, finds where the lifter's joints are: 17 points like shoulders, hips, knees and wrists. It looks only inside the lifter's box that ⓪ saved.",
-    in:"<code>vids/&lt;clip&gt;.MOV</code> and <code>out/&lt;clip&gt;/person.npz</code> (run ⓪ first). Optional: <code>--reps docs/reps.csv</code> (only rep frames) or <code>--every 8</code> (every 8th frame).",
+    in:"<code>vids/&lt;clip&gt;.MOV</code> and <code>out/&lt;clip&gt;/person.npz</code> (run ⓪ first). Optional: <code>--reps out/reps_proposed.csv</code> (only rep frames) or <code>--every 8</code> (every 8th frame).",
     how:`read options (--reps / --every / --name / --person)
 load person.npz (stop if it is missing)
 if a progress file exists: load it, continue from there
@@ -495,7 +495,7 @@ once per clip: fps, size, rotation, model name,
     time:"—" },
   ranges: { t:"Only some frames (--reps / --every)", tag:"new",
     what:"Lets ① skip frames nobody needs, e.g. the walking around between reps.",
-    in:"<code>--reps docs/reps.csv</code>: the start and end frame of each rep. <code>--every 8</code>: every 8th frame.",
+    in:"<code>--reps out/reps_proposed.csv</code>: the start and end frame of each rep. <code>--every 8</code>: every 8th frame.",
     how:`if frame is inside a rep (or is every 8th)
     process it
 else
@@ -727,7 +727,7 @@ the end of the rep:
     add a margin before and after each lift
     compare the number found with the number in the file name
 write the proposed list and a check picture per clip`,
-    out:"<code>out/reps_proposed.csv</code>, <code>out/reps_check/</code>. A person checks it and copies it into <code>docs/reps.csv</code>; the script never writes there.",
+    out:"<code>out/reps_proposed.csv</code>, <code>out/reps_check/</code>. Proposals, not hand-checked; a checked list is deferred to the gate 1 set (#20).",
     time:"find_reps: a few seconds for all clips. Quick body pass if needed: ~2 min per clip (mostly ⓪). rep_sheets: ~20 s per clip." },
   lifts_plate: { t:"Find lifts from the plate's height", tag:"new",
     what:"Uses the plate's height above the floor to see when the bar is lifted.",
@@ -756,15 +756,15 @@ if no lift found: look for holds (wrists above mid-thigh)`,
     out:"Start and end frame of each lift.", time:"Instant." },
   rep_sheets: { t:"Pictures of each rep", tag:"new",
     what:"One strip of 8 stills per rep, to check by eye that the start and end are right.",
-    in:"<code>out/reps_proposed.csv</code> (or <code>docs/reps.csv</code>), the video.",
+    in:"<code>out/reps_proposed.csv</code>, the video.",
     how:`for each rep take frames at:
     margin start, lift start, 4 points inside,
     lift end, margin end
 put them side by side with the frame number`,
     out:"<code>out/reps_check/&lt;clip&gt;_rep&lt;k&gt;.jpg</code>", time:"~20 s per clip." },
-  reps_csv: { t:"Checked rep list (docs/reps.csv)", tag:"new",
-    what:"The list of reps a person has checked. This is what later steps use.",
-    in:"A copy of the proposed list, corrected by hand.",
+  reps_csv: { t:"Proposed rep list (out/reps_proposed.csv)", tag:"new",
+    what:"The proposed reps from find_reps.py. Not hand-checked yet; a checked list is deferred to the gate 1 set (#20).",
+    in:"<code>find_reps.py</code>.",
     how:`one row per rep:
     clip, rep number
     start and end frame of the lift

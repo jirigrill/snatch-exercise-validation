@@ -1,7 +1,7 @@
 """One image strip per rep, to check the rep list's boundaries by eye.
 
 usage: uv run python scripts/rep_sheets.py out/reps_proposed.csv [clip ...]
-reads  the rep list (out/reps_proposed.csv or docs/reps.csv), ../vids/<clip>.MOV
+reads  the rep list (out/reps_proposed.csv), ../vids/<clip>.MOV
 writes out/reps_check/<clip>_rep<k>.jpg  frames: pose_start, start (liftoff),
            4 evenly spaced inside the lift, end (bar down), pose_end
 """
