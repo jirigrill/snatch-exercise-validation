@@ -1,0 +1,977 @@
+{
+ "clip": "20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right",
+ "plate_file": "plate_near.npz",
+ "fps": 240.0,
+ "definition": "v1/v1/v1",
+ "n_reps": 3,
+ "plate": {
+  "status": "near-plate prior; found 90.2% of lift frames, 4 jumps",
+  "model": "ellipse",
+  "found_pct": 46.885,
+  "ellipse_fit_pct": 46.853,
+  "near_plate_in_lifts_pct": 84.021,
+  "far_or_other_in_lifts_pct": 6.364,
+  "jumps": 4,
+  "rest_frames": 362,
+  "axis_ratio_rest": 0.864,
+  "view_deg_rest": 30.238,
+  "view_deg_all_median": 34.349,
+  "view_deg_all_p10_p90": [
+   26.262,
+   37.829
+  ],
+  "major_tilt_deg": -18.206,
+  "major_px": 78.328,
+  "px_per_m": 348.124,
+  "px_per_m_cv_pct": 4.658,
+  "hub_jitter_rest_px": [
+   2.552,
+   2.952
+  ],
+  "hub_jitter_lift_px": [
+   2.338,
+   4.07
+  ],
+  "hub_jitter_rest_mm": [
+   7.332,
+   8.479
+  ],
+  "hub_jitter_lift_mm": [
+   6.716,
+   11.69
+  ]
+ },
+ "reps": [
+  {
+   "x_at_height_cm": {
+    "25": [
+     4.296,
+     3.711,
+     100.0
+    ],
+    "50": [
+     3.756,
+     3.245,
+     100.0
+    ],
+    "75": [
+     4.198,
+     3.626,
+     100.0
+    ]
+   },
+   "rep": 1,
+   "definition": "v1",
+   "setup": 1006,
+   "hub_at_knee": 1115,
+   "transition": 1130,
+   "peak_ext": 1181,
+   "catch": 1337,
+   "lockout": 1646,
+   "overhead_start": 1223,
+   "hub_found_pull_pct": 100.0,
+   "keypoints": {
+    "shoulder": {
+     "pull": {
+      "near_score_mean": 0.789,
+      "near_score_min": 0.719,
+      "far_score_mean": 0.819,
+      "near_jitter_mm": 2.941,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 17.524
+     },
+     "transition": {
+      "near_score_mean": 0.792,
+      "near_score_min": 0.767,
+      "far_score_mean": 0.818,
+      "near_jitter_mm": 3.46,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 17.483
+     }
+    },
+    "elbow": {
+     "pull": {
+      "near_score_mean": 0.809,
+      "near_score_min": 0.634,
+      "far_score_mean": 0.893,
+      "near_jitter_mm": 4.02,
+      "behind_plate_pct": 3.977,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 28.791
+     },
+     "transition": {
+      "near_score_mean": 0.834,
+      "near_score_min": 0.784,
+      "far_score_mean": 0.883,
+      "near_jitter_mm": 3.888,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 31.065
+     }
+    },
+    "wrist": {
+     "pull": {
+      "near_score_mean": 0.707,
+      "near_score_min": 0.554,
+      "far_score_mean": 0.878,
+      "near_jitter_mm": 9.965,
+      "behind_plate_pct": 100.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 40.851
+     },
+     "transition": {
+      "near_score_mean": 0.738,
+      "near_score_min": 0.711,
+      "far_score_mean": 0.859,
+      "near_jitter_mm": 5.735,
+      "behind_plate_pct": 100.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 39.762
+     }
+    },
+    "hip": {
+     "pull": {
+      "near_score_mean": 0.739,
+      "near_score_min": 0.627,
+      "far_score_mean": 0.709,
+      "near_jitter_mm": 9.355,
+      "behind_plate_pct": 19.318,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 17.243
+     },
+     "transition": {
+      "near_score_mean": 0.697,
+      "near_score_min": 0.627,
+      "far_score_mean": 0.722,
+      "near_jitter_mm": 4.06,
+      "behind_plate_pct": 57.143,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 15.956
+     }
+    },
+    "knee": {
+     "pull": {
+      "near_score_mean": 0.794,
+      "near_score_min": 0.65,
+      "far_score_mean": 0.853,
+      "near_jitter_mm": 3.458,
+      "behind_plate_pct": 21.023,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 18.465
+     },
+     "transition": {
+      "near_score_mean": 0.798,
+      "near_score_min": 0.7,
+      "far_score_mean": 0.844,
+      "near_jitter_mm": 3.272,
+      "behind_plate_pct": 44.898,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 16.979
+     }
+    },
+    "ankle": {
+     "pull": {
+      "near_score_mean": 0.811,
+      "near_score_min": 0.716,
+      "far_score_mean": 0.859,
+      "near_jitter_mm": 5.599,
+      "behind_plate_pct": 46.591,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 13.818
+     },
+     "transition": {
+      "near_score_mean": 0.854,
+      "near_score_min": 0.833,
+      "far_score_mean": 0.865,
+      "near_jitter_mm": 2.24,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 13.815
+     }
+    },
+    "seg_thigh": {
+     "pull": {
+      "len_cm": 29.984,
+      "len_cv_pct": 13.086,
+      "len_jitter_mm": 8.116
+     },
+     "transition": {
+      "len_cm": 33.225,
+      "len_cv_pct": 3.524,
+      "len_jitter_mm": 3.384
+     }
+    },
+    "seg_shank": {
+     "pull": {
+      "len_cm": 36.547,
+      "len_cv_pct": 4.71,
+      "len_jitter_mm": 4.706
+     },
+     "transition": {
+      "len_cm": 36.904,
+      "len_cv_pct": 1.394,
+      "len_jitter_mm": 1.92
+     }
+    },
+    "seg_upper_arm": {
+     "pull": {
+      "len_cm": 25.718,
+      "len_cv_pct": 20.914,
+      "len_jitter_mm": 3.232
+     },
+     "transition": {
+      "len_cm": 21.537,
+      "len_cv_pct": 13.503,
+      "len_jitter_mm": 3.135
+     }
+    },
+    "seg_forearm": {
+     "pull": {
+      "len_cm": 24.609,
+      "len_cv_pct": 22.757,
+      "len_jitter_mm": 6.066
+     },
+     "transition": {
+      "len_cm": 23.879,
+      "len_cv_pct": 5.403,
+      "len_jitter_mm": 3.976
+     }
+    }
+   },
+   "bar_rect": {
+    "peak_frame": 1250,
+    "bar_catch_frame": 1372,
+    "x1_cm": 0.201,
+    "x2_cm": 11.183,
+    "xloop_cm": 67.741,
+    "xnet_cm": -64.159,
+    "drop_cm": 94.582,
+    "peak_v_m_s": 3.063,
+    "turnover_s": 0.796,
+    "turnover_to_bar_catch_s": 0.854,
+    "peak_height_cm": 151.565
+   },
+   "bar_unrect": {
+    "peak_frame": 1250,
+    "bar_catch_frame": 1372,
+    "x1_cm": 0.173,
+    "x2_cm": 9.662,
+    "xloop_cm": 58.525,
+    "xnet_cm": -55.43,
+    "drop_cm": 94.582,
+    "peak_v_m_s": 3.063,
+    "turnover_s": 0.796,
+    "turnover_to_bar_catch_s": 0.854
+   },
+   "rest_before_cm": [
+    1.836,
+    -0.457
+   ]
+  },
+  {
+   "x_at_height_cm": {
+    "25": [
+     2.925,
+     2.527,
+     100.0
+    ],
+    "50": [
+     1.967,
+     1.7,
+     100.0
+    ],
+    "75": [
+     1.171,
+     1.012,
+     100.0
+    ]
+   },
+   "rep": 2,
+   "definition": "v1",
+   "setup": 2643,
+   "hub_at_knee": 2746,
+   "transition": 2758,
+   "peak_ext": 2802,
+   "catch": 2959,
+   "lockout": 3117,
+   "overhead_start": 2852,
+   "hub_found_pull_pct": 100.0,
+   "keypoints": {
+    "shoulder": {
+     "pull": {
+      "near_score_mean": 0.778,
+      "near_score_min": 0.706,
+      "far_score_mean": 0.817,
+      "near_jitter_mm": 3.07,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 16.662
+     },
+     "transition": {
+      "near_score_mean": 0.802,
+      "near_score_min": 0.785,
+      "far_score_mean": 0.826,
+      "near_jitter_mm": 3.193,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 17.151
+     }
+    },
+    "elbow": {
+     "pull": {
+      "near_score_mean": 0.825,
+      "near_score_min": 0.742,
+      "far_score_mean": 0.892,
+      "near_jitter_mm": 2.635,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 27.22
+     },
+     "transition": {
+      "near_score_mean": 0.852,
+      "near_score_min": 0.823,
+      "far_score_mean": 0.896,
+      "near_jitter_mm": 2.954,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 29.428
+     }
+    },
+    "wrist": {
+     "pull": {
+      "near_score_mean": 0.718,
+      "near_score_min": 0.621,
+      "far_score_mean": 0.872,
+      "near_jitter_mm": 6.349,
+      "behind_plate_pct": 100.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 39.061
+     },
+     "transition": {
+      "near_score_mean": 0.747,
+      "near_score_min": 0.728,
+      "far_score_mean": 0.867,
+      "near_jitter_mm": 4.542,
+      "behind_plate_pct": 100.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 38.566
+     }
+    },
+    "hip": {
+     "pull": {
+      "near_score_mean": 0.72,
+      "near_score_min": 0.638,
+      "far_score_mean": 0.699,
+      "near_jitter_mm": 8.494,
+      "behind_plate_pct": 21.875,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 17.264
+     },
+     "transition": {
+      "near_score_mean": 0.699,
+      "near_score_min": 0.638,
+      "far_score_mean": 0.732,
+      "near_jitter_mm": 5.081,
+      "behind_plate_pct": 55.102,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 16.373
+     }
+    },
+    "knee": {
+     "pull": {
+      "near_score_mean": 0.786,
+      "near_score_min": 0.681,
+      "far_score_mean": 0.84,
+      "near_jitter_mm": 3.995,
+      "behind_plate_pct": 20.625,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 17.721
+     },
+     "transition": {
+      "near_score_mean": 0.797,
+      "near_score_min": 0.699,
+      "far_score_mean": 0.846,
+      "near_jitter_mm": 5.297,
+      "behind_plate_pct": 48.98,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 16.917
+     }
+    },
+    "ankle": {
+     "pull": {
+      "near_score_mean": 0.802,
+      "near_score_min": 0.705,
+      "far_score_mean": 0.858,
+      "near_jitter_mm": 4.583,
+      "behind_plate_pct": 46.25,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 13.748
+     },
+     "transition": {
+      "near_score_mean": 0.862,
+      "near_score_min": 0.841,
+      "far_score_mean": 0.87,
+      "near_jitter_mm": 2.996,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 13.765
+     }
+    },
+    "seg_thigh": {
+     "pull": {
+      "len_cm": 29.929,
+      "len_cv_pct": 10.681,
+      "len_jitter_mm": 7.362
+     },
+     "transition": {
+      "len_cm": 32.366,
+      "len_cv_pct": 3.879,
+      "len_jitter_mm": 2.978
+     }
+    },
+    "seg_shank": {
+     "pull": {
+      "len_cm": 35.699,
+      "len_cv_pct": 6.215,
+      "len_jitter_mm": 4.039
+     },
+     "transition": {
+      "len_cm": 36.938,
+      "len_cv_pct": 2.373,
+      "len_jitter_mm": 3.283
+     }
+    },
+    "seg_upper_arm": {
+     "pull": {
+      "len_cm": 25.816,
+      "len_cv_pct": 17.592,
+      "len_jitter_mm": 2.277
+     },
+     "transition": {
+      "len_cm": 22.689,
+      "len_cv_pct": 12.061,
+      "len_jitter_mm": 2.165
+     }
+    },
+    "seg_forearm": {
+     "pull": {
+      "len_cm": 24.71,
+      "len_cv_pct": 11.008,
+      "len_jitter_mm": 5.127
+     },
+     "transition": {
+      "len_cm": 24.008,
+      "len_cv_pct": 3.561,
+      "len_jitter_mm": 3.539
+     }
+    }
+   },
+   "bar_rect": {
+    "peak_frame": 2879,
+    "bar_catch_frame": 2971,
+    "x1_cm": 0.509,
+    "x2_cm": 18.093,
+    "xloop_cm": 19.321,
+    "xnet_cm": -24.335,
+    "drop_cm": 12.085,
+    "peak_v_m_s": 10.435,
+    "turnover_s": 0.304,
+    "turnover_to_bar_catch_s": 0.608,
+    "peak_height_cm": 145.245
+   },
+   "bar_unrect": {
+    "peak_frame": 2879,
+    "bar_catch_frame": 2971,
+    "x1_cm": 0.439,
+    "x2_cm": 15.632,
+    "xloop_cm": 16.693,
+    "xnet_cm": -21.024,
+    "drop_cm": 12.085,
+    "peak_v_m_s": 10.435,
+    "turnover_s": 0.304,
+    "turnover_to_bar_catch_s": 0.608
+   },
+   "rest_before_cm": [
+    1.167,
+    0.047
+   ]
+  },
+  {
+   "x_at_height_cm": {
+    "25": [
+     5.054,
+     4.366,
+     100.0
+    ],
+    "50": [
+     4.813,
+     4.158,
+     100.0
+    ],
+    "75": [
+     4.516,
+     3.901,
+     100.0
+    ]
+   },
+   "rep": 3,
+   "definition": "v1",
+   "setup": 4341,
+   "hub_at_knee": 4435,
+   "transition": null,
+   "peak_ext": 4487,
+   "catch": 4699,
+   "lockout": 4970,
+   "overhead_start": 4536,
+   "hub_found_pull_pct": 100.0,
+   "keypoints": {
+    "shoulder": {
+     "pull": {
+      "near_score_mean": 0.809,
+      "near_score_min": 0.731,
+      "far_score_mean": 0.83,
+      "near_jitter_mm": 2.585,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 17.292
+     },
+     "transition": {
+      "near_score_mean": 0.821,
+      "near_score_min": 0.746,
+      "far_score_mean": 0.832,
+      "near_jitter_mm": 2.971,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 17.299
+     }
+    },
+    "elbow": {
+     "pull": {
+      "near_score_mean": 0.845,
+      "near_score_min": 0.753,
+      "far_score_mean": 0.91,
+      "near_jitter_mm": 2.551,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 29.439
+     },
+     "transition": {
+      "near_score_mean": 0.856,
+      "near_score_min": 0.753,
+      "far_score_mean": 0.915,
+      "near_jitter_mm": 2.937,
+      "behind_plate_pct": 0.0,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 30.389
+     }
+    },
+    "wrist": {
+     "pull": {
+      "near_score_mean": 0.746,
+      "near_score_min": 0.601,
+      "far_score_mean": 0.894,
+      "near_jitter_mm": 6.215,
+      "behind_plate_pct": 99.32,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 40.636
+     },
+     "transition": {
+      "near_score_mean": 0.772,
+      "near_score_min": 0.665,
+      "far_score_mean": 0.905,
+      "near_jitter_mm": 5.998,
+      "behind_plate_pct": 97.959,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 39.629
+     }
+    },
+    "hip": {
+     "pull": {
+      "near_score_mean": 0.743,
+      "near_score_min": 0.643,
+      "far_score_mean": 0.724,
+      "near_jitter_mm": 9.891,
+      "behind_plate_pct": 24.49,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 17.802
+     },
+     "transition": {
+      "near_score_mean": 0.73,
+      "near_score_min": 0.643,
+      "far_score_mean": 0.735,
+      "near_jitter_mm": 9.774,
+      "behind_plate_pct": 30.612,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 17.612
+     }
+    },
+    "knee": {
+     "pull": {
+      "near_score_mean": 0.808,
+      "near_score_min": 0.712,
+      "far_score_mean": 0.867,
+      "near_jitter_mm": 3.584,
+      "behind_plate_pct": 21.769,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 20.438
+     },
+     "transition": {
+      "near_score_mean": 0.777,
+      "near_score_min": 0.712,
+      "far_score_mean": 0.857,
+      "near_jitter_mm": 5.0,
+      "behind_plate_pct": 65.306,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 22.065
+     }
+    },
+    "ankle": {
+     "pull": {
+      "near_score_mean": 0.808,
+      "near_score_min": 0.718,
+      "far_score_mean": 0.868,
+      "near_jitter_mm": 5.445,
+      "behind_plate_pct": 52.381,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 15.331
+     },
+     "transition": {
+      "near_score_mean": 0.853,
+      "near_score_min": 0.757,
+      "far_score_mean": 0.874,
+      "near_jitter_mm": 5.416,
+      "behind_plate_pct": 14.286,
+      "swap_pct": 0.0,
+      "near_far_sep_cm": 15.506
+     }
+    },
+    "seg_thigh": {
+     "pull": {
+      "len_cm": 27.092,
+      "len_cv_pct": 13.292,
+      "len_jitter_mm": 8.376
+     },
+     "transition": {
+      "len_cm": 28.45,
+      "len_cv_pct": 7.233,
+      "len_jitter_mm": 7.724
+     }
+    },
+    "seg_shank": {
+     "pull": {
+      "len_cm": 35.298,
+      "len_cv_pct": 5.442,
+      "len_jitter_mm": 4.578
+     },
+     "transition": {
+      "len_cm": 35.475,
+      "len_cv_pct": 1.893,
+      "len_jitter_mm": 4.641
+     }
+    },
+    "seg_upper_arm": {
+     "pull": {
+      "len_cm": 25.284,
+      "len_cv_pct": 18.978,
+      "len_jitter_mm": 2.394
+     },
+     "transition": {
+      "len_cm": 23.713,
+      "len_cv_pct": 9.969,
+      "len_jitter_mm": 2.452
+     }
+    },
+    "seg_forearm": {
+     "pull": {
+      "len_cm": 24.569,
+      "len_cv_pct": 13.421,
+      "len_jitter_mm": 4.564
+     },
+     "transition": {
+      "len_cm": 23.17,
+      "len_cv_pct": 5.505,
+      "len_jitter_mm": 4.255
+     }
+    }
+   },
+   "bar_rect": {
+    "peak_frame": 4562,
+    "bar_catch_frame": 4753,
+    "x1_cm": null,
+    "x2_cm": null,
+    "xloop_cm": 40.094,
+    "xnet_cm": -42.127,
+    "drop_cm": 85.778,
+    "peak_v_m_s": 3.375,
+    "turnover_s": 0.979,
+    "turnover_to_bar_catch_s": 1.083,
+    "peak_height_cm": 146.409
+   },
+   "bar_unrect": {
+    "peak_frame": 4562,
+    "bar_catch_frame": 4753,
+    "x1_cm": null,
+    "x2_cm": null,
+    "xloop_cm": 34.639,
+    "xnet_cm": -36.395,
+    "drop_cm": 85.778,
+    "peak_v_m_s": 3.375,
+    "turnover_s": 0.979,
+    "turnover_to_bar_catch_s": 1.083
+   },
+   "rest_before_cm": [
+    -10.87,
+    -0.733
+   ]
+  }
+ ],
+ "summary": {
+  "shoulder/transition": {
+   "near_score_mean": 0.805,
+   "near_score_min": 0.766,
+   "far_score_mean": 0.825,
+   "near_jitter_mm": 3.208,
+   "behind_plate_pct": 0.0,
+   "swap_pct": 0.0,
+   "near_far_sep_cm": 17.311
+  },
+  "shoulder/pull": {
+   "near_score_mean": 0.792,
+   "near_score_min": 0.719,
+   "far_score_mean": 0.822,
+   "near_jitter_mm": 2.865,
+   "behind_plate_pct": 0.0,
+   "swap_pct": 0.0,
+   "near_far_sep_cm": 17.16
+  },
+  "elbow/transition": {
+   "near_score_mean": 0.847,
+   "near_score_min": 0.786,
+   "far_score_mean": 0.898,
+   "near_jitter_mm": 3.26,
+   "behind_plate_pct": 0.0,
+   "swap_pct": 0.0,
+   "near_far_sep_cm": 30.294
+  },
+  "elbow/pull": {
+   "near_score_mean": 0.827,
+   "near_score_min": 0.71,
+   "far_score_mean": 0.898,
+   "near_jitter_mm": 3.069,
+   "behind_plate_pct": 1.326,
+   "swap_pct": 0.0,
+   "near_far_sep_cm": 28.483
+  },
+  "wrist/transition": {
+   "near_score_mean": 0.752,
+   "near_score_min": 0.701,
+   "far_score_mean": 0.877,
+   "near_jitter_mm": 5.425,
+   "behind_plate_pct": 99.32,
+   "swap_pct": 0.0,
+   "near_far_sep_cm": 39.319
+  },
+  "wrist/pull": {
+   "near_score_mean": 0.724,
+   "near_score_min": 0.592,
+   "far_score_mean": 0.881,
+   "near_jitter_mm": 7.51,
+   "behind_plate_pct": 99.773,
+   "swap_pct": 0.0,
+   "near_far_sep_cm": 40.182
+  },
+  "hip/transition": {
+   "near_score_mean": 0.709,
+   "near_score_min": 0.636,
+   "far_score_mean": 0.73,
+   "near_jitter_mm": 6.305,
+   "behind_plate_pct": 47.619,
+   "swap_pct": 0.0,
+   "near_far_sep_cm": 16.647
+  },
+  "hip/pull": {
+   "near_score_mean": 0.734,
+   "near_score_min": 0.636,
+   "far_score_mean": 0.711,
+   "near_jitter_mm": 9.247,
+   "behind_plate_pct": 21.894,
+   "swap_pct": 0.0,
+   "near_far_sep_cm": 17.436
+  },
+  "knee/transition": {
+   "near_score_mean": 0.79,
+   "near_score_min": 0.704,
+   "far_score_mean": 0.849,
+   "near_jitter_mm": 4.523,
+   "behind_plate_pct": 53.061,
+   "swap_pct": 0.0,
+   "near_far_sep_cm": 18.654
+  },
+  "knee/pull": {
+   "near_score_mean": 0.796,
+   "near_score_min": 0.681,
+   "far_score_mean": 0.853,
+   "near_jitter_mm": 3.679,
+   "behind_plate_pct": 21.139,
+   "swap_pct": 0.0,
+   "near_far_sep_cm": 18.875
+  },
+  "ankle/transition": {
+   "near_score_mean": 0.856,
+   "near_score_min": 0.81,
+   "far_score_mean": 0.87,
+   "near_jitter_mm": 3.551,
+   "behind_plate_pct": 4.762,
+   "swap_pct": 0.0,
+   "near_far_sep_cm": 14.362
+  },
+  "ankle/pull": {
+   "near_score_mean": 0.807,
+   "near_score_min": 0.713,
+   "far_score_mean": 0.862,
+   "near_jitter_mm": 5.209,
+   "behind_plate_pct": 48.407,
+   "swap_pct": 0.0,
+   "near_far_sep_cm": 14.299
+  },
+  "seg_thigh/pull": {
+   "len_cm": 29.001,
+   "len_cv_pct": 12.353,
+   "len_jitter_mm": 7.952
+  },
+  "seg_shank/pull": {
+   "len_cm": 35.848,
+   "len_cv_pct": 5.456,
+   "len_jitter_mm": 4.441
+  },
+  "seg_upper_arm/pull": {
+   "len_cm": 25.606,
+   "len_cv_pct": 19.161,
+   "len_jitter_mm": 2.634
+  },
+  "seg_forearm/pull": {
+   "len_cm": 24.629,
+   "len_cv_pct": 15.729,
+   "len_jitter_mm": 5.252
+  },
+  "bar/x1_cm": {
+   "mean": 0.355,
+   "sd": 0.218,
+   "values": [
+    0.201,
+    0.509,
+    null
+   ]
+  },
+  "bar/x2_cm": {
+   "mean": 14.638,
+   "sd": 4.886,
+   "values": [
+    11.183,
+    18.093,
+    null
+   ]
+  },
+  "bar/xloop_cm": {
+   "mean": 42.386,
+   "sd": 24.291,
+   "values": [
+    67.741,
+    19.321,
+    40.094
+   ]
+  },
+  "bar/xnet_cm": {
+   "mean": -43.54,
+   "sd": 19.949,
+   "values": [
+    -64.159,
+    -24.335,
+    -42.127
+   ]
+  },
+  "bar/drop_cm": {
+   "mean": 64.148,
+   "sd": 45.303,
+   "values": [
+    94.582,
+    12.085,
+    85.778
+   ]
+  },
+  "bar/peak_v_m_s": {
+   "mean": 5.624,
+   "sd": 4.169,
+   "values": [
+    3.063,
+    10.435,
+    3.375
+   ]
+  },
+  "bar/peak_height_cm": {
+   "mean": 147.74,
+   "sd": 3.364,
+   "values": [
+    151.565,
+    145.245,
+    146.409
+   ]
+  },
+  "bar_unrect/x1_cm": {
+   "mean": 0.306,
+   "values": [
+    0.173,
+    0.439,
+    null
+   ]
+  },
+  "bar_unrect/x2_cm": {
+   "mean": 12.647,
+   "values": [
+    9.662,
+    15.632,
+    null
+   ]
+  },
+  "bar_unrect/xloop_cm": {
+   "mean": 36.619,
+   "values": [
+    58.525,
+    16.693,
+    34.639
+   ]
+  },
+  "bar_unrect/xnet_cm": {
+   "mean": -37.616,
+   "values": [
+    -55.43,
+    -21.024,
+    -36.395
+   ]
+  },
+  "x_at_25": {
+   "mean": 4.092,
+   "sd": 1.079,
+   "unrect_mean": 3.535,
+   "found_pct": 100.0
+  },
+  "x_at_50": {
+   "mean": 3.512,
+   "sd": 1.438,
+   "unrect_mean": 3.034,
+   "found_pct": 100.0
+  },
+  "x_at_75": {
+   "mean": 3.295,
+   "sd": 1.846,
+   "unrect_mean": 2.847,
+   "found_pct": 100.0
+  },
+  "rest_spread_cm": [
+   7.15,
+   0.395
+  ]
+ }
+}

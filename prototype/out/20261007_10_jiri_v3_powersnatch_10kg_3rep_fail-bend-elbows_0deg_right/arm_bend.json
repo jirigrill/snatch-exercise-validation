@@ -1,0 +1,204 @@
+[
+ {
+  "clip": "20261007_10_jiri_v3_powersnatch_10kg_3rep_fail-bend-elbows_0deg_right",
+  "rep": 1,
+  "anchor": "shoulder",
+  "fps": 240.0,
+  "px_per_m": 434.862859375734,
+  "f_setup": 1023,
+  "f_knee": 1140,
+  "f_transition": null,
+  "f_hip": 1181,
+  "d_cm@setup": 60.607077778577136,
+  "d_cm@knee": 51.26094721282698,
+  "d_cm@transition": NaN,
+  "d_cm@hip": 42.55212583615766,
+  "d_cm_min": 42.55212583615766,
+  "d_cm_min_pt": 2.0,
+  "rel@setup": 1.0,
+  "rel@knee": 0.8457914338009257,
+  "rel@transition": NaN,
+  "rel@hip": 0.7020982927376613,
+  "rel_min": 0.7020982927376613,
+  "rel_min_pt": 2.0,
+  "straight@setup": 0.9999779266811384,
+  "straight@knee": 0.999879122067253,
+  "straight@transition": NaN,
+  "straight@hip": 0.9908664449690302,
+  "straight_min": 0.9908664449690302,
+  "straight_min_pt": 2.0,
+  "elbow_hub_deg@setup": 179.22093197279327,
+  "elbow_hub_deg@knee": 178.1687178960874,
+  "elbow_hub_deg@transition": NaN,
+  "elbow_hub_deg@hip": 163.0189652542088,
+  "elbow_hub_deg_min": 163.0189652542088,
+  "elbow_hub_deg_min_pt": 2.0,
+  "elbow_deg@setup": 173.32702143440648,
+  "elbow_deg@knee": 169.3176205038434,
+  "elbow_deg@transition": NaN,
+  "elbow_deg@hip": 145.86671214757925,
+  "elbow_deg_min": 145.86671214757925,
+  "elbow_deg_min_pt": 2.0,
+  "hub_found": 1.0,
+  "score_sh_el": 0.7731973528862,
+  "score_wrist": 0.6858354210853577,
+  "_points": {
+   "setup": {
+    "shoulder": [
+     489.9142697364691,
+     1042.7908973760177
+    ],
+    "elbow": [
+     479.84687386185595,
+     1146.1630589522936
+    ],
+    "wrist": [
+     481.7276272951572,
+     1243.188013308611
+    ],
+    "hub": [
+     466.52939890245176,
+     1305.3090757488492
+    ]
+   },
+   "knee": {
+    "shoulder": [
+     474.67882834319283,
+     918.1300114050224
+    ],
+    "elbow": [
+     473.2612407710121,
+     1003.8384019285918
+    ],
+    "wrist": [
+     490.08863972392004,
+     1101.9238577049355
+    ],
+    "hub": [
+     466.6085919184932,
+     1140.898699988335
+    ]
+   },
+   "transition": null,
+   "hip": {
+    "shoulder": [
+     437.609926097335,
+     819.646393901437
+    ],
+    "elbow": [
+     432.0374178944458,
+     874.7123379708248
+    ],
+    "wrist": [
+     475.28119384175864,
+     954.8410559848646
+    ],
+    "hub": [
+     457.56590565162816,
+     1003.6105629214974
+    ]
+   }
+  }
+ },
+ {
+  "clip": "20261007_10_jiri_v3_powersnatch_10kg_3rep_fail-bend-elbows_0deg_right",
+  "rep": 2,
+  "anchor": "shoulder",
+  "fps": 240.0,
+  "px_per_m": 436.98468295768726,
+  "f_setup": 4689,
+  "f_knee": 4802,
+  "f_transition": null,
+  "f_hip": 4845,
+  "d_cm@setup": 60.56253050477356,
+  "d_cm@knee": 50.14720533999413,
+  "d_cm@transition": NaN,
+  "d_cm@hip": 40.57161662915637,
+  "d_cm_min": 40.57161662915637,
+  "d_cm_min_pt": 2.0,
+  "rel@setup": 1.0,
+  "rel@knee": 0.8280236133138709,
+  "rel@transition": NaN,
+  "rel@hip": 0.669912837046307,
+  "rel_min": 0.669912837046307,
+  "rel_min_pt": 2.0,
+  "straight@setup": 0.9999829707150013,
+  "straight@knee": 0.9999709779177167,
+  "straight@transition": NaN,
+  "straight@hip": 0.9841579614307566,
+  "straight_min": 0.9841579614307566,
+  "straight_min_pt": 2.0,
+  "elbow_hub_deg@setup": 179.31618575683973,
+  "elbow_hub_deg@knee": 179.08914884178978,
+  "elbow_hub_deg@transition": NaN,
+  "elbow_hub_deg@hip": 157.27645893061734,
+  "elbow_hub_deg_min": 157.27645893061734,
+  "elbow_hub_deg_min_pt": 2.0,
+  "elbow_deg@setup": 175.7275101399208,
+  "elbow_deg@knee": 166.55775212209687,
+  "elbow_deg@transition": NaN,
+  "elbow_deg@hip": 137.53811036855214,
+  "elbow_deg_min": 137.53811036855214,
+  "elbow_deg_min_pt": 2.0,
+  "hub_found": 1.0,
+  "score_sh_el": 0.7816558480262756,
+  "score_wrist": 0.6941908001899719,
+  "_points": {
+   "setup": {
+    "shoulder": [
+     443.25628053526896,
+     1045.132796459842
+    ],
+    "elbow": [
+     441.06906773663906,
+     1149.8181131114118
+    ],
+    "wrist": [
+     446.23168274220586,
+     1245.9017003745835
+    ],
+    "hub": [
+     435.81980754004195,
+     1309.6772775954864
+    ]
+   },
+   "knee": {
+    "shoulder": [
+     446.8523980978255,
+     925.372052550384
+    ],
+    "elbow": [
+     447.6307062504713,
+     1003.6962601430394
+    ],
+    "wrist": [
+     472.43020921200315,
+     1103.076079997923
+    ],
+    "hub": [
+     451.26809207382075,
+     1144.4631650601475
+    ]
+   },
+   "transition": null,
+   "hip": {
+    "shoulder": [
+     427.0456012876939,
+     814.8691083205947
+    ],
+    "elbow": [
+     418.2497396187156,
+     864.9042914968287
+    ],
+    "wrist": [
+     463.5847473498353,
+     936.0892056701945
+    ],
+    "hub": [
+     446.8024669296215,
+     991.0565964791995
+    ]
+   }
+  }
+ }
+]

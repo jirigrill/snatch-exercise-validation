@@ -1,0 +1,102 @@
+[
+ {
+  "clip": "20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg",
+  "rep": 1,
+  "fps": 200.414051,
+  "px_per_m": 664.1845110310695,
+  "f_setup": 4468,
+  "f_knee": 4468,
+  "f_transition": null,
+  "f_hip": 4468,
+  "d_cm@setup": 26.261702393498787,
+  "d_cm@knee": 26.261702393498787,
+  "d_cm@transition": NaN,
+  "d_cm@hip": 26.261702393498787,
+  "d_cm_min": 26.261702393498787,
+  "d_cm_min_pt": 2.0,
+  "rel@setup": 1.0,
+  "rel@knee": 1.0,
+  "rel@transition": NaN,
+  "rel@hip": 1.0,
+  "rel_min": 1.0,
+  "rel_min_pt": 2.0,
+  "straight@setup": 0.6624856975530931,
+  "straight@knee": 0.6624856975530931,
+  "straight@transition": NaN,
+  "straight@hip": 0.6624856975530931,
+  "straight_min": 0.6624856975530931,
+  "straight_min_pt": 2.0,
+  "elbow_hub_deg@setup": 79.04912210418786,
+  "elbow_hub_deg@knee": 79.04912210418786,
+  "elbow_hub_deg@transition": NaN,
+  "elbow_hub_deg@hip": 79.04912210418786,
+  "elbow_hub_deg_min": 79.04912210418786,
+  "elbow_hub_deg_min_pt": 2.0,
+  "elbow_deg@setup": 168.506558417326,
+  "elbow_deg@knee": 168.506558417326,
+  "elbow_deg@transition": NaN,
+  "elbow_deg@hip": 168.506558417326,
+  "elbow_deg_min": 168.506558417326,
+  "elbow_deg_min_pt": 2.0,
+  "hub_found": 1.0,
+  "score_sh_el": 0.7251560688018799,
+  "score_wrist": 0.6679818034172058,
+  "_points": {
+   "setup": {
+    "shoulder": [
+     483.0992375174585,
+     926.0141214281487
+    ],
+    "elbow": [
+     467.19444225519146,
+     1024.9795727562919
+    ],
+    "wrist": [
+     470.8845814021789,
+     1114.38594833827
+    ],
+    "hub": [
+     630.1672194524426,
+     1019.7984157054088
+    ]
+   },
+   "knee": {
+    "shoulder": [
+     483.0992375174585,
+     926.0141214281487
+    ],
+    "elbow": [
+     467.19444225519146,
+     1024.9795727562919
+    ],
+    "wrist": [
+     470.8845814021789,
+     1114.38594833827
+    ],
+    "hub": [
+     630.1672194524426,
+     1019.7984157054088
+    ]
+   },
+   "transition": null,
+   "hip": {
+    "shoulder": [
+     483.0992375174585,
+     926.0141214281487
+    ],
+    "elbow": [
+     467.19444225519146,
+     1024.9795727562919
+    ],
+    "wrist": [
+     470.8845814021789,
+     1114.38594833827
+    ],
+    "hub": [
+     630.1672194524426,
+     1019.7984157054088
+    ]
+   }
+  }
+ }
+]

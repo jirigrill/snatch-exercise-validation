@@ -1,0 +1,1974 @@
+{
+ "summary": {
+  "clip": "20261005_6_jiri_v2_standup_10kg_2rep_success_0deg",
+  "side": "r",
+  "fps": 240.0,
+  "frames": 47,
+  "k_far_median": null,
+  "k_far_n": 0,
+  "k_protocol": 0.825,
+  "k_used": 0.811,
+  "hub_rest_y": 1256.6,
+  "px_per_m_rest": 437.2,
+  "camera_height_m": 0.903,
+  "px_per_m_near_median": 433.18,
+  "px_per_m_mid": 351.31,
+  "floor_plate_y": 1280.4,
+  "scale_from": [],
+  "by_cat": {
+   "hips": {
+    "h_cm": {
+     "n": 47,
+     "median": 178.4,
+     "iqr": [
+      178.0,
+      178.6
+     ]
+    },
+    "h_sole": {
+     "n": 47,
+     "median": 177.1,
+     "iqr": [
+      176.8,
+      177.4
+     ]
+    },
+    "h_plate": {
+     "n": 47,
+     "median": 179.7,
+     "iqr": [
+      179.2,
+      179.7
+     ]
+    },
+    "h_bbox_cm": {
+     "n": 47,
+     "median": 198.8,
+     "iqr": [
+      195.6,
+      199.4
+     ]
+    },
+    "ear_cm": {
+     "n": 47,
+     "median": 164.2,
+     "iqr": [
+      163.1,
+      164.4
+     ]
+    },
+    "head_above_ear_cm": {
+     "n": 47,
+     "median": 14.3,
+     "iqr": [
+      14.2,
+      14.8
+     ]
+    },
+    "eye_cm": {
+     "n": 47,
+     "median": 166.8,
+     "iqr": [
+      161.1,
+      167.2
+     ]
+    },
+    "head_above_eye_cm": {
+     "n": 47,
+     "median": 11.9,
+     "iqr": [
+      11.4,
+      16.8
+     ]
+    }
+   },
+   "overhead": {
+    "h_cm": {
+     "n": 0
+    },
+    "h_sole": {
+     "n": 0
+    },
+    "h_plate": {
+     "n": 0
+    },
+    "h_bbox_cm": {
+     "n": 0
+    },
+    "ear_cm": {
+     "n": 0
+    },
+    "head_above_ear_cm": {
+     "n": 0
+    },
+    "eye_cm": {
+     "n": 0
+    },
+    "head_above_eye_cm": {
+     "n": 0
+    }
+   }
+  },
+  "all": {
+   "h_cm": {
+    "n": 47,
+    "median": 178.4,
+    "iqr": [
+     178.0,
+     178.6
+    ]
+   },
+   "h_sole": {
+    "n": 47,
+    "median": 177.1,
+    "iqr": [
+     176.8,
+     177.4
+    ]
+   },
+   "h_plate": {
+    "n": 47,
+    "median": 179.7,
+    "iqr": [
+     179.2,
+     179.7
+    ]
+   }
+  }
+ },
+ "rows": [
+  {
+   "frame": 1163,
+   "cat": "hips",
+   "px_per_m": 433.0,
+   "near_fit": [
+    505.65,
+    982.65,
+    97.43,
+    97.43,
+    0.0
+   ],
+   "tracker_px_per_m": 433.51,
+   "knee": 170.9,
+   "hip": 171.1,
+   "bbox_top": 569.3,
+   "bbox_bottom": 1415.0,
+   "ankle_near_y": 1245.1,
+   "ankle_far_y": 1212.5,
+   "ear_y": 696.1,
+   "eye_y": 689.4,
+   "head_xy": [
+    467.0,
+    646.0
+   ],
+   "sole_xy": [
+    475.0,
+    1295.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1273.2,
+   "ear_cm": 165.3,
+   "eye_cm": 167.2,
+   "head_above_ear_cm": 14.3,
+   "head_above_eye_cm": 12.4,
+   "h_sole": 178.5,
+   "h_plate": 180.6,
+   "h_cm": 179.6,
+   "h_bbox_cm": 200.4
+  },
+  {
+   "frame": 1187,
+   "cat": "hips",
+   "px_per_m": 432.58,
+   "near_fit": [
+    503.76,
+    983.98,
+    97.33,
+    97.33,
+    0.0
+   ],
+   "tracker_px_per_m": 432.77,
+   "knee": 167.9,
+   "hip": 170.9,
+   "bbox_top": 569.1,
+   "bbox_bottom": 1414.2,
+   "ankle_near_y": 1245.5,
+   "ankle_far_y": 1212.5,
+   "ear_y": 698.4,
+   "eye_y": 690.3,
+   "head_xy": [
+    451.0,
+    648.0
+   ],
+   "sole_xy": [
+    482.9,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.0,
+   "ear_cm": 164.3,
+   "eye_cm": 166.6,
+   "head_above_ear_cm": 14.3,
+   "head_above_eye_cm": 12.0,
+   "h_sole": 177.3,
+   "h_plate": 180.0,
+   "h_cm": 178.7,
+   "h_bbox_cm": 199.8
+  },
+  {
+   "frame": 1211,
+   "cat": "hips",
+   "px_per_m": 432.72,
+   "near_fit": [
+    503.71,
+    982.32,
+    97.36,
+    97.36,
+    0.0
+   ],
+   "tracker_px_per_m": 432.27,
+   "knee": 168.8,
+   "hip": 171.9,
+   "bbox_top": 566.9,
+   "bbox_bottom": 1414.3,
+   "ankle_near_y": 1244.9,
+   "ankle_far_y": 1212.3,
+   "ear_y": 699.1,
+   "eye_y": 691.2,
+   "head_xy": [
+    452.0,
+    647.0
+   ],
+   "sole_xy": [
+    485.9,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.2,
+   "ear_cm": 164.2,
+   "eye_cm": 166.4,
+   "head_above_ear_cm": 14.8,
+   "head_above_eye_cm": 12.6,
+   "h_sole": 177.7,
+   "h_plate": 180.3,
+   "h_cm": 179.0,
+   "h_bbox_cm": 200.5
+  },
+  {
+   "frame": 1235,
+   "cat": "hips",
+   "px_per_m": 433.38,
+   "near_fit": [
+    503.61,
+    982.27,
+    97.51,
+    97.51,
+    0.0
+   ],
+   "tracker_px_per_m": 433.26,
+   "knee": 167.5,
+   "hip": 172.5,
+   "bbox_top": 566.4,
+   "bbox_bottom": 1414.2,
+   "ankle_near_y": 1244.9,
+   "ankle_far_y": 1212.6,
+   "ear_y": 698.8,
+   "eye_y": 689.9,
+   "head_xy": [
+    440.0,
+    648.0
+   ],
+   "sole_xy": [
+    486.8,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.4,
+   "ear_cm": 164.3,
+   "eye_cm": 166.8,
+   "head_above_ear_cm": 14.5,
+   "head_above_eye_cm": 11.9,
+   "h_sole": 177.5,
+   "h_plate": 180.0,
+   "h_cm": 178.8,
+   "h_bbox_cm": 200.7
+  },
+  {
+   "frame": 1259,
+   "cat": "hips",
+   "px_per_m": 433.99,
+   "near_fit": [
+    504.53,
+    982.39,
+    97.65,
+    97.65,
+    0.0
+   ],
+   "tracker_px_per_m": 433.51,
+   "knee": 167.0,
+   "hip": 172.5,
+   "bbox_top": 565.9,
+   "bbox_bottom": 1415.4,
+   "ankle_near_y": 1244.8,
+   "ankle_far_y": 1212.5,
+   "ear_y": 698.0,
+   "eye_y": 689.2,
+   "head_xy": [
+    444.0,
+    647.0
+   ],
+   "sole_xy": [
+    486.1,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.4,
+   "ear_cm": 164.5,
+   "eye_cm": 167.0,
+   "head_above_ear_cm": 14.5,
+   "head_above_eye_cm": 12.0,
+   "h_sole": 177.7,
+   "h_plate": 180.3,
+   "h_cm": 179.0,
+   "h_bbox_cm": 200.8
+  },
+  {
+   "frame": 1283,
+   "cat": "hips",
+   "px_per_m": 433.76,
+   "near_fit": [
+    505.25,
+    982.82,
+    97.6,
+    97.6,
+    0.0
+   ],
+   "tracker_px_per_m": 433.6,
+   "knee": 166.7,
+   "hip": 172.7,
+   "bbox_top": 567.3,
+   "bbox_bottom": 1415.7,
+   "ankle_near_y": 1245.4,
+   "ankle_far_y": 1212.1,
+   "ear_y": 698.2,
+   "eye_y": 687.9,
+   "head_xy": [
+    444.0,
+    648.0
+   ],
+   "sole_xy": [
+    472.5,
+    1295.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1272.8,
+   "ear_cm": 164.6,
+   "eye_cm": 167.6,
+   "head_above_ear_cm": 14.3,
+   "head_above_eye_cm": 11.4,
+   "h_sole": 177.8,
+   "h_plate": 180.0,
+   "h_cm": 178.9,
+   "h_bbox_cm": 200.8
+  },
+  {
+   "frame": 1307,
+   "cat": "hips",
+   "px_per_m": 432.74,
+   "near_fit": [
+    504.59,
+    983.25,
+    97.37,
+    97.37,
+    0.0
+   ],
+   "tracker_px_per_m": 433.25,
+   "knee": 167.0,
+   "hip": 173.2,
+   "bbox_top": 569.0,
+   "bbox_bottom": 1414.6,
+   "ankle_near_y": 1244.9,
+   "ankle_far_y": 1212.4,
+   "ear_y": 697.8,
+   "eye_y": 688.0,
+   "head_xy": [
+    444.0,
+    649.0
+   ],
+   "sole_xy": [
+    484.5,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.3,
+   "ear_cm": 164.5,
+   "eye_cm": 167.3,
+   "head_above_ear_cm": 13.9,
+   "head_above_eye_cm": 11.1,
+   "h_sole": 177.1,
+   "h_plate": 179.7,
+   "h_cm": 178.4,
+   "h_bbox_cm": 199.9
+  },
+  {
+   "frame": 1331,
+   "cat": "hips",
+   "px_per_m": 434.82,
+   "near_fit": [
+    504.76,
+    983.38,
+    97.84,
+    97.84,
+    0.0
+   ],
+   "tracker_px_per_m": 434.52,
+   "knee": 167.3,
+   "hip": 173.7,
+   "bbox_top": 570.1,
+   "bbox_bottom": 1414.3,
+   "ankle_near_y": 1245.5,
+   "ankle_far_y": 1212.7,
+   "ear_y": 698.1,
+   "eye_y": 688.5,
+   "head_xy": [
+    444.0,
+    649.0
+   ],
+   "sole_xy": [
+    475.0,
+    1294.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1272.1,
+   "ear_cm": 164.6,
+   "eye_cm": 167.3,
+   "head_above_ear_cm": 14.0,
+   "head_above_eye_cm": 11.2,
+   "h_sole": 177.4,
+   "h_plate": 179.7,
+   "h_cm": 178.6,
+   "h_bbox_cm": 199.8
+  },
+  {
+   "frame": 1355,
+   "cat": "hips",
+   "px_per_m": 433.85,
+   "near_fit": [
+    504.76,
+    983.64,
+    97.62,
+    97.62,
+    0.0
+   ],
+   "tracker_px_per_m": 434.67,
+   "knee": 167.6,
+   "hip": 174.7,
+   "bbox_top": 572.2,
+   "bbox_bottom": 1414.3,
+   "ankle_near_y": 1245.3,
+   "ankle_far_y": 1211.8,
+   "ear_y": 698.8,
+   "eye_y": 688.7,
+   "head_xy": [
+    437.0,
+    648.0
+   ],
+   "sole_xy": [
+    485.0,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1270.7,
+   "ear_cm": 164.2,
+   "eye_cm": 167.0,
+   "head_above_ear_cm": 14.5,
+   "head_above_eye_cm": 11.6,
+   "h_sole": 177.3,
+   "h_plate": 180.0,
+   "h_cm": 178.7,
+   "h_bbox_cm": 198.8
+  },
+  {
+   "frame": 1379,
+   "cat": "hips",
+   "px_per_m": 433.3,
+   "near_fit": [
+    504.35,
+    983.79,
+    97.49,
+    97.49,
+    0.0
+   ],
+   "tracker_px_per_m": 433.22,
+   "knee": 167.4,
+   "hip": 174.4,
+   "bbox_top": 572.8,
+   "bbox_bottom": 1413.6,
+   "ankle_near_y": 1245.0,
+   "ankle_far_y": 1211.9,
+   "ear_y": 698.4,
+   "eye_y": 689.3,
+   "head_xy": [
+    438.0,
+    649.0
+   ],
+   "sole_xy": [
+    477.5,
+    1294.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.9,
+   "ear_cm": 164.5,
+   "eye_cm": 167.0,
+   "head_above_ear_cm": 14.1,
+   "head_above_eye_cm": 11.5,
+   "h_sole": 177.3,
+   "h_plate": 179.7,
+   "h_cm": 178.5,
+   "h_bbox_cm": 199.0
+  },
+  {
+   "frame": 1403,
+   "cat": "hips",
+   "px_per_m": 432.87,
+   "near_fit": [
+    504.62,
+    984.53,
+    97.4,
+    97.4,
+    0.0
+   ],
+   "tracker_px_per_m": 432.88,
+   "knee": 167.2,
+   "hip": 174.1,
+   "bbox_top": 572.6,
+   "bbox_bottom": 1413.5,
+   "ankle_near_y": 1245.5,
+   "ankle_far_y": 1211.9,
+   "ear_y": 698.9,
+   "eye_y": 689.2,
+   "head_xy": [
+    434.0,
+    649.0
+   ],
+   "sole_xy": [
+    476.0,
+    1295.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1272.6,
+   "ear_cm": 164.4,
+   "eye_cm": 167.2,
+   "head_above_ear_cm": 14.2,
+   "head_above_eye_cm": 11.4,
+   "h_sole": 177.5,
+   "h_plate": 179.7,
+   "h_cm": 178.6,
+   "h_bbox_cm": 199.3
+  },
+  {
+   "frame": 1427,
+   "cat": "hips",
+   "px_per_m": 433.67,
+   "near_fit": [
+    505.29,
+    984.7,
+    97.58,
+    97.58,
+    0.0
+   ],
+   "tracker_px_per_m": 433.42,
+   "knee": 167.0,
+   "hip": 174.0,
+   "bbox_top": 571.7,
+   "bbox_bottom": 1414.7,
+   "ankle_near_y": 1246.1,
+   "ankle_far_y": 1211.9,
+   "ear_y": 698.9,
+   "eye_y": 688.9,
+   "head_xy": [
+    434.0,
+    649.0
+   ],
+   "sole_xy": [
+    487.0,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1270.3,
+   "ear_cm": 164.1,
+   "eye_cm": 166.9,
+   "head_above_ear_cm": 14.2,
+   "head_above_eye_cm": 11.4,
+   "h_sole": 176.9,
+   "h_plate": 179.7,
+   "h_cm": 178.3,
+   "h_bbox_cm": 198.9
+  },
+  {
+   "frame": 1451,
+   "cat": "hips",
+   "px_per_m": 433.64,
+   "near_fit": [
+    505.18,
+    985.18,
+    97.57,
+    97.57,
+    0.0
+   ],
+   "tracker_px_per_m": 433.79,
+   "knee": 166.3,
+   "hip": 173.5,
+   "bbox_top": 571.2,
+   "bbox_bottom": 1414.6,
+   "ankle_near_y": 1246.1,
+   "ankle_far_y": 1211.9,
+   "ear_y": 698.6,
+   "eye_y": 688.4,
+   "head_xy": [
+    433.0,
+    649.0
+   ],
+   "sole_xy": [
+    475.0,
+    1294.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.3,
+   "ear_cm": 164.3,
+   "eye_cm": 167.2,
+   "head_above_ear_cm": 14.1,
+   "head_above_eye_cm": 11.2,
+   "h_sole": 177.1,
+   "h_plate": 179.7,
+   "h_cm": 178.4,
+   "h_bbox_cm": 199.3
+  },
+  {
+   "frame": 1475,
+   "cat": "hips",
+   "px_per_m": 433.74,
+   "near_fit": [
+    504.63,
+    984.92,
+    97.59,
+    97.59,
+    0.0
+   ],
+   "tracker_px_per_m": 433.71,
+   "knee": 166.4,
+   "hip": 173.3,
+   "bbox_top": 571.4,
+   "bbox_bottom": 1414.1,
+   "ankle_near_y": 1246.0,
+   "ankle_far_y": 1212.2,
+   "ear_y": 698.3,
+   "eye_y": 688.8,
+   "head_xy": [
+    432.0,
+    649.0
+   ],
+   "sole_xy": [
+    485.6,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1270.5,
+   "ear_cm": 164.3,
+   "eye_cm": 167.0,
+   "head_above_ear_cm": 14.0,
+   "head_above_eye_cm": 11.3,
+   "h_sole": 176.9,
+   "h_plate": 179.7,
+   "h_cm": 178.3,
+   "h_bbox_cm": 199.0
+  },
+  {
+   "frame": 1499,
+   "cat": "hips",
+   "px_per_m": 433.22,
+   "near_fit": [
+    503.82,
+    984.87,
+    97.48,
+    97.48,
+    0.0
+   ],
+   "tracker_px_per_m": 433.9,
+   "knee": 166.4,
+   "hip": 173.2,
+   "bbox_top": 571.4,
+   "bbox_bottom": 1413.6,
+   "ankle_near_y": 1246.3,
+   "ankle_far_y": 1212.4,
+   "ear_y": 699.2,
+   "eye_y": 688.8,
+   "head_xy": [
+    437.0,
+    649.0
+   ],
+   "sole_xy": [
+    472.0,
+    1295.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1272.5,
+   "ear_cm": 164.3,
+   "eye_cm": 167.3,
+   "head_above_ear_cm": 14.3,
+   "head_above_eye_cm": 11.3,
+   "h_sole": 177.5,
+   "h_plate": 179.7,
+   "h_cm": 178.6,
+   "h_bbox_cm": 199.6
+  },
+  {
+   "frame": 1523,
+   "cat": "hips",
+   "px_per_m": 434.02,
+   "near_fit": [
+    503.05,
+    984.31,
+    97.65,
+    97.65,
+    0.0
+   ],
+   "tracker_px_per_m": 434.09,
+   "knee": 167.2,
+   "hip": 174.0,
+   "bbox_top": 571.6,
+   "bbox_bottom": 1413.6,
+   "ankle_near_y": 1245.9,
+   "ankle_far_y": 1212.8,
+   "ear_y": 699.1,
+   "eye_y": 689.5,
+   "head_xy": [
+    429.0,
+    649.0
+   ],
+   "sole_xy": [
+    486.5,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1270.9,
+   "ear_cm": 164.1,
+   "eye_cm": 166.8,
+   "head_above_ear_cm": 14.3,
+   "head_above_eye_cm": 11.5,
+   "h_sole": 177.0,
+   "h_plate": 179.7,
+   "h_cm": 178.3,
+   "h_bbox_cm": 199.1
+  },
+  {
+   "frame": 1547,
+   "cat": "hips",
+   "px_per_m": 434.49,
+   "near_fit": [
+    502.43,
+    984.13,
+    97.76,
+    97.76,
+    0.0
+   ],
+   "tracker_px_per_m": 434.64,
+   "knee": 166.5,
+   "hip": 173.0,
+   "bbox_top": 571.4,
+   "bbox_bottom": 1414.3,
+   "ankle_near_y": 1246.3,
+   "ankle_far_y": 1212.9,
+   "ear_y": 698.4,
+   "eye_y": 689.1,
+   "head_xy": [
+    437.0,
+    649.0
+   ],
+   "sole_xy": [
+    474.0,
+    1294.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.8,
+   "ear_cm": 164.4,
+   "eye_cm": 167.1,
+   "head_above_ear_cm": 14.1,
+   "head_above_eye_cm": 11.4,
+   "h_sole": 177.3,
+   "h_plate": 179.7,
+   "h_cm": 178.5,
+   "h_bbox_cm": 199.4
+  },
+  {
+   "frame": 1583,
+   "cat": "hips",
+   "px_per_m": 432.97,
+   "near_fit": [
+    501.93,
+    983.75,
+    97.42,
+    97.42,
+    0.0
+   ],
+   "tracker_px_per_m": 433.19,
+   "knee": 166.8,
+   "hip": 173.6,
+   "bbox_top": 571.4,
+   "bbox_bottom": 1413.1,
+   "ankle_near_y": 1245.4,
+   "ankle_far_y": 1212.1,
+   "ear_y": 698.3,
+   "eye_y": 688.2,
+   "head_xy": [
+    428.0,
+    649.0
+   ],
+   "sole_xy": [
+    477.0,
+    1294.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.8,
+   "ear_cm": 164.5,
+   "eye_cm": 167.3,
+   "head_above_ear_cm": 14.0,
+   "head_above_eye_cm": 11.2,
+   "h_sole": 177.3,
+   "h_plate": 179.7,
+   "h_cm": 178.5,
+   "h_bbox_cm": 199.4
+  },
+  {
+   "frame": 1607,
+   "cat": "hips",
+   "px_per_m": 434.29,
+   "near_fit": [
+    502.13,
+    983.73,
+    97.72,
+    97.72,
+    0.0
+   ],
+   "tracker_px_per_m": 434.45,
+   "knee": 166.4,
+   "hip": 173.0,
+   "bbox_top": 570.8,
+   "bbox_bottom": 1413.2,
+   "ankle_near_y": 1245.7,
+   "ankle_far_y": 1212.3,
+   "ear_y": 698.0,
+   "eye_y": 688.2,
+   "head_xy": [
+    429.0,
+    649.0
+   ],
+   "sole_xy": [
+    488.5,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1270.8,
+   "ear_cm": 164.4,
+   "eye_cm": 167.2,
+   "head_above_ear_cm": 13.9,
+   "head_above_eye_cm": 11.2,
+   "h_sole": 177.0,
+   "h_plate": 179.7,
+   "h_cm": 178.3,
+   "h_bbox_cm": 199.3
+  },
+  {
+   "frame": 1631,
+   "cat": "hips",
+   "px_per_m": 433.01,
+   "near_fit": [
+    501.4,
+    983.89,
+    97.43,
+    97.43,
+    0.0
+   ],
+   "tracker_px_per_m": 432.93,
+   "knee": 166.5,
+   "hip": 173.2,
+   "bbox_top": 571.1,
+   "bbox_bottom": 1412.8,
+   "ankle_near_y": 1245.5,
+   "ankle_far_y": 1213.3,
+   "ear_y": 699.0,
+   "eye_y": 688.8,
+   "head_xy": [
+    427.0,
+    649.0
+   ],
+   "sole_xy": [
+    471.5,
+    1294.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1272.4,
+   "ear_cm": 164.4,
+   "eye_cm": 167.3,
+   "head_above_ear_cm": 14.2,
+   "head_above_eye_cm": 11.3,
+   "h_sole": 177.5,
+   "h_plate": 179.7,
+   "h_cm": 178.6,
+   "h_bbox_cm": 199.6
+  },
+  {
+   "frame": 1655,
+   "cat": "hips",
+   "px_per_m": 433.81,
+   "near_fit": [
+    501.35,
+    983.86,
+    97.61,
+    97.61,
+    0.0
+   ],
+   "tracker_px_per_m": 433.89,
+   "knee": 166.7,
+   "hip": 173.5,
+   "bbox_top": 571.2,
+   "bbox_bottom": 1413.1,
+   "ankle_near_y": 1245.8,
+   "ankle_far_y": 1212.9,
+   "ear_y": 698.8,
+   "eye_y": 688.1,
+   "head_xy": [
+    427.0,
+    649.0
+   ],
+   "sole_xy": [
+    469.0,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.0,
+   "ear_cm": 164.2,
+   "eye_cm": 167.3,
+   "head_above_ear_cm": 14.2,
+   "head_above_eye_cm": 11.1,
+   "h_sole": 177.1,
+   "h_plate": 179.7,
+   "h_cm": 178.4,
+   "h_bbox_cm": 199.2
+  },
+  {
+   "frame": 1679,
+   "cat": "hips",
+   "px_per_m": 433.31,
+   "near_fit": [
+    500.39,
+    983.91,
+    97.5,
+    97.5,
+    0.0
+   ],
+   "tracker_px_per_m": 432.97,
+   "knee": 166.5,
+   "hip": 173.4,
+   "bbox_top": 572.2,
+   "bbox_bottom": 1413.0,
+   "ankle_near_y": 1245.8,
+   "ankle_far_y": 1213.0,
+   "ear_y": 699.0,
+   "eye_y": 688.5,
+   "head_xy": [
+    427.0,
+    649.0
+   ],
+   "sole_xy": [
+    482.6,
+    1295.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1273.1,
+   "ear_cm": 164.5,
+   "eye_cm": 167.4,
+   "head_above_ear_cm": 14.2,
+   "head_above_eye_cm": 11.2,
+   "h_sole": 177.6,
+   "h_plate": 179.7,
+   "h_cm": 178.6,
+   "h_bbox_cm": 199.5
+  },
+  {
+   "frame": 1703,
+   "cat": "hips",
+   "px_per_m": 433.91,
+   "near_fit": [
+    500.37,
+    983.92,
+    97.63,
+    97.63,
+    0.0
+   ],
+   "tracker_px_per_m": 435.48,
+   "knee": 166.9,
+   "hip": 174.0,
+   "bbox_top": 573.3,
+   "bbox_bottom": 1413.1,
+   "ankle_near_y": 1246.4,
+   "ankle_far_y": 1213.0,
+   "ear_y": 698.9,
+   "eye_y": 688.4,
+   "head_xy": [
+    426.0,
+    649.0
+   ],
+   "sole_xy": [
+    474.5,
+    1294.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.8,
+   "ear_cm": 164.3,
+   "eye_cm": 167.3,
+   "head_above_ear_cm": 14.2,
+   "head_above_eye_cm": 11.2,
+   "h_sole": 177.3,
+   "h_plate": 179.7,
+   "h_cm": 178.5,
+   "h_bbox_cm": 198.8
+  },
+  {
+   "frame": 1727,
+   "cat": "hips",
+   "px_per_m": 433.38,
+   "near_fit": [
+    499.83,
+    984.03,
+    97.51,
+    97.51,
+    0.0
+   ],
+   "tracker_px_per_m": 433.92,
+   "knee": 166.5,
+   "hip": 173.3,
+   "bbox_top": 572.8,
+   "bbox_bottom": 1413.5,
+   "ankle_near_y": 1246.2,
+   "ankle_far_y": 1214.0,
+   "ear_y": 699.1,
+   "eye_y": 688.7,
+   "head_xy": [
+    429.0,
+    649.0
+   ],
+   "sole_xy": [
+    471.6,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.4,
+   "ear_cm": 164.2,
+   "eye_cm": 167.1,
+   "head_above_ear_cm": 14.3,
+   "head_above_eye_cm": 11.3,
+   "h_sole": 177.2,
+   "h_plate": 179.7,
+   "h_cm": 178.4,
+   "h_bbox_cm": 198.9
+  },
+  {
+   "frame": 1751,
+   "cat": "hips",
+   "px_per_m": 433.67,
+   "near_fit": [
+    500.08,
+    984.16,
+    97.58,
+    97.58,
+    0.0
+   ],
+   "tracker_px_per_m": 433.64,
+   "knee": 166.8,
+   "hip": 173.4,
+   "bbox_top": 572.5,
+   "bbox_bottom": 1412.2,
+   "ankle_near_y": 1245.4,
+   "ankle_far_y": 1213.5,
+   "ear_y": 698.8,
+   "eye_y": 689.1,
+   "head_xy": [
+    427.0,
+    649.0
+   ],
+   "sole_xy": [
+    476.5,
+    1295.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1273.6,
+   "ear_cm": 164.6,
+   "eye_cm": 167.3,
+   "head_above_ear_cm": 14.2,
+   "head_above_eye_cm": 11.4,
+   "h_sole": 177.8,
+   "h_plate": 179.7,
+   "h_cm": 178.8,
+   "h_bbox_cm": 199.6
+  },
+  {
+   "frame": 1775,
+   "cat": "hips",
+   "px_per_m": 433.96,
+   "near_fit": [
+    500.38,
+    984.12,
+    97.64,
+    97.64,
+    0.0
+   ],
+   "tracker_px_per_m": 434.02,
+   "knee": 166.6,
+   "hip": 173.4,
+   "bbox_top": 573.2,
+   "bbox_bottom": 1412.8,
+   "ankle_near_y": 1245.4,
+   "ankle_far_y": 1212.0,
+   "ear_y": 699.1,
+   "eye_y": 689.4,
+   "head_xy": [
+    426.0,
+    649.0
+   ],
+   "sole_xy": [
+    483.4,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1270.8,
+   "ear_cm": 164.1,
+   "eye_cm": 166.9,
+   "head_above_ear_cm": 14.3,
+   "head_above_eye_cm": 11.5,
+   "h_sole": 177.0,
+   "h_plate": 179.7,
+   "h_cm": 178.3,
+   "h_bbox_cm": 198.6
+  },
+  {
+   "frame": 1823,
+   "cat": "hips",
+   "px_per_m": 434.54,
+   "near_fit": [
+    501.36,
+    984.47,
+    97.77,
+    97.77,
+    0.0
+   ],
+   "tracker_px_per_m": 434.42,
+   "knee": 165.9,
+   "hip": 172.5,
+   "bbox_top": 572.8,
+   "bbox_bottom": 1413.1,
+   "ankle_near_y": 1245.5,
+   "ankle_far_y": 1212.0,
+   "ear_y": 698.6,
+   "eye_y": 689.0,
+   "head_xy": [
+    428.0,
+    649.0
+   ],
+   "sole_xy": [
+    470.5,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1270.7,
+   "ear_cm": 164.2,
+   "eye_cm": 167.0,
+   "head_above_ear_cm": 14.1,
+   "head_above_eye_cm": 11.4,
+   "h_sole": 177.0,
+   "h_plate": 179.7,
+   "h_cm": 178.3,
+   "h_bbox_cm": 198.7
+  },
+  {
+   "frame": 1847,
+   "cat": "hips",
+   "px_per_m": 434.71,
+   "near_fit": [
+    502.18,
+    984.51,
+    97.81,
+    97.81,
+    0.0
+   ],
+   "tracker_px_per_m": 434.83,
+   "knee": 165.2,
+   "hip": 171.4,
+   "bbox_top": 573.0,
+   "bbox_bottom": 1414.3,
+   "ankle_near_y": 1246.5,
+   "ankle_far_y": 1212.6,
+   "ear_y": 698.7,
+   "eye_y": 689.8,
+   "head_xy": [
+    430.0,
+    649.0
+   ],
+   "sole_xy": [
+    470.6,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1270.5,
+   "ear_cm": 164.2,
+   "eye_cm": 166.7,
+   "head_above_ear_cm": 14.1,
+   "head_above_eye_cm": 11.6,
+   "h_sole": 176.9,
+   "h_plate": 179.7,
+   "h_cm": 178.3,
+   "h_bbox_cm": 198.5
+  },
+  {
+   "frame": 1871,
+   "cat": "hips",
+   "px_per_m": 434.18,
+   "near_fit": [
+    502.4,
+    984.68,
+    97.69,
+    97.69,
+    0.0
+   ],
+   "tracker_px_per_m": 434.1,
+   "knee": 164.4,
+   "hip": 170.7,
+   "bbox_top": 574.7,
+   "bbox_bottom": 1413.2,
+   "ankle_near_y": 1246.5,
+   "ankle_far_y": 1212.6,
+   "ear_y": 699.3,
+   "eye_y": 691.4,
+   "head_xy": [
+    432.0,
+    649.0
+   ],
+   "sole_xy": [
+    471.0,
+    1295.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1272.5,
+   "ear_cm": 164.3,
+   "eye_cm": 166.5,
+   "head_above_ear_cm": 14.3,
+   "head_above_eye_cm": 12.1,
+   "h_sole": 177.5,
+   "h_plate": 179.7,
+   "h_cm": 178.6,
+   "h_bbox_cm": 198.6
+  },
+  {
+   "frame": 1895,
+   "cat": "hips",
+   "px_per_m": 434.4,
+   "near_fit": [
+    501.28,
+    987.03,
+    97.74,
+    97.74,
+    0.0
+   ],
+   "tracker_px_per_m": 434.29,
+   "knee": 165.5,
+   "hip": 171.1,
+   "bbox_top": 575.7,
+   "bbox_bottom": 1412.0,
+   "ankle_near_y": 1246.2,
+   "ankle_far_y": 1213.1,
+   "ear_y": 700.2,
+   "eye_y": 692.6,
+   "head_xy": [
+    437.0,
+    649.0
+   ],
+   "sole_xy": [
+    477.0,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1270.9,
+   "ear_cm": 163.8,
+   "eye_cm": 166.0,
+   "head_above_ear_cm": 14.6,
+   "head_above_eye_cm": 12.4,
+   "h_sole": 177.0,
+   "h_plate": 179.7,
+   "h_cm": 178.3,
+   "h_bbox_cm": 197.9
+  },
+  {
+   "frame": 1919,
+   "cat": "hips",
+   "px_per_m": 434.66,
+   "near_fit": [
+    497.68,
+    991.37,
+    97.8,
+    97.8,
+    0.0
+   ],
+   "tracker_px_per_m": 434.58,
+   "knee": 165.6,
+   "hip": 170.9,
+   "bbox_top": 575.4,
+   "bbox_bottom": 1411.5,
+   "ankle_near_y": 1245.7,
+   "ankle_far_y": 1213.4,
+   "ear_y": 700.5,
+   "eye_y": 693.4,
+   "head_xy": [
+    450.0,
+    650.0
+   ],
+   "sole_xy": [
+    474.0,
+    1294.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1272.4,
+   "ear_cm": 163.9,
+   "eye_cm": 166.0,
+   "head_above_ear_cm": 14.4,
+   "head_above_eye_cm": 12.4,
+   "h_sole": 177.2,
+   "h_plate": 179.4,
+   "h_cm": 178.3,
+   "h_bbox_cm": 198.4
+  },
+  {
+   "frame": 2943,
+   "cat": "hips",
+   "px_per_m": 430.37,
+   "near_fit": [
+    494.3,
+    985.9,
+    96.83,
+    96.83,
+    0.0
+   ],
+   "tracker_px_per_m": 430.62,
+   "knee": 175.1,
+   "hip": 174.5,
+   "bbox_top": 581.5,
+   "bbox_bottom": 1413.6,
+   "ankle_near_y": 1246.5,
+   "ankle_far_y": 1213.7,
+   "ear_y": 703.1,
+   "eye_y": 705.6,
+   "head_xy": [
+    497.0,
+    648.0
+   ],
+   "sole_xy": [
+    491.6,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.1,
+   "ear_cm": 163.0,
+   "eye_cm": 162.3,
+   "head_above_ear_cm": 15.7,
+   "head_above_eye_cm": 16.4,
+   "h_sole": 177.4,
+   "h_plate": 180.0,
+   "h_cm": 178.7,
+   "h_bbox_cm": 196.3
+  },
+  {
+   "frame": 2967,
+   "cat": "hips",
+   "px_per_m": 433.14,
+   "near_fit": [
+    500.02,
+    985.78,
+    97.46,
+    97.46,
+    0.0
+   ],
+   "tracker_px_per_m": 432.16,
+   "knee": 174.9,
+   "hip": 173.5,
+   "bbox_top": 582.0,
+   "bbox_bottom": 1413.8,
+   "ankle_near_y": 1246.2,
+   "ankle_far_y": 1213.3,
+   "ear_y": 703.5,
+   "eye_y": 708.9,
+   "head_xy": [
+    486.0,
+    652.0
+   ],
+   "sole_xy": [
+    470.5,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.0,
+   "ear_cm": 162.9,
+   "eye_cm": 161.3,
+   "head_above_ear_cm": 14.7,
+   "head_above_eye_cm": 16.2,
+   "h_sole": 176.2,
+   "h_plate": 178.9,
+   "h_cm": 177.6,
+   "h_bbox_cm": 196.1
+  },
+  {
+   "frame": 2991,
+   "cat": "hips",
+   "px_per_m": 430.66,
+   "near_fit": [
+    498.81,
+    986.7,
+    96.9,
+    96.9,
+    0.0
+   ],
+   "tracker_px_per_m": 430.88,
+   "knee": 171.2,
+   "hip": 175.2,
+   "bbox_top": 584.6,
+   "bbox_bottom": 1413.3,
+   "ankle_near_y": 1245.6,
+   "ankle_far_y": 1213.6,
+   "ear_y": 703.3,
+   "eye_y": 710.4,
+   "head_xy": [
+    483.0,
+    651.0
+   ],
+   "sole_xy": [
+    489.2,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.5,
+   "ear_cm": 163.0,
+   "eye_cm": 161.0,
+   "head_above_ear_cm": 14.9,
+   "head_above_eye_cm": 16.9,
+   "h_sole": 176.6,
+   "h_plate": 179.2,
+   "h_cm": 177.9,
+   "h_bbox_cm": 195.5
+  },
+  {
+   "frame": 3015,
+   "cat": "hips",
+   "px_per_m": 431.01,
+   "near_fit": [
+    500.79,
+    987.1,
+    96.98,
+    96.98,
+    0.0
+   ],
+   "tracker_px_per_m": 430.87,
+   "knee": 170.7,
+   "hip": 175.3,
+   "bbox_top": 584.5,
+   "bbox_bottom": 1413.2,
+   "ankle_near_y": 1244.9,
+   "ankle_far_y": 1213.4,
+   "ear_y": 703.2,
+   "eye_y": 710.0,
+   "head_xy": [
+    480.0,
+    651.0
+   ],
+   "sole_xy": [
+    480.7,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.8,
+   "ear_cm": 163.1,
+   "eye_cm": 161.1,
+   "head_above_ear_cm": 14.9,
+   "head_above_eye_cm": 16.8,
+   "h_sole": 176.7,
+   "h_plate": 179.2,
+   "h_cm": 177.9,
+   "h_bbox_cm": 195.6
+  },
+  {
+   "frame": 3039,
+   "cat": "hips",
+   "px_per_m": 431.19,
+   "near_fit": [
+    499.71,
+    987.44,
+    97.02,
+    97.02,
+    0.0
+   ],
+   "tracker_px_per_m": 431.1,
+   "knee": 169.6,
+   "hip": 175.3,
+   "bbox_top": 584.2,
+   "bbox_bottom": 1412.0,
+   "ankle_near_y": 1245.9,
+   "ankle_far_y": 1214.0,
+   "ear_y": 702.8,
+   "eye_y": 710.1,
+   "head_xy": [
+    479.0,
+    651.0
+   ],
+   "sole_xy": [
+    481.6,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.6,
+   "ear_cm": 163.2,
+   "eye_cm": 161.1,
+   "head_above_ear_cm": 14.7,
+   "head_above_eye_cm": 16.8,
+   "h_sole": 176.7,
+   "h_plate": 179.2,
+   "h_cm": 177.9,
+   "h_bbox_cm": 195.7
+  },
+  {
+   "frame": 3063,
+   "cat": "hips",
+   "px_per_m": 431.65,
+   "near_fit": [
+    499.7,
+    987.71,
+    97.12,
+    97.12,
+    0.0
+   ],
+   "tracker_px_per_m": 431.72,
+   "knee": 169.6,
+   "hip": 174.9,
+   "bbox_top": 584.2,
+   "bbox_bottom": 1411.8,
+   "ankle_near_y": 1245.7,
+   "ankle_far_y": 1213.7,
+   "ear_y": 703.4,
+   "eye_y": 711.1,
+   "head_xy": [
+    480.0,
+    651.0
+   ],
+   "sole_xy": [
+    481.6,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.5,
+   "ear_cm": 163.0,
+   "eye_cm": 160.8,
+   "head_above_ear_cm": 14.9,
+   "head_above_eye_cm": 17.1,
+   "h_sole": 176.6,
+   "h_plate": 179.2,
+   "h_cm": 177.9,
+   "h_bbox_cm": 195.6
+  },
+  {
+   "frame": 3087,
+   "cat": "hips",
+   "px_per_m": 430.22,
+   "near_fit": [
+    498.65,
+    987.69,
+    96.8,
+    96.8,
+    0.0
+   ],
+   "tracker_px_per_m": 430.28,
+   "knee": 170.1,
+   "hip": 175.1,
+   "bbox_top": 584.6,
+   "bbox_bottom": 1411.6,
+   "ankle_near_y": 1245.5,
+   "ankle_far_y": 1213.4,
+   "ear_y": 702.9,
+   "eye_y": 710.9,
+   "head_xy": [
+    480.0,
+    651.0
+   ],
+   "sole_xy": [
+    477.5,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.5,
+   "ear_cm": 163.1,
+   "eye_cm": 160.8,
+   "head_above_ear_cm": 14.8,
+   "head_above_eye_cm": 17.1,
+   "h_sole": 176.6,
+   "h_plate": 179.2,
+   "h_cm": 177.9,
+   "h_bbox_cm": 195.5
+  },
+  {
+   "frame": 3111,
+   "cat": "hips",
+   "px_per_m": 432.87,
+   "near_fit": [
+    498.9,
+    987.69,
+    97.39,
+    97.39,
+    0.0
+   ],
+   "tracker_px_per_m": 432.84,
+   "knee": 170.9,
+   "hip": 175.8,
+   "bbox_top": 585.1,
+   "bbox_bottom": 1412.0,
+   "ankle_near_y": 1245.7,
+   "ankle_far_y": 1213.4,
+   "ear_y": 702.3,
+   "eye_y": 712.0,
+   "head_xy": [
+    490.0,
+    650.0
+   ],
+   "sole_xy": [
+    477.5,
+    1295.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1273.4,
+   "ear_cm": 163.6,
+   "eye_cm": 160.8,
+   "head_above_ear_cm": 14.9,
+   "head_above_eye_cm": 17.6,
+   "h_sole": 177.5,
+   "h_plate": 179.4,
+   "h_cm": 178.4,
+   "h_bbox_cm": 195.9
+  },
+  {
+   "frame": 3135,
+   "cat": "hips",
+   "px_per_m": 432.86,
+   "near_fit": [
+    499.51,
+    987.89,
+    97.39,
+    97.39,
+    0.0
+   ],
+   "tracker_px_per_m": 432.76,
+   "knee": 170.9,
+   "hip": 175.9,
+   "bbox_top": 585.7,
+   "bbox_bottom": 1411.6,
+   "ankle_near_y": 1245.4,
+   "ankle_far_y": 1213.4,
+   "ear_y": 703.0,
+   "eye_y": 711.3,
+   "head_xy": [
+    492.0,
+    650.0
+   ],
+   "sole_xy": [
+    477.5,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.5,
+   "ear_cm": 163.1,
+   "eye_cm": 160.7,
+   "head_above_ear_cm": 15.1,
+   "head_above_eye_cm": 17.4,
+   "h_sole": 176.9,
+   "h_plate": 179.4,
+   "h_cm": 178.2,
+   "h_bbox_cm": 195.2
+  },
+  {
+   "frame": 3159,
+   "cat": "hips",
+   "px_per_m": 432.19,
+   "near_fit": [
+    500.04,
+    987.72,
+    97.24,
+    97.24,
+    0.0
+   ],
+   "tracker_px_per_m": 432.07,
+   "knee": 170.5,
+   "hip": 175.5,
+   "bbox_top": 584.8,
+   "bbox_bottom": 1412.2,
+   "ankle_near_y": 1245.6,
+   "ankle_far_y": 1212.6,
+   "ear_y": 703.6,
+   "eye_y": 711.7,
+   "head_xy": [
+    481.0,
+    651.0
+   ],
+   "sole_xy": [
+    472.0,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.0,
+   "ear_cm": 162.8,
+   "eye_cm": 160.5,
+   "head_above_ear_cm": 15.0,
+   "head_above_eye_cm": 17.3,
+   "h_sole": 176.5,
+   "h_plate": 179.2,
+   "h_cm": 177.8,
+   "h_bbox_cm": 195.3
+  },
+  {
+   "frame": 3183,
+   "cat": "hips",
+   "px_per_m": 432.69,
+   "near_fit": [
+    502.28,
+    988.12,
+    97.36,
+    97.36,
+    0.0
+   ],
+   "tracker_px_per_m": 432.62,
+   "knee": 170.1,
+   "hip": 174.9,
+   "bbox_top": 584.6,
+   "bbox_bottom": 1412.6,
+   "ankle_near_y": 1245.9,
+   "ankle_far_y": 1212.8,
+   "ear_y": 703.3,
+   "eye_y": 711.4,
+   "head_xy": [
+    479.0,
+    653.0
+   ],
+   "sole_xy": [
+    469.5,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1270.9,
+   "ear_cm": 162.9,
+   "eye_cm": 160.6,
+   "head_above_ear_cm": 14.3,
+   "head_above_eye_cm": 16.6,
+   "h_sole": 175.9,
+   "h_plate": 178.6,
+   "h_cm": 177.2,
+   "h_bbox_cm": 195.4
+  },
+  {
+   "frame": 3207,
+   "cat": "hips",
+   "px_per_m": 432.29,
+   "near_fit": [
+    503.52,
+    988.48,
+    97.27,
+    97.27,
+    0.0
+   ],
+   "tracker_px_per_m": 432.42,
+   "knee": 169.4,
+   "hip": 174.1,
+   "bbox_top": 585.6,
+   "bbox_bottom": 1411.8,
+   "ankle_near_y": 1245.5,
+   "ankle_far_y": 1213.3,
+   "ear_y": 703.1,
+   "eye_y": 711.6,
+   "head_xy": [
+    483.0,
+    651.0
+   ],
+   "sole_xy": [
+    482.9,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.4,
+   "ear_cm": 163.0,
+   "eye_cm": 160.6,
+   "head_above_ear_cm": 14.8,
+   "head_above_eye_cm": 17.2,
+   "h_sole": 176.6,
+   "h_plate": 179.2,
+   "h_cm": 177.9,
+   "h_bbox_cm": 195.2
+  },
+  {
+   "frame": 3231,
+   "cat": "hips",
+   "px_per_m": 432.63,
+   "near_fit": [
+    504.12,
+    988.62,
+    97.34,
+    97.34,
+    0.0
+   ],
+   "tracker_px_per_m": 432.55,
+   "knee": 169.8,
+   "hip": 174.8,
+   "bbox_top": 586.2,
+   "bbox_bottom": 1411.5,
+   "ankle_near_y": 1245.7,
+   "ankle_far_y": 1213.3,
+   "ear_y": 703.6,
+   "eye_y": 711.3,
+   "head_xy": [
+    485.0,
+    651.0
+   ],
+   "sole_xy": [
+    475.0,
+    1294.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1272.3,
+   "ear_cm": 163.0,
+   "eye_cm": 160.8,
+   "head_above_ear_cm": 15.0,
+   "head_above_eye_cm": 17.2,
+   "h_sole": 176.9,
+   "h_plate": 179.2,
+   "h_cm": 178.1,
+   "h_bbox_cm": 195.3
+  },
+  {
+   "frame": 3255,
+   "cat": "hips",
+   "px_per_m": 432.48,
+   "near_fit": [
+    504.46,
+    989.17,
+    97.31,
+    97.31,
+    0.0
+   ],
+   "tracker_px_per_m": 432.39,
+   "knee": 170.0,
+   "hip": 174.7,
+   "bbox_top": 587.0,
+   "bbox_bottom": 1410.7,
+   "ankle_near_y": 1245.2,
+   "ankle_far_y": 1212.7,
+   "ear_y": 703.5,
+   "eye_y": 711.6,
+   "head_xy": [
+    485.0,
+    651.0
+   ],
+   "sole_xy": [
+    486.4,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.3,
+   "ear_cm": 162.9,
+   "eye_cm": 160.6,
+   "head_above_ear_cm": 14.9,
+   "head_above_eye_cm": 17.2,
+   "h_sole": 176.6,
+   "h_plate": 179.2,
+   "h_cm": 177.9,
+   "h_bbox_cm": 194.8
+  },
+  {
+   "frame": 3279,
+   "cat": "hips",
+   "px_per_m": 433.04,
+   "near_fit": [
+    503.97,
+    989.45,
+    97.43,
+    97.43,
+    0.0
+   ],
+   "tracker_px_per_m": 433.02,
+   "knee": 170.2,
+   "hip": 174.9,
+   "bbox_top": 586.5,
+   "bbox_bottom": 1411.4,
+   "ankle_near_y": 1245.5,
+   "ankle_far_y": 1213.4,
+   "ear_y": 703.5,
+   "eye_y": 712.2,
+   "head_xy": [
+    487.0,
+    651.0
+   ],
+   "sole_xy": [
+    483.9,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.5,
+   "ear_cm": 162.9,
+   "eye_cm": 160.5,
+   "head_above_ear_cm": 14.9,
+   "head_above_eye_cm": 17.4,
+   "h_sole": 176.6,
+   "h_plate": 179.2,
+   "h_cm": 177.9,
+   "h_bbox_cm": 195.0
+  },
+  {
+   "frame": 3303,
+   "cat": "hips",
+   "px_per_m": 432.78,
+   "near_fit": [
+    502.16,
+    991.06,
+    97.37,
+    97.37,
+    0.0
+   ],
+   "tracker_px_per_m": 433.07,
+   "knee": 170.0,
+   "hip": 174.5,
+   "bbox_top": 586.6,
+   "bbox_bottom": 1412.1,
+   "ankle_near_y": 1246.3,
+   "ankle_far_y": 1214.6,
+   "ear_y": 703.8,
+   "eye_y": 712.8,
+   "head_xy": [
+    492.0,
+    652.0
+   ],
+   "sole_xy": [
+    477.0,
+    1293.5
+   ],
+   "floor_plate_y": 1280.4,
+   "floor_sole_y": 1271.7,
+   "ear_cm": 162.9,
+   "eye_cm": 160.3,
+   "head_above_ear_cm": 14.7,
+   "head_above_eye_cm": 17.3,
+   "h_sole": 176.4,
+   "h_plate": 178.9,
+   "h_cm": 177.7,
+   "h_bbox_cm": 195.0
+  }
+ ]
+}
