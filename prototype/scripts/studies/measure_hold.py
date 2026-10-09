@@ -1,6 +1,6 @@
 """Length of the standing hold (noise-floor sample), from the plate hub.
 
-usage: uv run python scripts/measure_hold.py out/20261001_2_jiri_v1_standup_5kg_1rep_success_0deg
+usage: uv run python scripts/studies/measure_hold.py out/20261001_2_jiri_v1_standup_5kg_1rep_success_0deg
 reads  out/<clip>/plate.npz, out/<clip>/raw_pose.npz
 writes out/<clip>/hold.json
 

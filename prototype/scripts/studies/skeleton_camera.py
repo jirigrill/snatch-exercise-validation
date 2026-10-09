@@ -1,6 +1,6 @@
 """Did the camera move between the side-on spike clips? (for transferring px lengths)
 
-usage: uv run python scripts/skeleton_camera.py
+usage: uv run python scripts/studies/skeleton_camera.py
 reads  ../vids/spike/<clip>.MOV (first frame), out/<clip>/person.npz, plate.npz, raw_pose.npz
 writes out/skeleton/camera.md (table), out/skeleton/camera_diff.jpg (C1 vs each clip,
        background difference after no alignment)

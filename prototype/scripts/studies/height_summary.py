@@ -1,6 +1,6 @@
 """Pool body-height estimates (out/<clip>/height.json from body_height.py) across clips (#22).
 
-usage: uv run python scripts/height_summary.py --scale-clips out/<a>,out/<b>,... out/<clip> [...]
+usage: uv run python scripts/studies/height_summary.py --scale-clips out/<a>,out/<b>,... out/<clip> [...]
            [--shoe-cm 2.5] [--k 0.825]
 reads  out/<clip>/height.json
 writes nothing; prints markdown tables and the pooled estimate

@@ -1,6 +1,6 @@
 """How far do pose runs of one clip differ from a reference run (e.g. a full run)?
 
-usage: uv run python scripts/compare_pose_runs.py ref.npz run1.npz [run2.npz ...] [--plate plate.npz]
+usage: uv run python scripts/studies/compare_pose_runs.py ref.npz run1.npz [run2.npz ...] [--plate plate.npz]
 reads  the raw_pose.npz files; with --plate also v2 phases (needs hub_y)
 writes nothing (prints)
 

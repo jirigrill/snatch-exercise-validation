@@ -1,6 +1,6 @@
 """Wrist from the hub: how stable is wrist - bar on the bar-only side-on clips?
 
-usage: uv run python scripts/skeleton_wrist.py
+usage: uv run python scripts/studies/skeleton_wrist.py
 reads  ../vids/spike/{C1,C2}.MOV, out/{C1,C2}/raw_pose.npz
 writes out/skeleton/collar_{C1,C2}.npz (collar track), out/skeleton/wrist.md,
        out/skeleton/wrist_sheet.jpg (collar + wrist + rebuilt wrist on pull frames)

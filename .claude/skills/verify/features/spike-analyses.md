@@ -1,10 +1,11 @@
 # Spike analyses (D1, D2, body height, knee skeleton)
 
 ## Sub-features
-- D2 early arm bend: `arm_bend.py label=out/<clip> …` -> out/<clip>/arm_bend.json, out/d2_arm_bend/{reps.csv,curves.png,summary.md}
-- Body height: `body_height.py ../vids/spike/<clip>.MOV out/<clip> [--side r|l]` -> height.json, height_sheet.jpg
-- D1 camera views: `d1_views.py [--v1|--v2] [--near] out/<clip> …` -> d1_views.json, out/d1_views.md
-- Knee skeleton fill-in: `skeleton_validate.py [--seed 0]` -> out/skeleton/validate.{json,md}
+All scripts live in `prototype/scripts/studies/`.
+- D2 early arm bend: `scripts/studies/arm_bend.py label=out/<clip> …` -> out/<clip>/arm_bend.json, out/d2_arm_bend/{reps.csv,curves.png,summary.md}
+- Body height: `scripts/studies/body_height.py ../vids/spike/<clip>.MOV out/<clip> [--side r|l]` -> height.json, height_sheet.jpg
+- D1 camera views: `scripts/studies/d1_views.py [--v1|--v2] [--near] out/<clip> …` -> d1_views.json, out/d1_views.md
+- Knee skeleton fill-in: `scripts/studies/skeleton_validate.py [--seed 0]` -> out/skeleton/validate.{json,md}
 
 ## How to get to it (user POV)
 Analyst compares views/clips from the 2026-10-07 spike (`vids/spike/`, results in `docs/results/33-36`).

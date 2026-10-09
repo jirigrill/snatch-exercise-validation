@@ -18,7 +18,7 @@ Clips (`vids/spike/`, squat snatch, bar + 5 kg = 25 kg, 3 reps each, camera on t
 
 Only one pass was filmed (0 → 45 → 30), not the interleaved double pass, so view and set order (fatigue, warm-up) are confounded. 3 reps per view.
 
-Code: `prototype/src/snatch/views.py` (+ `tests/test_views.py`), `prototype/scripts/{d1_views,d1_sheets,d1_near_plate}.py`. Numbers: `prototype/out/d1_views.md`, `prototype/out/<clip>/d1_views.json`; path plot `prototype/out/d1_paths.png`.
+Code: `prototype/src/snatch/views.py` (+ `tests/test_views.py`), `prototype/scripts/studies/{d1_views,d1_sheets,d1_near_plate}.py`. Numbers: `prototype/out/d1_views.md`, `prototype/out/<clip>/d1_views.json`; path plot `prototype/out/d1_paths.png`.
 
 ## 1. Pipeline notes for these clips
 
@@ -121,11 +121,11 @@ uv run python scripts/track_plate.py ../vids/spike/20261007_4_jiri_v3_squatsnatc
 uv run python scripts/track_plate.py ../vids/spike/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right.MOV out/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right ellipse --radius 60:120
 uv run python scripts/track_plate.py ../vids/spike/20261007_5_jiri_v3_squatsnatch_5kg_3rep_success_45deg_right.MOV out/20261007_5_jiri_v3_squatsnatch_5kg_3rep_success_45deg_right ellipse --radius 45:72
 # near-plate prior, oblique only (~10 min each)
-uv run python scripts/d1_near_plate.py ../vids/spike/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right.MOV out/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right --radius 60:120
-uv run python scripts/d1_near_plate.py ../vids/spike/20261007_5_jiri_v3_squatsnatch_5kg_3rep_success_45deg_right.MOV out/20261007_5_jiri_v3_squatsnatch_5kg_3rep_success_45deg_right --radius 50:100
+uv run python scripts/studies/d1_near_plate.py ../vids/spike/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right.MOV out/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right --radius 60:120
+uv run python scripts/studies/d1_near_plate.py ../vids/spike/20261007_5_jiri_v3_squatsnatch_5kg_3rep_success_45deg_right.MOV out/20261007_5_jiri_v3_squatsnatch_5kg_3rep_success_45deg_right --radius 50:100
 # numbers and sheets
-uv run python scripts/d1_views.py --v1 --near out/20261007_4_jiri_v3_squatsnatch_5kg_3rep_success_0deg_right out/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right out/20261007_5_jiri_v3_squatsnatch_5kg_3rep_success_45deg_right
-uv run python scripts/d1_sheets.py ../vids/spike/<clip>.MOV out/<clip> --near   # each of the 3
+uv run python scripts/studies/d1_views.py --v1 --near out/20261007_4_jiri_v3_squatsnatch_5kg_3rep_success_0deg_right out/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right out/20261007_5_jiri_v3_squatsnatch_5kg_3rep_success_45deg_right
+uv run python scripts/studies/d1_sheets.py ../vids/spike/<clip>.MOV out/<clip> --near   # each of the 3
 ```
 
 ## Files

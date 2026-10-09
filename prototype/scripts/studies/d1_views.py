@@ -1,10 +1,10 @@
 """D1 camera-view numbers: keypoints at the transition and in the pull, plate
 tracking, and rectified bar-path markers per view (docs/results/33-d1-views.md).
 
-usage: uv run python scripts/d1_views.py [--v1|--v2] [--near] out/<clip> [out/<clip> ...]
+usage: uv run python scripts/studies/d1_views.py [--v1|--v2] [--near] out/<clip> [out/<clip> ...]
        (--v1: v1 phases (wrists) for every clip, so views compare like for like;
         --v2: v2 phases even where the plate check failed;
-        --near: read plate_near.npz from scripts/d1_near_plate.py where present)
+        --near: read plate_near.npz from scripts/studies/d1_near_plate.py where present)
 reads  out/<clip>/raw_pose.npz, out/<clip>/plate.npz
 writes out/<clip>/d1_views.json (per clip), out/d1_views.md (all clips given)
 
@@ -292,7 +292,7 @@ def plot_paths(results: list[dict]) -> None:
 
 def md(results: list[dict]) -> str:
     names = [r["clip"] for r in results]
-    L = ["# D1 views — numbers (scripts/d1_views.py)", "",
+    L = ["# D1 views — numbers (scripts/studies/d1_views.py)", "",
          "Clips: " + ", ".join(f"`{c}`" for c in names), ""]
     L += ["## Plate", "", "| clip | status | found % | near plate in lifts % (other) | jumps | view° rest (all p10–p90) | "
           "major tilt° | px/m | px/m CV % | hub jitter rest x/y (mm) | hub jitter in lifts x/y (mm) |", "|---|---|---|---|---|---|---|---|---|---|---|"]
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     results = []
     args = sys.argv[1:]
     force = "--v2" in args  # v2 phases even where the plate check failed
-    near = "--near" in args  # plate_near.npz (scripts/d1_near_plate.py) where present
+    near = "--near" in args  # plate_near.npz (scripts/studies/d1_near_plate.py) where present
     v1 = "--v1" in args  # v1 phases (wrists) for every clip
     for d in [a for a in args if not a.startswith("--")]:
         res = analyse(Path(d), force, near, v1)

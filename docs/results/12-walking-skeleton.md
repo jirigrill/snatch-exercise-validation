@@ -135,7 +135,7 @@ Per `docs/research/09-pose-model-licensing.md`, RTMPose code and rtmlib are Apac
 
 ## Addendum 2026-10-02: detector every Nth frame (tested, rejected)
 
-Can the CPU-bound detector run only every Nth frame, with the crop tracked from the previous frame's keypoints in between? Pose still runs on every frame. Test on 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg, reusing the saved every-frame boxes: `uv run python scripts/compare_sparse.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg 8 24`.
+Can the CPU-bound detector run only every Nth frame, with the crop tracked from the previous frame's keypoints in between? Pose still runs on every frame. Test on 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg, reusing the saved every-frame boxes: `uv run python scripts/studies/compare_sparse.py ../vids/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg.MOV out/20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg 8 24`.
 
 | | Every 8th frame (30 Hz) | Every 24th frame (10 Hz) |
 |---|---|---|

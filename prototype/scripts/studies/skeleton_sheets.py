@@ -1,6 +1,6 @@
 """Frame sheets: observed vs rebuilt near knee (visual check of the skeleton).
 
-usage: uv run python scripts/skeleton_sheets.py
+usage: uv run python scripts/studies/skeleton_sheets.py
 reads  out/<clip>/raw_pose.npz (+ plate.npz for the loaded clips), the videos
 writes out/skeleton/sheet_c1.jpg   C1 (no plate): per pull, frames at bar-at-knee, mid
                                    transition, bar-at-hip. Green = observed knee (truth),

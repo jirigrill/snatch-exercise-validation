@@ -1,6 +1,6 @@
 """Knee skeleton on the loaded side-on clips: agreement with RTMPose's own guess.
 
-usage: uv run python scripts/skeleton_loaded.py
+usage: uv run python scripts/studies/skeleton_loaded.py
 reads  out/<clip>/raw_pose.npz, plate.npz, height.json (px_per_m_mid) for the
        loaded right-side 0 deg clips; out/<C1>/raw_pose.npz for the calibration
 writes out/skeleton/loaded.json, out/skeleton/loaded.md
@@ -11,7 +11,7 @@ are agreement between the rebuilt knee and RTMPose's knee (and the far knee),
 not accuracy.
 Lengths: (a) "C1": the C1 length table (snatch.skeleton.length_table over
 all C1 frames) scaled by the clip's standing hip-ankle / C1's (camera and
-lifter depth check: scripts/skeleton_camera.py); (b) "own": the same table
+lifter depth check: scripts/studies/skeleton_camera.py); (b) "own": the same table
 from the clip's own frames with the knee clear of the plate (ellipse_dist >
 1.15) and the knee score >= 0.6.
 Pulls from the hub (snatch.skeleton.pull_windows, hub y as the bar), catch

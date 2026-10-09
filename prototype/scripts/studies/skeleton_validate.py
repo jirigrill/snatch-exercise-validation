@@ -1,6 +1,6 @@
 """Synthetic-occlusion test of the knee skeleton on the bar-only side-on clips.
 
-usage: uv run python scripts/skeleton_validate.py [--seed 0]
+usage: uv run python scripts/studies/skeleton_validate.py [--seed 0]
 reads  out/{C1,C2}/raw_pose.npz (C1 = 20261007_1_..._standup_bar_..., C2 =
        20261007_2_..._powersnatch_bar_..., no plates: the near knee is never hidden)
 writes out/skeleton/validate.json, out/skeleton/validate.md (tables),

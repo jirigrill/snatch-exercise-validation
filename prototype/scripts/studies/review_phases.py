@@ -1,6 +1,6 @@
 """Review material for #13: phase marks (definition v2) on side-on reps.
 
-usage: uv run python scripts/review_phases.py
+usage: uv run python scripts/studies/review_phases.py
 reads  out/<clip>/raw_pose.npz, plate.npz and ../vids/<clip>.MOV
 writes out/review13/<clip>_rep<k>.jpg   one sheet per rep: columns = setup,
            transition, catch, lockout; rows = event -0.1 s, event, +0.1 s

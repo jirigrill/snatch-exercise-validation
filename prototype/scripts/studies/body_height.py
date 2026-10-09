@@ -1,6 +1,6 @@
 """Body height (with shoes) from standing frames of a side-on clip (#22, docs/results/35).
 
-usage: uv run python scripts/body_height.py ../vids/spike/<clip>.MOV out/<clip> [--side r|l]
+usage: uv run python scripts/studies/body_height.py ../vids/spike/<clip>.MOV out/<clip> [--side r|l]
 reads  out/<clip>/raw_pose.npz, plate.npz, person.npz
 writes out/<clip>/height.json   per-frame rows and the clip summary
        out/<clip>/height_sheet.jpg   chosen frames: head top (red), sole (green),

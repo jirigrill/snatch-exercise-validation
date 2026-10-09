@@ -1,6 +1,6 @@
 """Does posing only the rep ranges change anything? Full run vs per-rep run.
 
-usage: uv run python scripts/compare_rep_pose.py out/20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg
+usage: uv run python scripts/studies/compare_rep_pose.py out/20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg
 reads  out/<clip>/raw_pose.npz (full clip), raw_pose_reps.npz (extract_pose.py
        --reps --name raw_pose_reps), plate.npz
 writes out/<clip>/rep_pose_check.md

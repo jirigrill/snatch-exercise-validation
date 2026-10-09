@@ -1,6 +1,6 @@
 """Quick frame-rate estimate (#30): subsample the 240 fps results to 120/60/30.
 
-usage: uv run python scripts/fps_estimate.py
+usage: uv run python scripts/studies/fps_estimate.py
 reads  out/<clip>/raw_pose.npz, out/<clip>/plate.npz, out/<clip>/phases_v2.json
 writes out/fps_estimate.md, out/fps_estimate.json
 
