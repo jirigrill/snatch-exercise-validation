@@ -1,0 +1,81 @@
+=== plate (manual, lane-2 fix): --radius 70:140
+candidates 0/5909 0s
+candidates 500/5909 12s
+candidates 1000/5909 26s
+candidates 1500/5909 41s
+candidates 2000/5909 54s
+candidates 2500/5909 68s
+candidates 3000/5909 83s
+candidates 3500/5909 97s
+candidates 4000/5909 110s
+candidates 4500/5909 124s
+[rawvideo @ 0x9dd017980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4769 >= 4769
+[rawvideo @ 0x9dd017980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4791 >= 4791
+[rawvideo @ 0x9dd017980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4796 >= 4796
+candidates 5000/5909 138s
+candidates 5500/5909 152s
+outline A 0/5909 172s
+outline A 500/5909 179s
+outline A 1000/5909 187s
+outline A 1500/5909 194s
+outline A 2000/5909 201s
+outline A 2500/5909 209s
+outline A 3000/5909 217s
+outline A 3500/5909 224s
+outline A 4000/5909 231s
+outline A 4500/5909 239s
+[rawvideo @ 0xc5740b980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4769 >= 4769
+[rawvideo @ 0xc5740b980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4791 >= 4791
+[rawvideo @ 0xc5740b980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4796 >= 4796
+outline A 5000/5909 247s
+outline A 5500/5909 258s
+outline B 0/5909 270s
+outline B 500/5909 278s
+outline B 1000/5909 286s
+outline B 1500/5909 294s
+outline B 2000/5909 300s
+outline B 2500/5909 306s
+outline B 3000/5909 311s
+outline B 3500/5909 317s
+outline B 4000/5909 325s
+outline B 4500/5909 339s
+[rawvideo @ 0xb5300f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4769 >= 4769
+[rawvideo @ 0xb5300f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4791 >= 4791
+[rawvideo @ 0xb5300f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4796 >= 4796
+outline B 5000/5909 351s
+outline B 5500/5909 364s
+found 5909/5909 frames (100.0%), ellipse fit 5909, r0 95.8 px, 373s
+status ok (vertical travel 1.73 m)
+[rawvideo @ 0x8b101f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4769 >= 4769
+[rawvideo @ 0x8b101f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4791 >= 4791
+[rawvideo @ 0x8b101f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4796 >= 4796
+wrote out/20261007_3_jiri_v3_powersnatch_5kg_3rep_success_0deg_right/plate.npz
+[rawvideo @ 0x98501f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4769 >= 4769
+[rawvideo @ 0x98501f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4791 >= 4791
+[rawvideo @ 0x98501f980] Application provided invalid, non monotonically increasing dts to muxer in stream 0: 4796 >= 4796
+[{"setup": 1027, "transition": 1129, "catch": 1310, "lockout": 1489, "overhead_start": 1217, "overhead_end": 1821}, {"setup": 2655, "transition": 2740, "catch": 2942, "lockout": 3209, "overhead_start": 2823, "overhead_end": 3472}, {"setup": 4267, "transition": null, "catch": 4529, "lockout": 4840, "overhead_start": 4458, "overhead_end": 5136}]
+wrote ['angles.csv', 'angles.png', 'bar_path.png', 'grabs', 'height.json', 'overlay.mp4', 'person.npz', 'phase_sheet.jpg', 'phases.json', 'plate.csv', 'plate.npz', 'plate_check.jpg', 'raw_pose.npz']
+# 20261007_3_jiri_v3_powersnatch_5kg_3rep_success_0deg_right — phase times, v1 (wrist) vs v2 (hub)
+
+reps: v1 3, v2 3; hub found in 100.0% of frames
+
+| rep | event | v1 | v2 | v2 − v1 (frames) | v2 − v1 (ms) |
+|---|---|---|---|---|---|
+| 1 | setup | f1027 (4.279 s) | f968 (4.033 s) | -59 | -246 |
+| 1 | transition | f1129 (4.704 s) | f1129 (4.704 s) | +0 | +0 |
+| 1 | catch | f1310 (5.458 s) | f1310 (5.458 s) | +0 | +0 |
+| 1 | lockout | f1489 (6.204 s) | f1489 (6.204 s) | +0 | +0 |
+| 1 | overhead_start | f1217 (5.071 s) | f1212 (5.050 s) | -5 | -21 |
+| 1 | overhead_end | f1821 (7.588 s) | f1825 (7.604 s) | +4 | +17 |
+| 2 | setup | f2655 (11.062 s) | f2598 (10.825 s) | -57 | -238 |
+| 2 | transition | f2740 (11.417 s) | f2740 (11.417 s) | +0 | +0 |
+| 2 | catch | f2942 (12.258 s) | f2942 (12.258 s) | +0 | +0 |
+| 2 | lockout | f3209 (13.371 s) | f3209 (13.371 s) | +0 | +0 |
+| 2 | overhead_start | f2823 (11.762 s) | f2817 (11.738 s) | -6 | -25 |
+| 2 | overhead_end | f3472 (14.467 s) | f3475 (14.479 s) | +3 | +12 |
+| 3 | setup | f4267 (17.779 s) | f4237 (17.654 s) | -30 | -125 |
+| 3 | transition | — | — | — | — |
+| 3 | catch | f4529 (18.871 s) | f4529 (18.871 s) | +0 | +0 |
+| 3 | lockout | f4840 (20.167 s) | f4840 (20.167 s) | +0 | +0 |
+| 3 | overhead_start | f4458 (18.575 s) | f4452 (18.550 s) | -6 | -25 |
+| 3 | overhead_end | f5136 (21.400 s) | f5141 (21.421 s) | +5 | +21 |

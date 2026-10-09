@@ -1,0 +1,119 @@
+{
+ "definition": "v2 (hub height for wrist height)",
+ "fps": 240.0,
+ "side": "r",
+ "reps": [
+  {
+   "setup": 1208,
+   "transition": 1347,
+   "catch": 1543,
+   "lockout": 1543,
+   "overhead_start": 1433,
+   "overhead_end": 1633,
+   "setup_s": 5.033,
+   "transition_s": 5.612,
+   "catch_s": 6.429,
+   "lockout_s": 6.429,
+   "overhead_start_s": 5.971,
+   "overhead_end_s": 6.804
+  },
+  {
+   "setup": 1208,
+   "transition": 1522,
+   "catch": 1792,
+   "lockout": 1856,
+   "overhead_start": 1760,
+   "overhead_end": 2027,
+   "setup_s": 5.033,
+   "transition_s": 6.342,
+   "catch_s": 7.467,
+   "lockout_s": 7.733,
+   "overhead_start_s": 7.333,
+   "overhead_end_s": 8.446
+  },
+  {
+   "setup": 2998,
+   "transition": null,
+   "catch": 3293,
+   "lockout": 3293,
+   "overhead_start": 3210,
+   "overhead_end": 3374,
+   "setup_s": 12.492,
+   "transition_s": null,
+   "catch_s": 13.721,
+   "lockout_s": 13.721,
+   "overhead_start_s": 13.375,
+   "overhead_end_s": 14.058
+  },
+  {
+   "setup": 3510,
+   "transition": null,
+   "catch": 3737,
+   "lockout": 3737,
+   "overhead_start": 3541,
+   "overhead_end": 3758,
+   "setup_s": 14.625,
+   "transition_s": null,
+   "catch_s": 15.571,
+   "lockout_s": 15.571,
+   "overhead_start_s": 14.754,
+   "overhead_end_s": 15.658
+  },
+  {
+   "setup": 5094,
+   "transition": null,
+   "catch": 5095,
+   "lockout": 5161,
+   "overhead_start": 5105,
+   "overhead_end": 5459,
+   "setup_s": 21.225,
+   "transition_s": null,
+   "catch_s": 21.229,
+   "lockout_s": 21.504,
+   "overhead_start_s": 21.271,
+   "overhead_end_s": 22.746
+  }
+ ],
+ "hub_found_at_event": [
+  {
+   "setup": true,
+   "transition": true,
+   "catch": true,
+   "lockout": true,
+   "overhead_start": true,
+   "overhead_end": true
+  },
+  {
+   "setup": true,
+   "transition": true,
+   "catch": true,
+   "lockout": true,
+   "overhead_start": false,
+   "overhead_end": true
+  },
+  {
+   "setup": true,
+   "transition": null,
+   "catch": true,
+   "lockout": true,
+   "overhead_start": true,
+   "overhead_end": true
+  },
+  {
+   "setup": false,
+   "transition": null,
+   "catch": true,
+   "lockout": true,
+   "overhead_start": false,
+   "overhead_end": true
+  },
+  {
+   "setup": true,
+   "transition": null,
+   "catch": true,
+   "lockout": true,
+   "overhead_start": false,
+   "overhead_end": true
+  }
+ ]
+}

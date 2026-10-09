@@ -1,0 +1,70 @@
+{
+ "fps": 240.0,
+ "side": "r",
+ "reps": [
+  {
+   "setup": 1212,
+   "transition": 1347,
+   "catch": 1543,
+   "lockout": 1856,
+   "overhead_start": 1432,
+   "overhead_end": 2024,
+   "setup_s": 5.05,
+   "transition_s": 5.612,
+   "catch_s": 6.429,
+   "lockout_s": 7.733,
+   "overhead_start_s": 5.967,
+   "overhead_end_s": 8.433
+  },
+  {
+   "setup": 2986,
+   "transition": null,
+   "catch": 3293,
+   "lockout": 3483,
+   "overhead_start": 3209,
+   "overhead_end": 3757,
+   "setup_s": 12.442,
+   "transition_s": null,
+   "catch_s": 13.721,
+   "lockout_s": 14.512,
+   "overhead_start_s": 13.371,
+   "overhead_end_s": 15.654
+  },
+  {
+   "setup": 4643,
+   "transition": null,
+   "catch": 4923,
+   "lockout": 5161,
+   "overhead_start": 4842,
+   "overhead_end": 5452,
+   "setup_s": 19.346,
+   "transition_s": null,
+   "catch_s": 20.512,
+   "lockout_s": 21.504,
+   "overhead_start_s": 20.175,
+   "overhead_end_s": 22.717
+  }
+ ],
+ "near_side_score_at_phase": {
+  "setup": [
+   0.7779355049133301,
+   0.7782688736915588,
+   0.8148984909057617
+  ],
+  "transition": [
+   0.854881227016449,
+   null,
+   null
+  ],
+  "catch": [
+   0.9525237679481506,
+   0.9123154282569885,
+   0.8990323543548584
+  ],
+  "lockout": [
+   0.8897704482078552,
+   0.9184868931770325,
+   0.8921258449554443
+  ]
+ }
+}

@@ -1,0 +1,85 @@
+{
+ "summary": {
+  "clip": "20261007_10_jiri_v3_powersnatch_10kg_3rep_fail-bend-elbows_0deg_right",
+  "side": "r",
+  "fps": 240.0,
+  "frames": 0,
+  "k_far_median": null,
+  "k_far_n": 0,
+  "k_protocol": 0.825,
+  "k_used": 0.825,
+  "hub_rest_y": 1325.9,
+  "px_per_m_rest": 453.4,
+  "camera_height_m": 1.032,
+  "px_per_m_near_median": NaN,
+  "px_per_m_mid": NaN,
+  "floor_plate_y": 1346.1,
+  "scale_from": [],
+  "by_cat": {
+   "hips": {
+    "h_cm": {
+     "n": 0
+    },
+    "h_sole": {
+     "n": 0
+    },
+    "h_plate": {
+     "n": 0
+    },
+    "h_bbox_cm": {
+     "n": 0
+    },
+    "ear_cm": {
+     "n": 0
+    },
+    "head_above_ear_cm": {
+     "n": 0
+    },
+    "eye_cm": {
+     "n": 0
+    },
+    "head_above_eye_cm": {
+     "n": 0
+    }
+   },
+   "overhead": {
+    "h_cm": {
+     "n": 0
+    },
+    "h_sole": {
+     "n": 0
+    },
+    "h_plate": {
+     "n": 0
+    },
+    "h_bbox_cm": {
+     "n": 0
+    },
+    "ear_cm": {
+     "n": 0
+    },
+    "head_above_ear_cm": {
+     "n": 0
+    },
+    "eye_cm": {
+     "n": 0
+    },
+    "head_above_eye_cm": {
+     "n": 0
+    }
+   }
+  },
+  "all": {
+   "h_cm": {
+    "n": 0
+   },
+   "h_sole": {
+    "n": 0
+   },
+   "h_plate": {
+    "n": 0
+   }
+  }
+ },
+ "rows": []
+}

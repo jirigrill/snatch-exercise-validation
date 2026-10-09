@@ -1,0 +1,115 @@
+=== person: uv run python scripts/extract_person.py ../vids/spike/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right.MOV out/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right
+ClipInfo(width=1080, height=1920, fps=240.0, n_frames=6196, rotation=-90)
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/yolox_x_8xb8-300e_humanart-a39d44ed.onnx with onnxruntime backend
+detector frame 0/6196 1s
+detector frame 2400/6196 66s
+detector frame 4800/6196 129s
+done 259 detections on 6196 frames in 165s
+=== pose: uv run python scripts/extract_pose.py ../vids/spike/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right.MOV out/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right
+ClipInfo(width=1080, height=1920, fps=240.0, n_frames=6196, rotation=-90)
+2026-10-08 11:13:15.292 python3[28894:34740031] 2026-10-08 11:13:15.292508 [W:onnxruntime:, session_state.cc:1397 VerifyEachNodeIsAssignedToAnEp] Some nodes were not assigned to the preferred execution providers which may or may not have an negative impact on performance. e.g. ORT explicitly assigns shape related ops to CPU to improve perf.
+2026-10-08 11:13:15.292 python3[28894:34740031] 2026-10-08 11:13:15.292585 [W:onnxruntime:, session_state.cc:1399 VerifyEachNodeIsAssignedToAnEp] Rerunning with verbose output on a non-minimal build will show node assignments.
+load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/rtmpose-x_simcc-body7_pt-body7_700e-384x288-71d7b7e9_20230629.onnx with onnxruntime backend
+frame 0/6196 4s
+frame 200/6196 9s
+frame 400/6196 14s
+frame 600/6196 19s
+frame 800/6196 25s
+frame 1000/6196 30s
+frame 1200/6196 35s
+frame 1400/6196 40s
+frame 1600/6196 45s
+frame 1800/6196 50s
+frame 2000/6196 56s
+frame 2200/6196 61s
+frame 2400/6196 66s
+frame 2600/6196 72s
+frame 2800/6196 77s
+frame 3000/6196 82s
+frame 3200/6196 88s
+frame 3400/6196 93s
+frame 3600/6196 98s
+frame 3800/6196 103s
+frame 4000/6196 108s
+frame 4200/6196 113s
+frame 4400/6196 118s
+frame 4600/6196 124s
+frame 4800/6196 129s
+frame 5000/6196 134s
+frame 5200/6196 139s
+frame 5400/6196 144s
+frame 5600/6196 149s
+frame 5800/6196 154s
+frame 6000/6196 159s
+done 6196 frames in 164s
+=== plate (d1 agent rerun): ellipse --radius 60:120
+candidates 0/6196 0s
+candidates 500/6196 21s
+candidates 1000/6196 34s
+candidates 1500/6196 48s
+candidates 2000/6196 63s
+candidates 2500/6196 77s
+candidates 3000/6196 91s
+candidates 3500/6196 105s
+candidates 4000/6196 118s
+candidates 4500/6196 134s
+candidates 5000/6196 153s
+candidates 5500/6196 172s
+candidates 6000/6196 185s
+outline A 0/6196 199s
+outline A 500/6196 213s
+outline A 1000/6196 226s
+outline A 1500/6196 239s
+outline A 2000/6196 252s
+outline A 2500/6196 269s
+outline A 3000/6196 282s
+outline A 3500/6196 298s
+outline A 4000/6196 311s
+outline A 4500/6196 324s
+outline A 5000/6196 337s
+outline A 5500/6196 350s
+outline A 6000/6196 366s
+outline B 0/6196 374s
+outline B 500/6196 387s
+outline B 1000/6196 400s
+outline B 1500/6196 409s
+outline B 2000/6196 417s
+outline B 2500/6196 426s
+outline B 3000/6196 434s
+outline B 3500/6196 443s
+outline B 4000/6196 456s
+outline B 4500/6196 470s
+outline B 5000/6196 483s
+outline B 5500/6196 497s
+outline B 6000/6196 508s
+found 5782/6196 frames (93.3%), ellipse fit 5765, r0 70.5 px, 512s
+status check: 29 jumps (frames 157, 679, 987, 1329, 1332, 1534, 1539, 1830, 1891, 2195, 2254, 2835) (vertical travel 1.85 m)
+wrote out/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right/plate.npz
+=== analyze: uv run python scripts/analyze.py ../vids/spike/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right.MOV out/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right
+[{"setup": 1006, "transition": 1130, "catch": 1337, "lockout": 1646, "overhead_start": 1223, "overhead_end": 1817}, {"setup": 2643, "transition": 2758, "catch": 2959, "lockout": 3117, "overhead_start": 2852, "overhead_end": 3470}, {"setup": 4341, "transition": null, "catch": 4699, "lockout": 4970, "overhead_start": 4536, "overhead_end": 5203}]
+wrote ['.rerun_pose', 'angles.csv', 'angles.png', 'bar_path.png', 'd1_sheet.jpg', 'd1_views.json', 'd1_zoom.jpg', 'grabs', 'overlay.mp4', 'person.npz', 'phase_sheet.jpg', 'phases.json', 'plate.csv', 'plate.npz', 'plate_check.jpg', 'plate_near.npz', 'plate_near_check.jpg', 'raw_pose.npz']
+=== compare: uv run python scripts/compare_phases.py out/20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right
+# 20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right — phase times, v1 (wrist) vs v2 (hub)
+
+reps: v1 3, v2 6; hub found in 93.3% of frames
+
+| rep | event | v1 | v2 | v2 − v1 (frames) | v2 − v1 (ms) |
+|---|---|---|---|---|---|
+| 1 | setup | f1006 (4.192 s) | f1024 (4.267 s) | +18 | +75 |
+| 1 | transition | f1130 (4.708 s) | f1130 (4.708 s) | +0 | +0 |
+| 1 | catch | f1337 (5.571 s) | f1337 (5.571 s) | +0 | +0 |
+| 1 | lockout | f1646 (6.858 s) | f1465 (6.104 s) | -181 | -754 |
+| 1 | overhead_start | f1223 (5.096 s) | f1217 (5.071 s) | -6 | -25 |
+| 1 | overhead_end | f1817 (7.571 s) | f1476 (6.150 s) | -341 | -1421 |
+| 2 | setup | f2643 (11.012 s) | f1512 (6.300 s) | -1131 | -4712 |
+| 2 | transition | f2758 (11.492 s) | — | — | — |
+| 2 | catch | f2959 (12.329 s) | f1545 (6.438 s) | -1414 | -5892 |
+| 2 | lockout | f3117 (12.988 s) | f1645 (6.854 s) | -1472 | -6133 |
+| 2 | overhead_start | f2852 (11.883 s) | f1546 (6.442 s) | -1306 | -5442 |
+| 2 | overhead_end | f3470 (14.458 s) | f1699 (7.079 s) | -1771 | -7379 |
+| 3 | setup | f4341 (18.087 s) | f2685 (11.188 s) | -1656 | -6900 |
+| 3 | transition | — | f2758 (11.492 s) | — | — |
+| 3 | catch | f4699 (19.579 s) | f2959 (12.329 s) | -1740 | -7250 |
+| 3 | lockout | f4970 (20.708 s) | f3025 (12.604 s) | -1945 | -8104 |
+| 3 | overhead_start | f4536 (18.900 s) | f2844 (11.850 s) | -1692 | -7050 |
+| 3 | overhead_end | f5203 (21.679 s) | f3036 (12.650 s) | -2167 | -9029 |

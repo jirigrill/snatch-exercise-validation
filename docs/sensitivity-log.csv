@@ -1,0 +1,13 @@
+clip,date,session,lifter,bodyweight_kg,height_cm,load_kg,pct_1rm,attempt_in_session,variant,result,miss_type,fault_deliberate,self_rating,notes
+20261007_1_jiri_v3_standup_bar_3rep_success_0deg_right,2026-10-07,SP1,L1,,172.5,20,,1,,made,,,,"view 0deg side; warm-up pull to standing, 3 reps, empty bar with no plates (no hub, no scale); not a snatch"
+20261007_2_jiri_v3_powersnatch_bar_1rep_success_0deg_right,2026-10-07,SP1,L1,,172.5,20,,2,power,made,,,,view 0deg side; 1 rep; empty bar
+20261007_3_jiri_v3_powersnatch_5kg_3rep_success_0deg_right,2026-10-07,SP1,L1,,172.5,25,,3,power,made,,,,view 0deg side; 3 reps; straight arms
+20261007_4_jiri_v3_squatsnatch_5kg_3rep_success_0deg_right,2026-10-07,SP1,L1,,172.5,25,,4,squat,made,,,,view 0deg side; 3 reps; required side-on squat-snatch set (#26)
+20261007_5_jiri_v3_squatsnatch_5kg_3rep_success_45deg_right,2026-10-07,SP1,L1,,172.5,25,,5,squat,made,,,,view 45deg oblique; 3 reps; D1
+20261007_6_jiri_v3_squatsnatch_5kg_3rep_success_30deg_right,2026-10-07,SP1,L1,,172.5,25,,6,squat,made,,,,view 30deg oblique; 3 reps; D1
+20261007_7_jiri_v3_powersnatch_5kg_3rep_success_0deg_left,2026-10-07,SP1,L1,,172.5,25,,7,power,made,,,,view 0deg side from the LEFT (protocol: right); 3 reps
+20261007_8_jiri_v3_powersnatch_7-5kg_3rep_success_0deg_right,2026-10-07,SP1,L1,,172.5,27.5,,8,power,made,,,,view 0deg side; 3 reps; straight arms
+20261007_9_jiri_v3_powersnatch_10kg_3rep_success_0deg_right,2026-10-07,SP1,L1,,172.5,30,,9,power,made,,,,view 0deg side; 3 reps; straight arms; D2 reference for clip 10
+20261007_10_jiri_v3_powersnatch_10kg_3rep_fail-bend-elbows_0deg_right,2026-10-07,SP1,L1,,172.5,30,,10,power,miss_deliberate,no_turnover,arm_bend,,"view 0deg side; 3 reps; deliberate early arm bend in every rep; bar stopped at face height, never caught overhead (lifter, 2026-10-09); D2"
+20261007_11_jiri_v3_powersnatch_5kg_3rep_fail-far-from-body_0deg_right,2026-10-07,SP1,L1,,172.5,25,,11,power,made,,bar_far,,view 0deg side; 3 reps; bar deliberately pulled far from the body; lifts completed
+20261007_12_jiri_v3_powersnatch_5kg_3rep_fail-behind-bar_0deg_right,2026-10-07,SP1,L1,,172.5,25,,12,power,made,,behind_bar,,view 0deg side; 3 reps; deliberately behind the bar; lifts completed
