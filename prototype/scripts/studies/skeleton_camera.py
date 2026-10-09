@@ -10,7 +10,7 @@ Per clip, against 20261007_1 (C1):
   boxes over the clip (+15 %) and the bottom 35 % of the image (bar, plates)
   masked out, similarity transform by RANSAC (2 px). (ECC on the same masks
   gave scale errors of up to 3.5 % and was dropped.)
-- hub at rest (median hub over rest frames, snatch.views.rest_mask) and the
+- hub at rest (median hub over rest frames, snatch.studies.views.rest_mask) and the
   near-plate radius sqrt(a b) at rest: the bar's set-down spot and depth.
 - standing near hip-ankle distance (knee and hip > 165 deg, median, px):
   the lifter's own depth; this is the px-length rescale factor between clips.
@@ -24,7 +24,7 @@ import numpy as np
 from snatch.angles import COCO, sagittal_angles
 from snatch.signals import smooth, smooth_keypoints
 from snatch.video import frame_times, frames, mean_rate, probe
-from snatch.views import rest_mask
+from snatch.studies.views import rest_mask
 
 CLIPS = ["20261007_1_jiri_v3_standup_bar_3rep_success_0deg_right",
          "20261007_2_jiri_v3_powersnatch_bar_1rep_success_0deg_right",

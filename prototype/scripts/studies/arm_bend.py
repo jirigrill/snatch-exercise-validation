@@ -10,14 +10,13 @@ writes out/<clip>/arm_bend.json (per rep), out/<clip>/arm_bend_sheet.jpg (frame
 Reps are v2 (snatch.phases.find_reps_v2), computed exactly as
 scripts/compare_phases.py does; nothing in the clip's other outputs changes.
 Near side = lifter's right (r_shoulder, r_elbow, r_wrist). Signals and the
-event definitions are in snatch.armbend.
+event definitions are in snatch.studies.armbend.
 """
 
 import csv
 import json
 import math
 import sys
-from dataclasses import asdict
 from pathlib import Path
 
 import cv2
@@ -25,7 +24,7 @@ import matplotlib
 import numpy as np
 
 from snatch.angles import COCO, mid_y, sagittal_angles
-from snatch.armbend import arm_signals, at, phase_time, pull_events, separation, window_min
+from snatch.studies.armbend import arm_signals, at, phase_time, pull_events, separation, window_min
 from snatch.phases import find_reps_v2
 from snatch.signals import smooth, smooth_keypoints
 from snatch.video import frame_times, frames, mean_rate, probe

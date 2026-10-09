@@ -44,11 +44,12 @@ Run them like the others, from `prototype/`: `uv run python scripts/studies/<scr
 | Module | Owns |
 |---|---|
 | `video`, `person`, `pose` | Reading frames, finding the lifter, running the pose model |
-| `plate`, `ladder` | Plate tracking and the frame-rate ladder |
-| `angles`, `signals`, `phases`, `reps` | Joint angles, smoothing, the phase definition, rep finding |
-| `spread`, `markers` | Across-rep spread and the bar markers with their verdict rule |
-| `views`, `armbend`, `height`, `skeleton` | Spike session analyses |
+| `plate` | Plate tracking |
+| `angles`, `signals`, `phases`, `reps` | Joint angles, smoothing, the phase definition (v2 frozen), rep finding |
+| `spread` | Across-rep spread |
 | `overlay` | Drawing on frames |
+
+`src/snatch/studies/` holds the modules only the studies use: `ladder` (frame-rate ladder), `markers` (bar markers and their verdict rule), `views` (D1), `armbend` (D2), `height` (body height), `skeleton` (knee and wrist fill-in). The pipeline never imports them.
 
 ## `out/`
 

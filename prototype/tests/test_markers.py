@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pytest
 
-from snatch.markers import bar_markers, group_verdict, verdict
+from snatch.studies.markers import bar_markers, group_verdict, verdict
 from snatch.phases import Rep
 
 FPS = 100

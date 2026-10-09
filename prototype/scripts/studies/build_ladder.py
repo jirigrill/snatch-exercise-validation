@@ -9,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 
-from snatch.ladder import STEPS, build, frame_hashes, verify
+from snatch.studies.ladder import STEPS, build, frame_hashes, verify
 from snatch.video import probe
 
 vids = Path(sys.argv[1])

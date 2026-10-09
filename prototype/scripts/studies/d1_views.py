@@ -13,11 +13,11 @@ the plate check failed. Windows per rep:
 - transition: +-0.1 s around the v2 transition (knee re-bend), or around the
   frame the hub passes above the knees if no re-bend is found;
 - pull: setup (liftoff) -> peak knee extension before the overhead run.
-"Behind plate" = the keypoint lies inside the plate outline (snatch.views.
+"Behind plate" = the keypoint lies inside the plate outline (snatch.studies.views.
 ellipse_dist < 1): the plate is the nearest thing to the camera, so the
 joint is hidden and its keypoint a guess, whatever its score.
-Bar markers (snatch.markers) are computed on the hub path rectified to the
-plate plane with the clip's resting outline (snatch.views.rectify).
+Bar markers (snatch.studies.markers) are computed on the hub path rectified to the
+plate plane with the clip's resting outline (snatch.studies.views.rectify).
 """
 
 import json
@@ -28,9 +28,9 @@ from pathlib import Path
 
 import numpy as np
 
-from snatch import views
+from snatch.studies import views
 from snatch.angles import COCO, mid_y, sagittal_angles
-from snatch.markers import bar_markers
+from snatch.studies.markers import bar_markers
 from snatch.phases import find_reps, find_reps_v2
 from snatch.plate import PLATE_DIAMETER_M
 from snatch.signals import smooth, smooth_keypoints
@@ -60,7 +60,7 @@ def rnd(x, d=2):
 
 
 def safe_markers(hub, ppm, fps, rep, t) -> dict:
-    """snatch.markers.bar_markers, or all NaN where its windows are empty
+    """snatch.studies.markers.bar_markers, or all NaN where its windows are empty
     (a hub track that is wrong, e.g. a failed plate check)."""
     try:
         return asdict(bar_markers(hub[:, 0], hub[:, 1], ppm, fps, rep, t))
@@ -195,7 +195,7 @@ def analyse(out: Path, force_v2: bool = False, near: bool = False,
                     "near_jitter_mm": views.jitter_px(pts, kps_s[sl, ni]) * mm,
                     "behind_plate_pct": 100 * float(behind.mean()) if len(behind) else math.nan,
                     "swap_pct": 100 * float(views.swap_frames(
-                        pts, kps[sl, fi], kps_s[sl, ni], kps_s[sl, fi], sep_px).mean()),
+                        pts, kps_s[sl, ni], kps_s[sl, fi], sep_px).mean()),
                     "near_far_sep_cm": float(np.median(np.linalg.norm(
                         kps_s[sl, ni] - kps_s[sl, fi], axis=1))) * 100 / ppm,
                 }

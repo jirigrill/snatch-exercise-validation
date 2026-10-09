@@ -27,7 +27,7 @@ Ticket: [#22](https://github.com/jirigrill/snatch-exercise-validation/issues/22)
 
 ## Method
 
-`snatch/armbend.py`, `scripts/studies/arm_bend.py`:
+`snatch/studies/armbend.py`, `scripts/studies/arm_bend.py`:
 - **Near side:** the right shoulder, elbow and wrist, smoothed.
 - **Hub:** from `plate.npz`. Side-on, the near wrist sits inside the plate outline in every pull frame (`36-skeleton-fill.md`), so the hub stands in for the hand.
 - **Events per v2 rep:**

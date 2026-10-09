@@ -50,7 +50,7 @@ The universal bands from `12` § 1, mapped to markers:
 
 | Band | Markers | Status |
 |---|---|---|
-| Bar stays close | B3 (X2), B4 (Xloop), B5 (Xnet) | now (`snatch/markers.py`) |
+| Bar stays close | B3 (X2), B4 (Xloop), B5 (Xnet) | now (`snatch/studies/markers.py`) |
 | Bar over the base at catch and lockout | B10, E2 | now (needs ankle keypoint at catch) |
 | Full extension before the turnover | A10, A11 vs D4 start | blocked: hip/knee hidden at transition (D1, #23) |
 | Catch below the bar's peak | B8 drop > 0, timing of hip catch vs bar peak | now; catch mark unstable (#31) |
@@ -158,7 +158,7 @@ The answer to the biased-reference problem: judge what is measurably wasteful, w
 | Change | Where | When | Blocks gate 1? |
 |---|---|---|---|
 | Add **lifter height** per lifter (`pct_1rm` is already in the recording-protocol log) | recording protocol § Log, `clip-log.md` | **now** (cheap) | No; layer 2 only |
-| Efficiency metrics | `snatch/markers.py` (new fields on `BarMarkers`) | now; they are ratios of existing markers | No |
+| Efficiency metrics | `snatch/studies/markers.py` (new fields on `BarMarkers`) | now; they are ratios of existing markers | No |
 | Layer 1 band checks with noise margin | new `snatch/bands.py`: `check_bands(markers, noise) -> list[BandHit]` | with #27 | Yes |
 | Layer 3 reference selection | new `snatch/reference.py`: filter by load, rank, take top third, return per-marker median + SD | with #27 | Yes |
 | Layer 1b proportion model | new `snatch/proportions.py`: `segment_lengths(pose, frames) -> Segments`, `solve_position(segments, constraints) -> AngleRange` | with #27 (setup, catch); power position after D1 | No; reported only, compared with layer 3 in the gate-1 evaluation |

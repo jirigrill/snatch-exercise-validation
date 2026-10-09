@@ -24,7 +24,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from snatch import skeleton as sk
+from snatch.studies import skeleton as sk
 from snatch.angles import COCO
 from snatch.signals import smooth
 from snatch.video import frames, probe

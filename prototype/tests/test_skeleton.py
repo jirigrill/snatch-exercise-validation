@@ -1,9 +1,7 @@
 import numpy as np
 import pytest
 
-from snatch import skeleton as sk
-
-
+from snatch.studies import skeleton as sk
 def _leg(knee_deg: float, lt: float = 150.0, ls: float = 155.0, facing: float = 1.0):
     """Hip at origin, shank vertical below the knee, knee in front (facing)."""
     th = np.radians(180 - knee_deg)  # thigh tilt from vertical
