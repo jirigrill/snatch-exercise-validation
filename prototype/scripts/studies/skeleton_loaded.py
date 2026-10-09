@@ -6,15 +6,15 @@ reads  out/<clip>/raw_pose.npz, plate.npz, height.json (px_per_m_mid) for the
 writes out/skeleton/loaded.json, out/skeleton/loaded.md
 
 Hidden: the raw near-knee keypoint inside the tracked near-plate outline
-(snatch.views.ellipse_dist < 1). There is no ground truth here: the numbers
+(snatch.studies.views.ellipse_dist < 1). There is no ground truth here: the numbers
 are agreement between the rebuilt knee and RTMPose's knee (and the far knee),
 not accuracy.
-Lengths: (a) "C1": the C1 length table (snatch.skeleton.length_table over
+Lengths: (a) "C1": the C1 length table (snatch.studies.skeleton.length_table over
 all C1 frames) scaled by the clip's standing hip-ankle / C1's (camera and
 lifter depth check: scripts/studies/skeleton_camera.py); (b) "own": the same table
 from the clip's own frames with the knee clear of the plate (ellipse_dist >
 1.15) and the knee score >= 0.6.
-Pulls from the hub (snatch.skeleton.pull_windows, hub y as the bar), catch
+Pulls from the hub (snatch.studies.skeleton.pull_windows, hub y as the bar), catch
 to the v2 lockout where the clip has v2 reps.
 """
 
@@ -23,13 +23,13 @@ from pathlib import Path
 
 import numpy as np
 
-from snatch import skeleton as sk
+from snatch.studies import skeleton as sk
 from snatch.angles import COCO, joint_angle, mid_y, sagittal_angles
-from snatch.height import facing
+from snatch.studies.height import facing
 from snatch.phases import find_reps_v2
 from snatch.signals import smooth, smooth_keypoints
 from snatch.video import frame_times, mean_rate
-from snatch.views import ellipse_dist
+from snatch.studies.views import ellipse_dist
 
 C1 = "20261007_1_jiri_v3_standup_bar_3rep_success_0deg_right"
 LOADED = ["20261007_3_jiri_v3_powersnatch_5kg_3rep_success_0deg_right",
@@ -281,7 +281,7 @@ def write_md(res: dict) -> None:
         cells = [f"{a:.0f}/{b:.0f} ({n})" for a, b, n in zip(x["own_thigh"], x["own_shank"], x["clear_r_hist"])]
         L.append(f"| {short(x['clip'])} | {x['scale_vs_C1']:.3f} | {x['n_clear']} | " + " | ".join(cells) + " |")
     L += ["", "## Knee re-bend (v2 transition) from RTMPose's knee angle vs the hybrid knee (rebuilt where hidden and gain <= 2, "
-          "RTMPose elsewhere, snatch.skeleton.fill_hidden): frame, knee deg, depth deg", "",
+          "RTMPose elsewhere, snatch.studies.skeleton.fill_hidden): frame, knee deg, depth deg", "",
           "| clip | rep | RTMPose | hybrid, C1 lengths | hybrid, own lengths |", "|---|---|---|---|---|"]
     keys = sorted({(x["clip"], x["rep"]) for x in res["rebend"]}, key=lambda q: (LOADED.index(q[0]), q[1]))
     for cl, rp in keys:

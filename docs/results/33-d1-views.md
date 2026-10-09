@@ -18,7 +18,7 @@ Clips (`vids/spike/`, squat snatch, bar + 5 kg = 25 kg, 3 reps each, camera on t
 
 Only one pass was filmed (0 → 45 → 30), not the interleaved double pass, so view and set order (fatigue, warm-up) are confounded. 3 reps per view.
 
-Code: `prototype/src/snatch/views.py` (+ `tests/test_views.py`), `prototype/scripts/studies/{d1_views,d1_sheets,d1_near_plate}.py`. Numbers: `prototype/out/d1_views.md`, `prototype/out/<clip>/d1_views.json`; path plot `prototype/out/d1_paths.png`.
+Code: `prototype/src/snatch/studies/views.py` (+ `tests/test_views.py`), `prototype/scripts/studies/{d1_views,d1_sheets,d1_near_plate}.py`. Numbers: `prototype/out/d1_views.md`, `prototype/out/<clip>/d1_views.json`; path plot `prototype/out/d1_paths.png`.
 
 ## 1. Pipeline notes for these clips
 

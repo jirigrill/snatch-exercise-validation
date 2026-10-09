@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
 
-from snatch import height as H
-
+from snatch.studies import height as H
 F, CY = 1500.0, 960.0  # synthetic pinhole: focal px, principal row
 
 

@@ -53,7 +53,7 @@ def rectify(dx, dy, a, b, ang):
     return np.cos(th) * u - np.sin(th) * v, np.sin(th) * u + np.cos(th) * v
 
 
-def swap_frames(near_raw, far_raw, near_s, far_s, min_sep_px):
+def swap_frames(near_raw, near_s, far_s, min_sep_px):
     """Frames where the raw near keypoint sits closer to the far side's
     smoothed track than to its own (a left/right swap), counted only where
     the two tracks are at least `min_sep_px` apart. Inputs (n, 2)."""

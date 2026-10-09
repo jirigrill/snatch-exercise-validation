@@ -14,7 +14,7 @@ Ticket: [#22](https://github.com/jirigrill/snatch-exercise-validation/issues/22)
 
 ## 1. Method
 
-Code: `prototype/src/snatch/height.py` (+ `tests/test_height.py`), `prototype/scripts/studies/{body_height,height_summary,segment_lengths}.py`. Per-clip output: `prototype/out/<clip>/height.json` and `height_sheet.jpg`.
+Code: `prototype/src/snatch/studies/height.py` (+ `tests/test_height.py`), `prototype/scripts/studies/{body_height,height_summary,segment_lengths}.py`. Per-clip output: `prototype/out/<clip>/height.json` and `height_sheet.jpg`.
 
 | Step | What |
 |---|---|

@@ -7,13 +7,13 @@ writes out/skeleton/validate.json, out/skeleton/validate.md (tables),
        out/skeleton/validate_curves.png
 
 The observed (smoothed) near knee is the ground truth. The knee is rebuilt
-from the near hip and ankle (snatch.skeleton.two_circle_knee) with lengths
+from the near hip and ankle (snatch.studies.skeleton.two_circle_knee) with lengths
 calibrated on frames that do not include the test rep:
   C1 rep k: calibrated on C1 minus rep k (leave one rep out), and on C2;
   C2:       calibrated on C1 (and on C2 itself, for reference).
 Length models: "fixed-standing" (median over upright frames), "fixed-p90"
 (90th percentile over the calibration frames), "table" (median per bin of
-d / d_standing, snatch.skeleton.LengthTable).
+d / d_standing, snatch.studies.skeleton.LengthTable).
 Phases from the wrist (no hub here): setup (0.25 s before liftoff), first
 pull (liftoff -> wrist at the near knee), transition (wrist at knee -> wrist
 at hip), second pull (wrist at hip -> peak knee extension), catch (C2: peak
@@ -28,9 +28,9 @@ from pathlib import Path
 import matplotlib
 import numpy as np
 
-from snatch import skeleton as sk
+from snatch.studies import skeleton as sk
 from snatch.angles import COCO, joint_angle, mid_y, sagittal_angles
-from snatch.height import facing
+from snatch.studies.height import facing
 from snatch.phases import find_reps
 from snatch.signals import smooth_keypoints
 from snatch.video import frame_times, mean_rate
@@ -59,7 +59,7 @@ def load(clip: str) -> dict:
 
 
 def pulls(c: dict) -> list[dict]:
-    """Pull windows from the near wrist (snatch.skeleton.pull_windows); C2 is
+    """Pull windows from the near wrist (snatch.studies.skeleton.pull_windows); C2 is
     a real snatch, so its catch ends at the v1 lockout."""
     k, fps = c["k"], c["fps"]
     ev = sk.pull_windows(k[:, J["wrist"], 1], k[:, J["knee"], 1], k[:, J["hip"], 1],

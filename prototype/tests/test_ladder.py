@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from snatch.ladder import find_layer, keep_pts, layer_frames, temporal_id
+from snatch.studies.ladder import find_layer, keep_pts, layer_frames, temporal_id
 
 
 def _nal(nal_type: int, tid: int, payload: bytes = b"\x80\x00") -> bytes:

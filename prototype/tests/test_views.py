@@ -1,8 +1,6 @@
 import numpy as np
 
-from snatch import views
-
-
+from snatch.studies import views
 def test_view_angle_from_axis_ratio():
     assert np.isclose(views.view_angle_deg(100, 100), 0)
     assert np.isclose(views.view_angle_deg(100 * np.cos(np.radians(45)), 100), 45)
@@ -33,7 +31,7 @@ def test_swap_frames():
     far_s = np.tile([30.0, 0.0], (3, 1))
     near_raw = np.array([[2.0, 0], [28.0, 0], [28.0, 0]])
     far_s[2] = [5.0, 0]  # tracks too close: not counted
-    assert views.swap_frames(near_raw, far_s, near_s, far_s,
+    assert views.swap_frames(near_raw, near_s, far_s,
                              10).tolist() == [False, True, False]
 
 

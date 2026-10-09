@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 
 from snatch.angles import JOINTS, mid_y, sagittal_angles
-from snatch.markers import bar_markers, group_verdict, verdict
+from snatch.studies.markers import bar_markers, group_verdict, verdict
 from snatch.phases import Rep, find_reps_v2
 from snatch.signals import smooth, smooth_keypoints
 from snatch.spread import PHASES
@@ -132,7 +132,7 @@ lines = ["# Frame-rate estimate (#30): difference from 240 fps vs rep-to-rep spr
          "rep's overhead start). Bias = mean Δ; median and max |Δ| over all reps "
          "and start offsets, detected reps only; offset 0 = the ladder file. "
          "ratio = max |Δ| / SD. A rep not detected at all makes the marker "
-         "unusable (snatch.markers.verdict). Group verdict = most common marker "
+         "unusable (snatch.studies.markers.verdict). Group verdict = most common marker "
          "verdict (plurality).", ""]
 summary: dict[int, dict[str, str]] = {}
 data: dict = {"spread": spread, "rates": {}}

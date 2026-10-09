@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pytest
 
-from snatch.armbend import (PullEvents, arm_signals, phase_time, pull_events,
+from snatch.studies.armbend import (PullEvents, arm_signals, phase_time, pull_events,
                             separation, window_min)
 from snatch.phases import Rep
 

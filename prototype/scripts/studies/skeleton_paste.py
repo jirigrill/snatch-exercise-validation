@@ -30,8 +30,10 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from snatch import pose, skeleton as sk
 from scipy.signal import find_peaks
+
+from snatch import pose
+from snatch.studies import skeleton as sk
 
 from snatch.angles import joint_angle, sagittal_angles
 from snatch.signals import smooth_keypoints
@@ -153,7 +155,7 @@ def main() -> None:
             kh = sk.two_circle_knee(hip, ank, lt, ls, c["facing"])[0]
             a_hat = joint_angle(hip, kh, ank)
             # hybrid: rebuilt only where the pasted run's knee is inside the plate and the leg is
-            # well conditioned (gain <= 2), observed elsewhere, cross-faded (snatch.skeleton.fill_hidden)
+            # well conditioned (gain <= 2), observed elsewhere, cross-faded (snatch.studies.skeleton.fill_hidden)
             seen_hidden = np.hypot(*(kp[:, J["knee"]] - hub).T) < R_PLATE
             gain = sk.knee_gain(hip, ank, lt, ls, c["facing"])
             kb = sk.fill_hidden(ks[:, J["knee"]], kh, seen_hidden & (gain <= 2.0))

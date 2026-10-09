@@ -99,7 +99,7 @@
 | _11_ | 1.038 | 2230 | 136/164 (16) | 136/164 (14) | 136/164 (14) | 136/164 (13) | 136/164 (15) | 136/164 (17) | 136/164 (91) | 142/164 (188) | 145/165 (233) | 147/166 (152) | 152/163 (738) | 155/163 (522) |
 | _12_ | 1.020 | 1819 | 136/157 (0) | 136/157 (0) | 136/157 (0) | 136/157 (0) | 136/157 (0) | 136/157 (43) | 137/158 (77) | 136/161 (42) | 141/164 (216) | 143/164 (239) | 151/159 (605) | 152/161 (597) |
 
-## Knee re-bend (v2 transition) from RTMPose's knee angle vs the hybrid knee (rebuilt where hidden and gain <= 2, RTMPose elsewhere, snatch.skeleton.fill_hidden): frame, knee deg, depth deg
+## Knee re-bend (v2 transition) from RTMPose's knee angle vs the hybrid knee (rebuilt where hidden and gain <= 2, RTMPose elsewhere, snatch.studies.skeleton.fill_hidden): frame, knee deg, depth deg
 
 | clip | rep | RTMPose | hybrid, C1 lengths | hybrid, own lengths |
 |---|---|---|---|---|

@@ -18,10 +18,10 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from snatch import skeleton as sk
+from snatch.studies import skeleton as sk
 from snatch.signals import smooth
 from snatch.video import frames, probe
-from snatch.views import ellipse_dist
+from snatch.studies.views import ellipse_dist
 
 sys.path.insert(0, str(Path(__file__).parent))
 import skeleton_loaded as sl  # noqa: E402

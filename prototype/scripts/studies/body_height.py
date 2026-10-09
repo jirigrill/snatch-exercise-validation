@@ -11,7 +11,7 @@ vertical), still (nose < 0.3, ankles < 0.15 m/s), feet found; split into "hips"
 (wrists below the shoulders: bar at the hips, arms down) and "overhead"
 (wrists above the nose: lockout). One frame every 0.1 s.
 Head top: highest foreground pixel above the eyes against a background made
-from setup frames (snatch.height.head_top), not the YOLOX box (that box ends
+from setup frames (snatch.studies.height.head_top), not the YOLOX box (that box ends
 at the hands or plate overhead; its top is reported for the hips frames).
 Floor: midline floor from the near shoe's lowest green pixel
 (floor_from_sole) and from the resting plate (floor_from_plate); their mean.
@@ -27,7 +27,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from snatch import height as H
+from snatch.studies import height as H
 from snatch import plate as P
 from snatch.angles import COCO, sagittal_angles
 from snatch.signals import smooth, smooth_keypoints

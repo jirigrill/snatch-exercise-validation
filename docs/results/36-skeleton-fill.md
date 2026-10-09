@@ -13,7 +13,7 @@ Run 2026-10-08 on the spike session (2026-10-07, `vids/spike/`), side-on (0°, c
 
 ## 1. Method
 
-Code: `prototype/src/snatch/skeleton.py` (+ `tests/test_skeleton.py`), scripts `prototype/scripts/skeleton_{camera,validate,wrist,paste,loaded,sheets}.py`. Outputs: `prototype/out/skeleton/`. Near side = right (r_* keypoints). Keypoints are smoothed (Savitzky–Golay 0.1 s) as in the rest of the pipeline.
+Code: `prototype/src/snatch/studies/skeleton.py` (+ `tests/test_skeleton.py`), scripts `prototype/scripts/studies/skeleton_{camera,validate,wrist,paste,loaded,sheets}.py`. Outputs: `prototype/out/skeleton/`. Near side = right (r_* keypoints). Keypoints are smoothed (Savitzky–Golay 0.1 s) as in the rest of the pipeline.
 
 | Step | What |
 |---|---|

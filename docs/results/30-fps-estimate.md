@@ -9,14 +9,14 @@ Ticket: [#30](https://github.com/jirigrill/snatch-exercise-validation/issues/30)
 - **The catch mark and turnover (D4) fail at every rate, 120 included.** That comes from how they are defined, not from the frame rate (see §2). They need a more stable definition before any rate can be judged.
 - **Approximation only.** Pose and plate were tracked at 240 fps and then thinned. #15 gives the exact answer.
 
-Code: `prototype/src/snatch/markers.py` (bar markers B2–B5, B8, C1, D4 and the verdict rule), `prototype/scripts/studies/fps_estimate.py`. Output: `prototype/out/fps_estimate.{md,json}`.
+Code: `prototype/src/snatch/studies/markers.py` (bar markers B2–B5, B8, C1, D4 and the verdict rule), `prototype/scripts/studies/fps_estimate.py`. Output: `prototype/out/fps_estimate.{md,json}`.
 
 ## 1. Method
 
 - **Clips:** the 6 side-on reps of 20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg, 20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg, 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg (2) and 20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg (2). 6 light power snatches, one lifter.
 - **Subsampling:** every 2nd/4th/8th frame of `raw_pose.npz` and `plate.npz`, at **every start offset** (2/4/8 per rate). Offset 0 is the ladder file (#14), pixel for pixel; the other offsets show how much the result depends on where the frames happen to fall.
 - **Re-run at the lower rate:** Savitzky–Golay smoothing with the same 0.1 s window (13/7/3 frames at 120/60/30; at 30 fps a 3-frame window with order 2 does not smooth at all), phases v2 unchanged, then the markers. Times are mapped back to the 240 fps clock.
-- **Markers** (doc 11 rows, from the smoothed hub; operational details in `snatch/markers.py`):
+- **Markers** (doc 11 rows, from the smoothed hub; operational details in `snatch/studies/markers.py`):
   - phase marks: setup, transition, catch, lockout (v2);
   - D4 turnover: peak upward bar speed → lowest bar speed (Ahn & Kipp). Doc 11's alternative end point, the bar catch, is shown too;
   - C1 peak upward bar speed;
@@ -24,7 +24,7 @@ Code: `prototype/src/snatch/markers.py` (bar markers B2–B5, B8, C1, D4 and the
   - hip, knee, elbow and trunk angles at each phase mark.
 - **Comparison:** Δ = lower-rate value − 240 fps value, same rep. Rep-to-rep spread = SD across the 6 reps at 240 fps (for phase marks: SD of the mark's time after the rep's overhead start).
 - **240 fps unchanged:** the script reproduces `phases_v2.json` for every rep and stops if it does not. No 240 fps output file was changed.
-- **Verdict rule, fixed before the results were seen** (`snatch.markers.verdict`): ratio = max |Δ| over all reps and offsets ÷ SD at 240. **Usable** ≤ 0.5, **marginal** ≤ 1, **unusable** above that, or if any rep was not detected. A group takes the most common verdict of its markers (plurality), ties to the worse. A plurality can hide failing members, so §4 names them.
+- **Verdict rule, fixed before the results were seen** (`snatch.studies.markers.verdict`): ratio = max |Δ| over all reps and offsets ÷ SD at 240. **Usable** ≤ 0.5, **marginal** ≤ 1, **unusable** above that, or if any rep was not detected. A group takes the most common verdict of its markers (plurality), ties to the worse. A plurality can hide failing members, so §4 names them.
 
 ## 2. Two markers fail at any rate: the catch mark and D4
 

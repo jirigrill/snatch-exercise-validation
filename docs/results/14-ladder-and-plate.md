@@ -8,7 +8,7 @@ Ticket: [#14](https://github.com/jirigrill/snatch-exercise-validation/issues/14)
 - **Hold:** the standing hold in 20261001_2_jiri_v1_standup_5kg_1rep_success_0deg is **1.42 s (340 frames, f1151–f1490)**.
 - **Phase definition v2** (hub height in place of wrist height, plus the v2.1 transition rule chosen by the lifter after seeing 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg) is written down and frozen. On 20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg it moves **setup ~0.3 s earlier** (v1 was late, see below). Transition, catch and lockout land on the same frames as v1.
 
-Code: `prototype/src/snatch/{ladder,plate}.py`, `prototype/scripts/{track_plate,compare_phases}.py`, `prototype/scripts/studies/{build_ladder,measure_hold}.py`.
+Code: `prototype/src/snatch/plate.py`, `prototype/src/snatch/studies/ladder.py`, `prototype/scripts/{track_plate,compare_phases}.py`, `prototype/scripts/studies/{build_ladder,measure_hold}.py`.
 
 ## 1. Frame-rate ladder
 
