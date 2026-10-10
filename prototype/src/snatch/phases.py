@@ -57,7 +57,8 @@ def overhead_runs(above: np.ndarray, t: np.ndarray,
     """[start, end) runs of True spanning at least min_s seconds of `t`."""
     edges = np.diff(np.r_[0, above.astype(np.int8), 0])
     starts, ends = np.flatnonzero(edges == 1), np.flatnonzero(edges == -1)
-    t_end = np.r_[t, t[-1] + np.median(np.diff(t))]  # a run's end is exclusive
+    # runs ending at the last frame need a time one frame past it
+    t_end = np.r_[t, t[-1] + np.median(np.diff(t))]
     return [(int(s), int(e)) for s, e in zip(starts, ends)
             if t_end[e] - t[s] >= min_s - 1e-9]
 

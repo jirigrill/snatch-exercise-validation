@@ -22,15 +22,14 @@ def window_frames(t: np.ndarray, window_s: float) -> int:
 
 def smooth(x: np.ndarray, fps: float | None = None, window_s: float = 0.1,
            polyorder: int = 2, t: np.ndarray | None = None) -> np.ndarray:
-    """`t`: frame times (s); the window spans `window_s` of them. Without it,
-    uniform frames at `fps`."""
+    """Pass `t` (frame times, s) or `fps` (uniform frames); `t` wins."""
     if t is not None:
         n = window_frames(t, window_s)
     elif fps is not None:
         n = int(round(window_s * fps))
     else:
         raise ValueError("smooth needs t or fps")
-    window = n | 1  # odd
+    window = n | 1
     return np.asarray(savgol_filter(fill_gaps(x), window, polyorder))
 
 
