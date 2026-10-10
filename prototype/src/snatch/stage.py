@@ -110,7 +110,8 @@ def run_stages(
     for pick in (only, start):
         if pick is not None and pick not in names:
             raise ValueError(f"unknown stage {pick}, expected one of {names}")
-    first = names.index(only or start) if (only or start) else 0
+    pick = only or start
+    first = names.index(pick) if pick else 0
     chosen = stages[first:first + 1] if only else stages[first:]
     producers = {o: s.name for s in stages for o in s.outputs}
 
