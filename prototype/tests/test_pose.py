@@ -61,7 +61,7 @@ def test_range_mask_rejects_ranges_outside_the_clip():
 def _fake_model(calls):
     def fake_pose(img, bboxes):
         calls.append((int(img[0, 0, 0]), bboxes[0].tolist()))
-        return np.full((1, 17, 2), 50.0), np.ones((1, 17))  # far outside the box: tracking shows
+        return np.full((1, 26, 2), 50.0), np.ones((1, 26))  # far outside the box: tracking shows
     return fake_pose
 
 
@@ -109,3 +109,34 @@ def test_run_without_a_box_follows_the_previous_keypoints(monkeypatch):
 def test_run_rejects_boxes_of_the_wrong_length():
     with pytest.raises(ValueError):
         pose.run(_images(3), 3, np.zeros((2, 4)))
+
+
+def _feet(dxs, score=0.9):
+    n = len(dxs)
+    kps = np.zeros((n, 26, 2), np.float32)
+    scores = np.full((n, 26), score, np.float32)
+    kps[:, 25, 0] = 100
+    kps[:, 21, 0] = 100 + np.asarray(dxs, np.float32)
+    return kps, scores
+
+
+def test_facing_clear_majority():
+    assert pose.facing(*_feet([30] * 9 + [-30])) == "right"
+    assert pose.facing(*_feet([-30] * 9 + [30])) == "left"
+
+
+def test_facing_split_is_none():
+    assert pose.facing(*_feet([30] * 5 + [-30] * 5)) is None
+
+
+def test_facing_without_feet_or_confidence_is_none():
+    assert pose.facing(np.zeros((3, 17, 2)), np.ones((3, 17))) is None
+    assert pose.facing(*_feet([30] * 5, score=0.1)) is None
+
+
+def test_near_side_takes_higher_scoring_leg():
+    scores = np.full((4, 26), 0.5, np.float32)
+    scores[:, [12, 14, 16, 21, 23, 25]] = 0.9
+    assert pose.near_side(scores) == "r"
+    scores[:, [12, 14, 16, 21, 23, 25]] = 0.1
+    assert pose.near_side(scores) == "l"

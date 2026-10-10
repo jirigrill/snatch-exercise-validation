@@ -20,11 +20,13 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from snatch.angles import COCO
+from snatch.angles import COCO, HALPE26
 from snatch.video import frames, probe
 
 EDGES = [("shoulder", "elbow"), ("elbow", "wrist"), ("shoulder", "hip"), ("hip", "knee"),
          ("knee", "ankle")]
+FOOT_EDGES = [("ankle", "heel"), ("heel", "big_toe"), ("big_toe", "small_toe"),
+              ("ankle", "big_toe")]
 POSE_COLORS = ((0, 255, 0), (255, 0, 255))  # BGR: green, magenta
 PERSON_COLOR = (255, 200, 0)  # BGR: light blue
 PLATE_COLOR = (0, 140, 255)  # BGR: orange
@@ -73,9 +75,10 @@ def _box(img: np.ndarray, b: np.ndarray, color: tuple[int, int, int], thick: int
 
 
 def _skeleton(img: np.ndarray, k: np.ndarray, color: tuple[int, int, int]) -> None:
+    names, edges = (HALPE26, EDGES + FOOT_EDGES) if len(k) >= len(HALPE26) else (COCO, EDGES)
     for side in ("l", "r"):
-        for a, b in EDGES:
-            pa, pb = k[COCO[f"{side}_{a}"]], k[COCO[f"{side}_{b}"]]
+        for a, b in edges:
+            pa, pb = k[names[f"{side}_{a}"]], k[names[f"{side}_{b}"]]
             if not (np.isnan(pa).any() or np.isnan(pb).any()):
                 cv2.line(img, tuple(map(int, pa)), tuple(map(int, pb)), color, 4)
     for p in k:
