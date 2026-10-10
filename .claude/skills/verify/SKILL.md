@@ -8,7 +8,7 @@ description: Drive and prove the snatch-exercise-validation prototype (Python CL
 Surface: **CLI pipeline, no server, no UI.** A user runs `uv run python scripts/<step>.py <clip.MOV> out/<clip>` and reads files (npz, json, csv, jpg, png, mp4). All commands run from `prototype/` (uv project, Python 3.12). Paths below are relative to the repo root unless stated. Only the Mac is supported (pose runs on CoreML).
 
 ## Launch
-Nothing to start. One-time: `cd prototype && uv sync`. Models (`~/.cache/rtmlib/hub/checkpoints`: RTMPose-x 189 MB, YOLOX-x 378 MB) download on first pose run.
+Nothing to start. One-time: `cd prototype && uv sync`. Models (`~/.cache/rtmlib/hub/checkpoints`: RTMPose-x body7 halpe26, YOLOX-x 378 MB) download on first pose run. The halpe26 pose model needs one network download; doctor prints the command when it is missing.
 
 Ready = doctor passes. Teardown = none (each step exits).
 
