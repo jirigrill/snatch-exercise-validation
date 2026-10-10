@@ -2,8 +2,42 @@ import numpy as np
 import pytest
 
 from snatch.angles import (
-    COCO, joint_angle, mid_y, sagittal_angles, trunk_from_vertical,
+    COCO, HALPE26, joint_angle, keypoint_map, mid_y, sagittal_angles, trunk_from_vertical,
 )
+
+
+def _halpe(**points):
+    kps = np.full((1, 26, 2), np.nan)
+    for name, xy in points.items():
+        kps[0, HALPE26[name]] = xy
+    return kps
+
+
+LEANING = dict(r_shoulder=(160, 100), r_hip=(100, 300), r_knee=(250, 450),
+               r_ankle=(200, 650), r_elbow=(220, 0), r_wrist=(200, -100))
+
+
+def test_halpe26_starts_with_coco():
+    assert all(HALPE26[k] == v for k, v in COCO.items())
+    assert keypoint_map(np.zeros((1, 17, 2))) is COCO
+    assert keypoint_map(np.zeros((1, 26, 2))) is HALPE26
+
+
+def test_mirrored_skeleton_gives_same_angles_when_facing_left():
+    right = _halpe(**LEANING)
+    left = right.copy()
+    left[..., 0] = 1000 - left[..., 0]
+    a, b = sagittal_angles(right, facing="right"), sagittal_angles(left, facing="left")
+    assert a["trunk"][0] > 0
+    for joint in ("hip", "knee", "elbow", "trunk"):
+        assert b[joint] == pytest.approx(a[joint])
+
+
+def test_17_keypoint_input_matches_26_keypoint_input():
+    a = sagittal_angles(_pose(**LEANING))
+    b = sagittal_angles(_halpe(**LEANING))
+    for joint in ("hip", "knee", "elbow", "trunk"):
+        assert a[joint] == pytest.approx(b[joint])
 
 
 def test_joint_angle_straight_limb_is_180():
