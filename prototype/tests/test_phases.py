@@ -13,7 +13,7 @@ def test_overhead_runs_drops_short_blips():
     above = np.zeros(100, bool)
     above[10:12] = True  # 2 frames: noise
     above[30:80] = True
-    assert overhead_runs(above, min_len=10) == [(30, 80)]
+    assert overhead_runs(above, np.arange(100) / FPS, min_s=0.1) == [(30, 80)]
 
 
 def test_liftoff_is_where_the_continuous_rise_starts():
@@ -182,3 +182,15 @@ def test_v2_finds_the_rebend_when_the_hub_passes_the_knees_late():
                       knee_y=knee_y)
     assert all(r.transition is None for r in v1)
     assert [r.transition for r in v2] == [137, 547]
+
+
+def test_overhead_run_of_exactly_a_quarter_second_is_kept_on_uneven_frame_times():
+    gaps = np.r_[np.full(40, 1 / 240), np.full(5, 3 / 240), np.full(60, 1 / 240)]
+    t = np.r_[0.0, np.cumsum(gaps)]
+    i0 = 20
+    i1 = int(np.searchsorted(t, t[i0] + 0.25 - 1e-9))
+    above = np.zeros(len(t), bool)
+    above[i0:i1] = True
+    assert overhead_runs(above, t, min_s=0.25) == [(i0, i1)]
+    above[i1 - 1] = False
+    assert overhead_runs(above, t, min_s=0.25) == []

@@ -52,11 +52,14 @@ class Rep:
     overhead_end: int
 
 
-def overhead_runs(above: np.ndarray, min_len: int) -> list[tuple[int, int]]:
-    """[start, end) runs of True at least min_len long."""
+def overhead_runs(above: np.ndarray, t: np.ndarray,
+                  min_s: float) -> list[tuple[int, int]]:
+    """[start, end) runs of True spanning at least min_s seconds of `t`."""
     edges = np.diff(np.r_[0, above.astype(np.int8), 0])
     starts, ends = np.flatnonzero(edges == 1), np.flatnonzero(edges == -1)
-    return [(int(s), int(e)) for s, e in zip(starts, ends) if e - s >= min_len]
+    t_end = np.r_[t, t[-1] + np.median(np.diff(t))]  # a run's end is exclusive
+    return [(int(s), int(e)) for s, e in zip(starts, ends)
+            if t_end[e] - t[s] >= min_s - 1e-9]
 
 
 def liftoff_frame(wrist_y: np.ndarray, end: int, fps: float,
@@ -118,7 +121,8 @@ def find_reps(*, wrist_y: np.ndarray, nose_y: np.ndarray, hip_y: np.ndarray,
     """`fps`: the mean rate, for the windows in frames; `t`: frame times (s),
     for the liftoff speed on clips with dropped frames (default i / fps)."""
     reps = []
-    runs = overhead_runs(wrist_y < nose_y, int(min_overhead_s * fps))
+    t_all = t if t is not None else np.arange(len(wrist_y)) / fps
+    runs = overhead_runs(wrist_y < nose_y, t_all, min_overhead_s)
     for oh_start, oh_end in runs:
         # overhead from the clip's start (bar already up, or a wrong plate
         # track): no pull before it to time, so no rep
