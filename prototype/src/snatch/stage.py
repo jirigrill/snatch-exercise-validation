@@ -126,11 +126,12 @@ def run_stages(
             _write_status(ctx.out, status)
             return MISSING_INPUT_EXIT
         digest = stage_hash(stage, ctx)
-        if not (force or only or start) and _is_fresh(stage, ctx, digest):
+        fresh = _is_fresh(stage, ctx, digest)
+        if fresh and not (force or only or start):
             log(f"{stage.name} skipped (up to date)")
             status["stages"][stage.name] = {"state": "skipped"}
             continue
-        if (ctx.out / f"{stage.name}.meta.json").exists() and not _is_fresh(stage, ctx, digest):
+        if not fresh and (ctx.out / f"{stage.name}.meta.json").exists():
             log(f"{stage.name} stale, rerunning")
         try:
             _run_one(stage, ctx, digest)
