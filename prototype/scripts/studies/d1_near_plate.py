@@ -64,13 +64,13 @@ def masked():
         yield o
 
 
-max_step_px = plate.MAX_STEP_PX * info.width / 1080
+max_speed_px_s = plate.MAX_SPEED_PX_S * info.width / 1080
 res = plate.detect(masked, t, r_min=r_lo, r_max=r_hi, model="ellipse",
-                   max_step_px=max_step_px)
+                   max_speed_px_s=max_speed_px_s)
 found = res["found"]
 idx = np.flatnonzero(found)
 step = np.hypot(np.diff(res["hub_x"][idx]), np.diff(res["hub_y"][idx]))
-jumps = idx[1:][step > max_step_px * np.diff(t[idx]) + 15]
+jumps = idx[1:][step > max_speed_px_s * np.diff(t[idx]) + 15]
 status = (f"near-plate prior; found {found[span].mean():.1%} of lift frames, "
           f"{len(jumps)} jumps")
 print(status, flush=True)

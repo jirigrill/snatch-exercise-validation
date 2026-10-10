@@ -51,10 +51,10 @@ def progress(stage, i):
 
 
 t = timestamps(clip, info.fps)
-max_step_px = plate.MAX_STEP_PX * info.width / 1080  # scaled for 20261005_1 (4K)
+max_speed_px_s = plate.MAX_SPEED_PX_S * info.width / 1080
 res = plate.detect(lambda: frames(clip, info), t, progress=progress,
                    model=model, r_min=radius[0], r_max=radius[1],
-                   max_step_px=max_step_px)
+                   max_speed_px_s=max_speed_px_s)
 n, fps = info.n_frames, info.fps
 found = res["found"]
 print(f"found {found.sum()}/{n} frames ({found.mean():.1%}), ellipse fit "
@@ -70,7 +70,7 @@ travel_m, jumps = 0.0, np.empty(0, int)
 if len(idx):
     travel_m = float(np.ptp(res["hub_y"][found]) / np.nanmedian(res["px_per_m"]))
     step = np.hypot(np.diff(res["hub_x"][idx]), np.diff(res["hub_y"][idx]))
-    jumps = idx[1:][step > max_step_px * np.diff(t[idx]) + 15]
+    jumps = idx[1:][step > max_speed_px_s * np.diff(t[idx]) + 15]
 reasons = []
 if found.mean() < 0.9:
     reasons.append(f"found in only {found.mean():.0%} of frames")
