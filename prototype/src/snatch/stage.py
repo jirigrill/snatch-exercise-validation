@@ -16,7 +16,7 @@ from typing import Any
 
 CLIP = "<clip>"
 STATUS_FILE = "pipeline_status.json"
-MISSING_INPUT_EXIT = 1
+MISSING_INPUT_EXIT = 9
 
 
 @dataclass(frozen=True)
@@ -66,17 +66,22 @@ def _is_fresh(stage: Stage, ctx: Context, digest: str) -> bool:
     return json.loads(meta.read_text()).get("hash") == digest
 
 
+def _write_json(path: Path, data: dict) -> None:
+    tmp = path.with_name(f".{path.name}.tmp")
+    tmp.write_text(json.dumps(data, indent=2) + "\n")
+    tmp.replace(path)
+
+
 def _write_status(out: Path, status: dict) -> None:
-    tmp = out / f".{STATUS_FILE}.tmp"
-    tmp.write_text(json.dumps(status, indent=2) + "\n")
-    tmp.replace(out / STATUS_FILE)
+    _write_json(out / STATUS_FILE, status)
 
 
 def _missing_input(stage: Stage, ctx: Context, producers: Mapping[str, str]) -> str | None:
     for name in stage.inputs:
-        if not ctx.path(name).exists():
+        path = ctx.path(name)
+        if not path.exists():
             by = producers.get(name)
-            return f"{stage.name} needs {name}, run {by} first" if by else f"{stage.name} needs {name}"
+            return f"{stage.name} needs {path}, run {by} first" if by else f"{stage.name} needs {path}"
     return None
 
 
@@ -90,8 +95,7 @@ def _run_one(stage: Stage, ctx: Context, digest: str) -> None:
             dest = ctx.out / name
             dest.parent.mkdir(parents=True, exist_ok=True)
             (tmp / name).replace(dest)
-        (ctx.out / f"{stage.name}.meta.json").write_text(
-            json.dumps({"hash": digest, "version": stage.version}, indent=2) + "\n")
+        _write_json(ctx.out / f"{stage.name}.meta.json", {"hash": digest, "version": stage.version})
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

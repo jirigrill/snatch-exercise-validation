@@ -1,13 +1,14 @@
 """S-1: probe the clip, check it is usable, and write its frame times.
 
 Hard checks stop with exit 3 (status bad_clip). Warnings go into clip.json and
-never stop the run. The contact sheet is written whenever the clip decodes.
+never stop the run.
 """
 
 import json
 import re
 import subprocess
 from pathlib import Path
+from typing import Literal
 
 import cv2
 import numpy as np
@@ -23,8 +24,10 @@ GAP_PERIODS = 1.5
 BRIGHTNESS = (40.0, 220.0)
 SHEET_FRAMES = 6
 SHEET_HEIGHT = 480
+SHEET = "overlays/0_clip_sheet.jpg"
 LOAD_TOKEN = re.compile(r"_(\d+(?:-\d+)?)kg_")
 FPS_TOKEN = re.compile(r"_(\d+)fps(?:[_.]|$)")
+RateSource = Literal["filename", "camera", "none"]
 
 
 def load_from(flag: float | None, filename: str) -> tuple[float | None, str]:
@@ -36,18 +39,30 @@ def load_from(flag: float | None, filename: str) -> tuple[float | None, str]:
     return None, "none"
 
 
-def tagged_fps(filename: str, r_frame_rate: float) -> float:
-    """The rate the clip was recorded at: the `_<n>fps` filename token, else the stream tag.
+def rate_reference(filename: str, r_frame_rate: float, format_tags: dict) -> tuple[float | None, RateSource]:
+    """The recorded rate to check the timestamps against, and where it came from.
 
-    A remux rewrites the stream tag from the timestamps, and the 120 fps ladder
-    files keep a 240 tag, so the filename wins when it names a rate.
+    A `-c copy` remux rewrites r_frame_rate from the new timestamps, and the
+    clips carry no codec-level timing, so the stream tag only counts on a
+    camera original: Apple tags present and no ffmpeg muxer. The `_<n>fps`
+    filename token wins, since the 120 fps ladder files keep a 240 tag.
     """
     m = FPS_TOKEN.search(filename)
-    return float(m.group(1)) if m else r_frame_rate
+    if m:
+        return float(m.group(1)), "filename"
+    remuxed = str(format_tags.get("encoder", "")).startswith("Lavf")
+    if "com.apple.quicktime.make" in format_tags and not remuxed:
+        return r_frame_rate, "camera"
+    return None, "none"
 
 
-def check_times(t: np.ndarray, fps: float) -> tuple[list[str], list[str]]:
-    """Hard errors and warnings for raw packet times `t` against the fps tag."""
+def measured_fps(t: np.ndarray) -> float:
+    """Frames over duration, the last frame held one median period, as ffprobe's avg_frame_rate."""
+    d = np.diff(t)
+    return len(t) / float(t[-1] - t[0] + np.median(d)) if len(d) and np.all(d > 0) else 0.0
+
+
+def check_times(t: np.ndarray, reference: float | None) -> tuple[list[str], list[str]]:
     if len(t) < 2:
         return ["no frames"], []
     d = np.diff(t)
@@ -58,10 +73,14 @@ def check_times(t: np.ndarray, fps: float) -> tuple[list[str], list[str]]:
     if duration < MIN_DURATION_S:
         errors.append(f"duration {duration:.2f} s is under {MIN_DURATION_S:.0f} s")
     rate = 1.0 / float(np.median(d))
-    if abs(rate - fps) > MAX_RATE_OFF * fps:
-        errors.append(f"timestamps broken (median rate {rate:.1f} fps vs tag {fps:.1f}; "
-                      "re-encoded/exported?), use the original file")
     warnings = []
+    if reference is None:
+        warnings.append(f"cannot verify frame rate (median {rate:.1f} fps): no _<n>fps filename token "
+                        "and not a camera original")
+    elif abs(rate - reference) > MAX_RATE_OFF * reference:
+        errors.append(f"timestamps broken (median rate {rate:.1f} fps vs tag {reference:.1f}; "
+                      "re-encoded/exported?), use the original file")
+    fps = measured_fps(t)
     if fps < MIN_FPS:
         warnings.append(f"fps {fps:.1f} is under {MIN_FPS:.0f}")
     n_gaps = int(np.sum(d > GAP_PERIODS * np.median(d)))
@@ -75,10 +94,10 @@ def check_brightness(mean: float) -> list[str]:
     return [] if lo <= mean <= hi else [f"mean brightness {mean:.0f} is outside {lo:.0f} to {hi:.0f}"]
 
 
-def _ffprobe(path: Path) -> tuple[dict, np.ndarray]:
+def _ffprobe(path: Path) -> tuple[dict, dict, np.ndarray]:
     run = subprocess.run(
         ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_streams",
-         "-show_entries", "packet=pts_time", "-of", "json", str(path)],
+         "-show_entries", "packet=pts_time:format_tags", "-of", "json", str(path)],
         capture_output=True, text=True)
     if run.returncode != 0:
         raise StageStop(BAD_CLIP_EXIT, "bad_clip", f"unreadable: {run.stderr.strip()[:200]}")
@@ -86,7 +105,8 @@ def _ffprobe(path: Path) -> tuple[dict, np.ndarray]:
     if not data.get("streams"):
         raise StageStop(BAD_CLIP_EXIT, "bad_clip", "unreadable: no video stream")
     pts = [float(p["pts_time"]) for p in data.get("packets", []) if "pts_time" in p]
-    return data["streams"][0], np.sort(np.array(pts)) if pts else np.array([])
+    tags = data.get("format", {}).get("tags", {})
+    return data["streams"][0], tags, np.sort(np.array(pts)) if pts else np.array([])
 
 
 def _rate(s: str) -> float:
@@ -117,13 +137,12 @@ def contact_sheet(frames: list[np.ndarray], times: list[float]) -> np.ndarray:
 
 
 def run(ctx: Context, tmp: Path) -> None:
-    stream, pts = _ffprobe(ctx.clip)
+    stream, format_tags, pts = _ffprobe(ctx.clip)
     rotation = next((int(sd["rotation"]) for sd in stream.get("side_data_list", [])
                      if "rotation" in sd), 0)
     w, h = rotated_size(int(stream["width"]), int(stream["height"]), rotation)
-    tag = tagged_fps(ctx.clip.name, _rate(stream["r_frame_rate"]))
-    fps = _rate(stream.get("avg_frame_rate", "0/0")) or tag
-    errors, warnings = check_times(pts, tag)
+    reference, reference_source = rate_reference(ctx.clip.name, _rate(stream["r_frame_rate"]), format_tags)
+    errors, warnings = check_times(pts, reference)
 
     frames, times = [], []
     if len(pts) >= 2:
@@ -136,7 +155,7 @@ def run(ctx: Context, tmp: Path) -> None:
     if frames:
         warnings += check_brightness(float(np.mean([cv2.cvtColor(f, cv2.COLOR_BGR2GRAY).mean()
                                                     for f in frames])))
-        sheet = ctx.out / "overlays" / "0_clip_sheet.jpg"
+        sheet = tmp / SHEET
         sheet.parent.mkdir(parents=True, exist_ok=True)
         cv2.imwrite(str(sheet), contact_sheet(frames, times))
     elif not errors:
@@ -144,16 +163,15 @@ def run(ctx: Context, tmp: Path) -> None:
     if errors:
         raise StageStop(BAD_CLIP_EXIT, "bad_clip", "; ".join(errors))
 
-    periods = np.maximum(np.round(np.diff(pts) * tag), 1)
-    frame_times = np.r_[0, np.cumsum(periods)] / tag
-    np.save(tmp / "frame_times.npy", frame_times)
+    np.save(tmp / "frame_times.npy", pts - pts[0])
     load_kg, load_source = load_from(ctx.params.get("load"), ctx.clip.name)
     clip = {
-        "fps": round(fps, 6), "n_frames": len(pts), "size": [w, h], "rotation": rotation,
+        "fps": round(measured_fps(pts), 6), "fps_reference": reference,
+        "fps_reference_source": reference_source, "n_frames": len(pts), "size": [w, h], "rotation": rotation,
         "times_file": "frame_times.npy", "load_kg": load_kg, "load_source": load_source,
         "warnings": warnings,
     }
     (tmp / "clip.json").write_text(json.dumps(clip, indent=2) + "\n")
 
 
-STAGE = Stage("S-1", (CLIP,), ("clip.json", "frame_times.npy"), run, params=("load",))
+STAGE = Stage("S-1", (CLIP,), ("clip.json", "frame_times.npy", SHEET), run, params=("load",))

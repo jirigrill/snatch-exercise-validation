@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from snatch.stage import CLIP, Context, Stage, StageStop, run_stages
+from snatch.stage import CLIP, MISSING_INPUT_EXIT, Context, Stage, StageStop, run_stages
 
 
 def _writer(name: str, calls: list[str]):
@@ -74,9 +74,12 @@ def test_missing_input_names_producer_and_never_runs_it(ctx: Context) -> None:
     calls: list[str] = []
     lines: list[str] = []
     code = run_stages(_pipeline(calls), ctx, only="B", log=lines.append)
-    assert code != 0
+    assert code == MISSING_INPUT_EXIT not in (0, 1)
     assert calls == []
-    assert "A.txt" in lines[-1] and "run A" in lines[-1]
+    assert str(ctx.out / "A.txt") in lines[-1] and "run A" in lines[-1]
+    status = json.loads((ctx.out / "pipeline_status.json").read_text())
+    assert status["status"] == "missing_input"
+    assert status["stages"]["B"] == {"state": "failed", "reason": lines[-1]}
 
 
 def test_deleted_output_is_stale_and_rebuilt(ctx: Context) -> None:
@@ -108,3 +111,44 @@ def test_stop_writes_status_and_returns_code(ctx: Context) -> None:
     assert run_stages([Stage("A", (CLIP,), ("A.txt",), stop)], ctx, log=_quiet) == 3
     status = json.loads((ctx.out / "pipeline_status.json").read_text())
     assert (status["status"], status["reason"]) == ("bad_clip", "too short")
+
+
+def test_version_bump_reruns(ctx: Context) -> None:
+    calls: list[str] = []
+    run_stages([Stage("A", (CLIP,), ("A.txt",), _writer("A", calls))], ctx, log=_quiet)
+    run_stages([Stage("A", (CLIP,), ("A.txt",), _writer("A", calls), version=2)], ctx, log=_quiet)
+    assert calls == ["A", "A"]
+
+
+def test_unchosen_stage_with_changed_hash_is_recorded_stale(ctx: Context) -> None:
+    calls: list[str] = []
+    run_stages(_pipeline(calls), ctx, log=_quiet)
+    run_stages(_pipeline(calls), Context(ctx.clip, ctx.out, {"k": 2}), only="B", log=_quiet)
+    status = json.loads((ctx.out / "pipeline_status.json").read_text())
+    assert status["stages"]["A"] == {"state": "stale"}
+
+
+def _nested(calls: list[str], stop: bool = False):
+    def run(_: Context, tmp: Path) -> None:
+        calls.append("A")
+        (tmp / "overlays").mkdir()
+        (tmp / "overlays" / "sheet.jpg").write_bytes(b"jpg")
+        if stop:
+            raise StageStop(3, "bad_clip", "too short")
+        (tmp / "A.txt").write_text("a")
+    return [Stage("A", (CLIP,), ("A.txt", "overlays/sheet.jpg"), run)]
+
+
+def test_stop_leaves_no_nested_output(ctx: Context) -> None:
+    assert run_stages(_nested([], stop=True), ctx, log=_quiet) == 3
+    assert not (ctx.out / "overlays" / "sheet.jpg").exists()
+
+
+def test_deleted_nested_output_is_stale(ctx: Context) -> None:
+    calls: list[str] = []
+    lines: list[str] = []
+    run_stages(_nested(calls), ctx, log=_quiet)
+    (ctx.out / "overlays" / "sheet.jpg").unlink()
+    run_stages(_nested(calls), ctx, log=lines.append)
+    assert "A stale, rerunning" in lines
+    assert calls == ["A", "A"] and (ctx.out / "overlays" / "sheet.jpg").exists()
