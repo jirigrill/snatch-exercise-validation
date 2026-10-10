@@ -87,16 +87,16 @@ for mov in sorted(vids.glob("*.MOV"), key=lambda p: [int(x) if x.isdigit() else 
     k = sparse_pose(out / clip)
     h = None
     if p is not None and str(p["status"]) == "ok":
-        h = height_above_floor(p["hub_y"], p["found"], p["px_per_m"], fps)
-        lifts, source, kind = find_lifts(h, fps), "plate hub", "plate"
+        h = height_above_floor(p["hub_y"], p["found"], p["px_per_m"], t)
+        lifts, source, kind = find_lifts(h, t), "plate hub", "plate"
     elif k is not None and (p is not None or "_bar_" not in clip):
         with np.errstate(all="ignore"):
             wrist, knee, hip = (ymean(k, "l_wrist", "r_wrist"), ymean(k, "l_knee", "r_knee"),
                                 ymean(k, "l_hip", "r_hip"))
-        lifts = find_pose_lifts(wrist, k[:, COCO["nose"], 1], knee, hip, fps)
+        lifts = find_pose_lifts(wrist, k[:, COCO["nose"], 1], knee, hip, t)
         source, kind = "pose, wrists above chest (sparse frames)", "pose"
         if not lifts:
-            lifts = find_pose_holds(wrist, knee, hip, fps)
+            lifts = find_pose_holds(wrist, knee, hip, t)
             source = "pose, wrists above mid-thigh (no overhead phase; sparse frames)"
         if p is not None:
             notes.append(f"plate {str(p['status'])[:40]}")
@@ -111,7 +111,7 @@ for mov in sorted(vids.glob("*.MOV"), key=lambda p: [int(x) if x.isdigit() else 
     if name["n_reps"] and len(lifts) != int(name["n_reps"]):
         notes.append(f"found {len(lifts)} lifts, name says {name['n_reps']}")
     for k, lf in enumerate(lifts, 1):
-        ps, pe = pose_range(lf, fps, info.n_frames, *PAD_S[kind])
+        ps, pe = pose_range(lf, t, info.n_frames, *PAD_S[kind])
         rows.append({"clip": clip, "rep": k, "start_frame": lf.start,
                      "end_frame": lf.end, "pose_start": ps, "pose_end": pe,
                      "fps": f"{fps:.1f}",
@@ -126,7 +126,7 @@ for mov in sorted(vids.glob("*.MOV"), key=lambda p: [int(x) if x.isdigit() else 
         fig, ax = plt.subplots(figsize=(12, 3))
         ax.plot(t, h, lw=0.8)
         for k, lf in enumerate(lifts, 1):
-            ps, pe = pose_range(lf, fps, info.n_frames, *PAD_S[kind])
+            ps, pe = pose_range(lf, t, info.n_frames, *PAD_S[kind])
             ax.axvspan(t[ps], t[min(pe, len(t) - 1)], color="0.9")
             ax.axvspan(t[lf.start], t[min(lf.end, len(t) - 1)], color="tab:green", alpha=0.3)
             ax.text(t[lf.start], 0.05, f"rep {k}\nf{lf.start}-{lf.end}", fontsize=8)

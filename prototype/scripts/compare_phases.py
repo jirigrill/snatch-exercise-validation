@@ -28,12 +28,12 @@ t = frame_times(raw)  # real frame times: 2026-10-05 drops frames
 fps = mean_rate(t)  # for windows in frames
 n = len(kps)
 assert len(plate["hub_y"]) == len(kps), "plate and pose frame counts differ"
-kps_s = smooth_keypoints(kps, fps)
+kps_s = smooth_keypoints(kps, fps, t)
 common: dict[str, Any] = dict(
     nose_y=mid_y(kps_s, "nose"), hip_y=mid_y(kps_s, "hip"),
     knee=sagittal_angles(kps_s, SIDE)["knee"], fps=fps, knee_y=mid_y(kps_s, "knee"), t=t)
 v1 = find_reps(wrist_y=mid_y(kps_s, "wrist"), **common)
-v2 = find_reps_v2(hub_y=smooth(plate["hub_y"], fps), **common)
+v2 = find_reps_v2(hub_y=smooth(plate["hub_y"], fps, t=t), **common)
 found = plate["found"]
 
 (out / "phases_v2.json").write_text(json.dumps({

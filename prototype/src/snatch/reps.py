@@ -31,12 +31,12 @@ class Lift:
 
 
 def height_above_floor(hub_y: np.ndarray, found: np.ndarray, px_per_m: np.ndarray,
-                       fps: float, floor_pct: float = 95) -> np.ndarray:
+                       t: np.ndarray, floor_pct: float = 95) -> np.ndarray:
     """Smoothed hub height above its resting level, in metres."""
     y = np.where(found, hub_y, np.nan)
     floor_y = np.nanpercentile(y, floor_pct)
     scale = np.nanmedian(np.where(found, px_per_m, np.nan))
-    return (floor_y - smooth(y, fps)) / scale
+    return (floor_y - smooth(y, t=t)) / scale
 
 
 def runs(mask: np.ndarray) -> list[tuple[int, int]]:
@@ -45,13 +45,13 @@ def runs(mask: np.ndarray) -> list[tuple[int, int]]:
     return list(zip(np.flatnonzero(d == 1).tolist(), np.flatnonzero(d == -1).tolist()))
 
 
-def find_lifts(height_m: np.ndarray, fps: float, lift_m: float = 0.10,
+def find_lifts(height_m: np.ndarray, t: np.ndarray, lift_m: float = 0.10,
                min_peak_m: float = 0.60, rest_m: float = 0.03,
                merge_s: float = 0.25) -> list[Lift]:
     up = runs(height_m > lift_m)
     merged: list[list[int]] = []
     for s, e in up:
-        if merged and s - merged[-1][1] < merge_s * fps:
+        if merged and t[s] - t[merged[-1][1]] < merge_s - 1e-9:
             merged[-1][1] = e
         else:
             merged.append([s, e])
@@ -69,15 +69,18 @@ def find_lifts(height_m: np.ndarray, fps: float, lift_m: float = 0.10,
     return lifts
 
 
-def pose_range(lift: Lift, fps: float, n_frames: int, pad_before_s: float = 1.0,
+def pose_range(lift: Lift, t: np.ndarray, n_frames: int, pad_before_s: float = 1.0,
                pad_after_s: float = 1.0) -> tuple[int, int]:
     """Frames to pose for one lift: the lift plus still padding either side."""
-    return (max(0, lift.start - round(pad_before_s * fps)),
-            min(n_frames, lift.end + round(pad_after_s * fps)))
+    start = int(np.searchsorted(t, t[lift.start] - pad_before_s - 1e-9))
+    if lift.end >= len(t):
+        return start, n_frames
+    end = int(np.searchsorted(t, t[lift.end] + pad_after_s - 1e-9))
+    return start, min(n_frames, end)
 
 
 def find_pose_lifts(wrist_y: np.ndarray, nose_y: np.ndarray, knee_y: np.ndarray,
-                        hip_y: np.ndarray, fps: float, min_up_s: float = 0.1,
+                        hip_y: np.ndarray, t: np.ndarray, min_up_s: float = 0.1,
                         merge_s: float = 0.5) -> list[Lift]:
     """Lifts from pose alone, for clips whose plate track fails (off-axis).
 
@@ -97,13 +100,13 @@ def find_pose_lifts(wrist_y: np.ndarray, nose_y: np.ndarray, knee_y: np.ndarray,
     over = idx[wrist_y[idx] < chest_y[idx]]
     groups: list[list[int]] = []
     for i in over:
-        if groups and i - groups[-1][1] < merge_s * fps:
+        if groups and t[i] - t[groups[-1][1]] < merge_s - 1e-9:
             groups[-1][1] = int(i)
         else:
             groups.append([int(i), int(i)])
     lifts = []
     for s, e in groups:
-        if e - s < min_up_s * fps:
+        if t[e] - t[s] < min_up_s - 1e-9:
             continue
         low = idx[(idx < s) & (wrist_y[idx] > knee_y[idx])]
         down = idx[(idx > e) & (wrist_y[idx] > hip_y[idx])]
@@ -116,7 +119,7 @@ def find_pose_lifts(wrist_y: np.ndarray, nose_y: np.ndarray, knee_y: np.ndarray,
 
 
 def find_pose_holds(wrist_y: np.ndarray, knee_y: np.ndarray, hip_y: np.ndarray,
-                    fps: float, min_s: float = 0.5) -> list[Lift]:
+                    t: np.ndarray, min_s: float = 0.5) -> list[Lift]:
     """Pulls to a standing hold (no overhead phase), from pose: runs of posed
     frames with the wrists above mid-thigh, at least `min_s` long. Fallback
     when find_pose_lifts finds nothing (20261005_6: two holds, no snatch).
@@ -125,4 +128,4 @@ def find_pose_holds(wrist_y: np.ndarray, knee_y: np.ndarray, hip_y: np.ndarray,
     idx = np.flatnonzero(~np.isnan(wrist_y) & ~np.isnan(knee_y) & ~np.isnan(hip_y))
     up = wrist_y[idx] < (knee_y[idx] + hip_y[idx]) / 2
     return [Lift(int(idx[s]), int(idx[e - 1]) + 1, float("nan"))
-            for s, e in runs(up) if idx[e - 1] - idx[s] >= min_s * fps]
+            for s, e in runs(up) if t[idx[e - 1]] - t[idx[s]] >= min_s - 1e-9]

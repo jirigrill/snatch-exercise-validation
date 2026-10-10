@@ -5,6 +5,10 @@ from snatch.reps import Lift, find_lifts, pose_range, runs
 FPS = 100.0
 
 
+def _t(n: int) -> np.ndarray:
+    return np.arange(n) / FPS
+
+
 def _lift(h: np.ndarray, start: int, up: int, top: float, hold: int, down: int) -> None:
     """Hub rises linearly to `top` m, holds, falls back to the floor."""
     h[start:start + up] = np.linspace(0, top, up)
@@ -20,7 +24,7 @@ def test_two_lifts_with_a_rest_between():
     h = np.zeros(1000)
     _lift(h, 100, 50, 1.5, 100, 30)
     _lift(h, 600, 50, 1.5, 100, 30)
-    lifts = find_lifts(h, FPS)
+    lifts = find_lifts(h, _t(len(h)))
     assert [(lf.start, lf.end) for lf in lifts] == [(100, 280), (600, 780)]
     assert lifts[0].peak_m == 1.5
 
@@ -29,18 +33,18 @@ def test_a_short_bounce_after_a_drop_stays_one_lift():
     h = np.zeros(800)
     _lift(h, 100, 50, 1.5, 50, 20)  # dropped, back on the floor at 220
     _lift(h, 230, 5, 0.15, 0, 5)  # bounce 10 frames later
-    assert len(find_lifts(h, FPS)) == 1
+    assert len(find_lifts(h, _t(len(h)))) == 1
 
 
 def test_low_movements_are_not_lifts():
     h = np.zeros(500)
     _lift(h, 100, 20, 0.2, 10, 20)  # bar rolled / nudged, never pulled
-    assert find_lifts(h, FPS) == []
+    assert find_lifts(h, _t(len(h))) == []
 
 
 def test_pose_range_pads_and_clips_to_the_clip():
-    assert pose_range(Lift(50, 300, 1.0), FPS, 350) == (0, 350)
-    assert pose_range(Lift(500, 700, 1.0), FPS, 1000) == (400, 800)
+    assert pose_range(Lift(50, 300, 1.0), _t(350), 350) == (0, 350)
+    assert pose_range(Lift(500, 700, 1.0), _t(1000), 1000) == (400, 800)
 
 
 def test_overhead_lifts_from_sparse_pose():
@@ -55,7 +59,7 @@ def test_overhead_lifts_from_sparse_pose():
     wrist[s[(s >= 150) & (s < 300)]] = 50.0  # overhead
     wrist[s[(s >= 300) & (s < 320)]] = 200.0  # lowering, still above the hips
     wrist[s[(s >= 700) & (s < 705)]] = 50.0  # one sample overhead: too short
-    lifts = find_pose_lifts(wrist, nose, knee, hip, FPS)
+    lifts = find_pose_lifts(wrist, nose, knee, hip, _t(n))
     assert [(lf.start, lf.end) for lf in lifts] == [(120, 321)]
 
 
@@ -67,4 +71,4 @@ def test_pose_holds_are_long_runs_with_the_wrists_above_mid_thigh():
     knee[s], hip[s], wrist[s] = 400.0, 300.0, 420.0  # bar on the floor
     wrist[s[(s >= 200) & (s < 600)]] = 300.0  # standing hold, bar at the hips
     wrist[s[(s >= 800) & (s < 820)]] = 300.0  # too short
-    assert [(h.start, h.end) for h in find_pose_holds(wrist, knee, hip, FPS)] == [(200, 591)]
+    assert [(h.start, h.end) for h in find_pose_holds(wrist, knee, hip, _t(len(wrist)))] == [(200, 591)]

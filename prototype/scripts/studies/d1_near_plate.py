@@ -38,7 +38,7 @@ info = probe(clip)
 raw = np.load(out / "raw_pose.npz")
 t = frame_times(raw)
 fps = mean_rate(t)
-kps_s = smooth_keypoints(raw["keypoints"], fps)
+kps_s = smooth_keypoints(raw["keypoints"], fps, t)
 reps = find_reps(wrist_y=mid_y(kps_s, "wrist"), nose_y=mid_y(kps_s, "nose"),
                  hip_y=mid_y(kps_s, "hip"), knee=sagittal_angles(kps_s, "r")["knee"],
                  fps=fps, knee_y=mid_y(kps_s, "knee"), t=t)
@@ -64,12 +64,13 @@ def masked():
         yield o
 
 
-res = plate.detect(masked, n, r_min=r_lo, r_max=r_hi, model="ellipse",
-                   max_step_px=plate.MAX_STEP_PX * 240 / info.fps * info.width / 1080)
+max_step_px = plate.MAX_STEP_PX * info.width / 1080
+res = plate.detect(masked, t, r_min=r_lo, r_max=r_hi, model="ellipse",
+                   max_step_px=max_step_px)
 found = res["found"]
 idx = np.flatnonzero(found)
 step = np.hypot(np.diff(res["hub_x"][idx]), np.diff(res["hub_y"][idx]))
-jumps = idx[1:][step > plate.MAX_STEP_PX * np.diff(idx) + 15]
+jumps = idx[1:][step > max_step_px * np.diff(t[idx]) + 15]
 status = (f"near-plate prior; found {found[span].mean():.1%} of lift frames, "
           f"{len(jumps)} jumps")
 print(status, flush=True)
