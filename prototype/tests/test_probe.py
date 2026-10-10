@@ -1,7 +1,13 @@
+import json
+import shutil
+import subprocess
+from pathlib import Path
+
 import numpy as np
 import pytest
 
-from snatch.stages.probe import check_brightness, check_times, load_from, tagged_fps
+from snatch.stage import Context, run_stages
+from snatch.stages.probe import STAGE, check_brightness, check_times, load_from, rate_reference
 
 
 def _times(n: int, fps: float) -> np.ndarray:
@@ -58,6 +64,66 @@ def test_load(flag: float | None, name: str, want: tuple) -> None:
     assert load_from(flag, name) == want
 
 
+CAMERA = {"com.apple.quicktime.make": "Apple"}
+REMUX = {"encoder": "Lavf63.1.101"}
+
+
 def test_fps_token_wins_over_the_stream_tag() -> None:
-    assert tagged_fps("a_0deg_120fps.MOV", 240.0) == 120.0
-    assert tagged_fps("a_0deg_right.MOV", 240.0) == 240.0
+    assert rate_reference("a_0deg_120fps.MOV", 240.0, CAMERA) == (120.0, "filename")
+    assert rate_reference("a_0deg_60fps.MOV", 50.0, REMUX) == (60.0, "filename")
+
+
+def test_camera_original_trusts_the_stream_tag() -> None:
+    assert rate_reference("a_0deg_right.MOV", 240.0, CAMERA) == (240.0, "camera")
+
+
+@pytest.mark.parametrize("tags", [REMUX, {**CAMERA, **REMUX}, {}])
+def test_untokened_remux_has_no_reference(tags: dict) -> None:
+    assert rate_reference("untokened.MOV", 50.0, tags) == (None, "none")
+
+
+def test_no_reference_warns_cannot_verify_rate() -> None:
+    errors, warnings = check_times(_times(960, 200.0), None)
+    assert errors == []
+    assert any("cannot verify frame rate" in w for w in warnings)
+
+
+def _clip(path: Path, seconds: float) -> Path:
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i",
+                    f"testsrc=size=160x120:rate=240:duration={seconds}", "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p", str(path)], check=True)
+    return path
+
+
+needs_ffmpeg = pytest.mark.skipif(not shutil.which("ffmpeg"), reason="needs ffmpeg")
+
+
+@needs_ffmpeg
+def test_bad_clip_leaves_no_sheet(tmp_path: Path) -> None:
+    ctx = Context(_clip(tmp_path / "a_240fps.mp4", 1), tmp_path / "out")
+    assert run_stages([STAGE], ctx, log=lambda _: None) == 3
+    assert not (ctx.out / "overlays" / "0_clip_sheet.jpg").exists()
+
+
+@needs_ffmpeg
+def test_clip_json_fps_and_frame_times_are_measured(tmp_path: Path) -> None:
+    ctx = Context(_clip(tmp_path / "a_240fps.mp4", 3), tmp_path / "out")
+    assert run_stages([STAGE], ctx, log=lambda _: None) == 0
+    clip = json.loads((ctx.out / "clip.json").read_text())
+    t = np.load(ctx.out / "frame_times.npy")
+    assert (clip["fps_reference"], clip["fps_reference_source"]) == (240.0, "filename")
+    assert clip["fps"] == pytest.approx(240.0, rel=1e-3)
+    assert len(t) == clip["n_frames"] and t[0] == 0
+    assert (ctx.out / "overlays" / "0_clip_sheet.jpg").exists()
+
+
+@needs_ffmpeg
+def test_frame_times_keep_measured_jitter(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from snatch.stages import probe
+
+    ctx = Context(_clip(tmp_path / "a_240fps.mp4", 3), tmp_path / "out")
+    stream, tags, pts = probe._ffprobe(ctx.clip)
+    jittered = pts + 10.0 + np.where(np.arange(len(pts)) % 7 == 3, 0.0008, 0.0)
+    monkeypatch.setattr(probe, "_ffprobe", lambda _: (stream, tags, jittered))
+    assert run_stages([STAGE], ctx, log=lambda _: None) == 0
+    np.testing.assert_allclose(np.load(ctx.out / "frame_times.npy"), jittered - jittered[0])
