@@ -79,7 +79,8 @@ def track(cands: list[np.ndarray], r0: float, t: np.ndarray, max_step_px: float,
     radius off r0, disc brighter than dark_ok grey: +1 per dark_span) or
     `miss_cost` per frame without one; 0.5 * (step / allowed)^2 for moving
     between chosen candidates k frames apart (k <= max_gap), where allowed =
-    max_step_px (px per second) times the time between them from `t` and longer steps are forbidden; and `reentry_cost` each time the path starts again after
+    max_step_px (px per second) times their time gap in `t` and longer
+    steps are forbidden; and `reentry_cost` each time the path starts again after
     longer gaps (or at the start), where position is unconstrained.
     """
     n = len(cands)
