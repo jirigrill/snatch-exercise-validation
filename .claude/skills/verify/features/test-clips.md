@@ -21,9 +21,10 @@ Cut points: rep 1 setup − 1 s to overhead_end + 1 s from `prototype/out/<src>/
 ## Rebuild
 ```
 cd vids && mkdir -p test
-ffmpeg -ss <start> -to <end> -i spike/<src>.MOV -c copy -map 0 test/<name>
+ffmpeg -ss <start> -to <end> -i spike/<src>.MOV -c copy -tag:v hvc1 -map 0 test/<name>
 ```
-Check: `ffprobe -select_streams v:0 -show_entries packet=pts_time` gives uneven deltas (min 0.00375 s, max up to 0.0167 s), same 1920x1080 and rotation −90 as the source.
+Apple players only play HEVC tagged `hvc1`; the 60 fps ladder sources carry `hev1`, so the cut clips need the re-tag.
+Check: `codec_tag_string` is `hvc1` for all 7 clips; `ffprobe -select_streams v:0 -show_entries packet=pts_time` gives uneven deltas (min 0.00375 s, max up to 0.0167 s), same 1920x1080 and rotation −90 as the source.
 
 ## Measured (current scripts, `run_clip.sh`, M4, pose lock held)
 | Id | Runtime | v1 reps | v2 reps | v1 event shift vs source − offset (frames) |
