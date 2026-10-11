@@ -9,4 +9,5 @@ Harness for all features: shell, from `prototype/`, `uv run python scripts/<x>.p
 | Rep finding | [rep-finding.md](rep-finding.md) | `find_reps.py` |
 | Spike analyses (arm bend, body height, camera views, knee skeleton) | [spike-analyses.md](spike-analyses.md) | `arm_bend.py`, `body_height.py`, `d1_views.py`, `skeleton_validate.py` |
 | Batch orchestration | [batch-run.md](batch-run.md) | `run_all.sh` |
+| Short test clips T1–T5 for per-commit / per-PR runs | [test-clips.md](test-clips.md) | `run_clip.sh vids/test/T1_*` |
 | Unit tests and types | [tests.md](tests.md) | `pytest`, `pyright` |
