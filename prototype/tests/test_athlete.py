@@ -95,6 +95,12 @@ def test_calibrate_skips_the_skeleton_check(tmp_path: Path) -> None:
     assert _run(_ctx(tmp_path, height=1.80, calibrate=True))[0] == 0
 
 
+def test_calibrate_without_height_exits_7(tmp_path: Path) -> None:
+    code, status, lines = _run(_ctx(tmp_path, calibrate=True))
+    assert (code, status["status"]) == (7, "needs_height")
+    assert any("--height" in s for s in lines)
+
+
 def test_bad_height_exits_7(tmp_path: Path) -> None:
     code, _, lines = _run(_ctx(tmp_path, height=180.0))
     assert code == 7 and any("cm" in s for s in lines)
