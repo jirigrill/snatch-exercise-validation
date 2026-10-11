@@ -41,12 +41,12 @@ Plate options depend on the clip name (see `prototype/scripts/run_all.sh`): `ell
 
 ### Levels
 - **Per commit:** `pytest -q` + `pyright` (count ≤ baseline) + `run_clip.sh` on T1.
-- **Per PR:** `run_clip.sh` on T1–T5, plus the `vids/ladder/*_60fps.MOV` clips for the S−1 rate checks; before/after vs the parent branch.
-- **Expected failure:** ladder clip `20261001_2` stays in the set and gives 0 reps (standup ladder, no snatch). A rep count > 0 there is a regression.
+- **Per PR:** `run_clip.sh` on T1–T7 only (no full `vids/ladder/` clips); T6 and T7 cover the S−1 60 fps checks. Before/after vs the parent branch.
+- **Expected failure:** T7 gives 0 reps and `run_clip.sh` fails on the missing phase_sheet.jpg. The clip shows a stand-up with a 5 kg plate held at the hips, no pull and no bar overhead. A rep count > 0 there is a regression.
 
 Test clips T1–T5 (`vids/test/`, 1 rep each, 240 fps, ~5 s): what each covers, expected results, runtimes and how to rebuild them in [features/test-clips.md](features/test-clips.md). Doctor warns when they are missing.
 
-Clip choice: `vids/ladder/*_60fps.MOV` (about 50 s each) for proofs; 240 fps clips in `vids/` and `vids/spike/` take minutes to an hour (detector ~0.4 s per detected frame on CPU). Per-feature recipes: `features/README.md`.
+Clip choice: `vids/test/T1–T7` (seconds each) for proofs; full `vids/ladder/*_60fps.MOV` clips are no longer used; 240 fps clips in `vids/` and `vids/spike/` take minutes to an hour (detector ~0.4 s per detected frame on CPU). Per-feature recipes: `features/README.md`.
 
 ## Evidence
 Per proof keep, under `.scratch/verify/<ts>/<clip>/` (gitignored, survives cleanup):

@@ -12,7 +12,7 @@ chk "pose model cached"            "ls ~/.cache/rtmlib/hub/checkpoints/rtmpose-x
 chk "detector model cached"        "ls ~/.cache/rtmlib/hub/checkpoints/yolox_x_*.onnx"
 chk "ffprobe installed"            "command -v ffprobe"
 chk "ladder 60fps clips present"   "ls ../vids/ladder/*_60fps.MOV"
-[ "$(ls ../vids/test/T[1-5]_*_240fps.MOV 2>/dev/null | wc -l)" -eq 5 ] && echo "ok   test clips T1-T5 present" \
+[ "$(ls ../vids/test/T[1-7]_*_{240,60}fps.MOV 2>/dev/null | wc -l)" -eq 7 ] && echo "ok   test clips T1-T7 present" \
   || echo "WARN test clips missing in vids/test/: rebuild per features/test-clips.md"
 chk "CoreML provider available"    "uv run python -c 'import onnxruntime as o; assert \"CoreMLExecutionProvider\" in o.get_available_providers()'"
 echo "branch: $(git -C "$root" rev-parse --abbrev-ref HEAD) $(git -C "$root" rev-parse --short HEAD), dirty files: $(git -C "$root" status --porcelain | wc -l | tr -d ' ')"
