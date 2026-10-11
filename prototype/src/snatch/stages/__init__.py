@@ -1,4 +1,4 @@
 from snatch.stage import Stage
-from snatch.stages import probe
+from snatch.stages import athlete, probe
 
-STAGES: list[Stage] = [probe.STAGE]
+STAGES: list[Stage] = [probe.STAGE, athlete.STAGE]

@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from snatch.stage import CLIP, MISSING_INPUT_EXIT, Context, Stage, StageStop, run_stages
+from snatch.stage import CLIP, MISSING_INPUT_EXIT, SKELETON, Context, Stage, StageStop, run_stages
 
 
 def _writer(name: str, calls: list[str]):
@@ -152,3 +152,28 @@ def test_deleted_nested_output_is_stale(ctx: Context) -> None:
     run_stages(_nested(calls), ctx, log=lines.append)
     assert "A stale, rerunning" in lines
     assert calls == ["A", "A"] and (ctx.out / "overlays" / "sheet.jpg").exists()
+
+
+def test_skeleton_input_resolves_to_the_athlete_dir_and_is_hashed(tmp_path: Path) -> None:
+    clip = tmp_path / "clip.MOV"
+    clip.write_bytes(b"v")
+    ctx = Context(clip, tmp_path / "out", {"athlete": "jiri"}, athletes=tmp_path / "ath")
+    assert ctx.path(SKELETON) == tmp_path / "ath" / "jiri" / "skeleton.json"
+    calls: list[str] = []
+    stages = [Stage("S4b", (CLIP, SKELETON), ("S4b.txt",), _writer("S4b", calls))]
+    ctx.path(SKELETON).parent.mkdir(parents=True)
+    ctx.path(SKELETON).write_text("1")
+    run_stages(stages, ctx, log=_quiet)
+    run_stages(stages, ctx, log=_quiet)
+    ctx.path(SKELETON).write_text("2")
+    run_stages(stages, ctx, log=_quiet)
+    assert calls == ["S4b", "S4b"]
+
+
+def test_always_stage_runs_every_time_without_meta(ctx: Context) -> None:
+    calls: list[str] = []
+    stages = [Stage("S0", (), (), lambda c, t: calls.append("S0"), always=True)]
+    run_stages(stages, ctx, log=_quiet)
+    run_stages(stages, ctx, log=_quiet)
+    assert calls == ["S0", "S0"]
+    assert not (ctx.out / "S0.meta.json").exists()

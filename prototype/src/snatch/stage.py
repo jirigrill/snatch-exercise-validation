@@ -3,7 +3,10 @@
 A stage hashes the bytes of its input files, its params and its version into
 `<stage>.meta.json`. It writes its outputs into a temp directory, and only a
 stage that returns has them renamed into place, so a crash never leaves a
-file that looks done. `pipeline_status.json` holds each stage's state.
+file that looks done. `pipeline_status.json` holds each stage's state. An
+`always` stage (a check, no outputs) runs every time and keeps no meta.
+`SKELETON` names the athlete's skeleton.json as an input, so a stage that lists
+it reruns when the calibration changes.
 """
 
 import hashlib
@@ -14,7 +17,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from snatch import athlete_store
+
 CLIP = "<clip>"
+SKELETON = "<skeleton>"
 STATUS_FILE = "pipeline_status.json"
 MISSING_INPUT_EXIT = 9
 
@@ -24,9 +30,14 @@ class Context:
     clip: Path
     out: Path
     params: Mapping[str, Any] = field(default_factory=dict)
+    athletes: Path = Path("athletes")
 
     def path(self, name: str) -> Path:
-        return self.clip if name == CLIP else self.out / name
+        if name == CLIP:
+            return self.clip
+        if name == SKELETON:
+            return athlete_store.path(self.athletes, str(self.params["athlete"]), athlete_store.SKELETON)
+        return self.out / name
 
 
 @dataclass(frozen=True)
@@ -37,6 +48,7 @@ class Stage:
     run: Callable[[Context, Path], None]
     params: tuple[str, ...] = ()
     version: int = 1
+    always: bool = False
 
 
 class StageStop(Exception):
@@ -100,6 +112,14 @@ def _run_one(stage: Stage, ctx: Context, digest: str) -> None:
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def _stopped(stage: Stage, stop: StageStop, out: Path, status: dict, log: Callable[[str], None]) -> int:
+    log(f"{stage.name} stopped: {stop.reason}")
+    status["stages"][stage.name] = {"state": "failed", "reason": stop.reason}
+    status.update(status=stop.status, reason=stop.reason)
+    _write_status(out, status)
+    return stop.code
+
+
 def run_stages(
     stages: Sequence[Stage],
     ctx: Context,
@@ -117,11 +137,24 @@ def run_stages(
     pick = only or start
     first = names.index(pick) if pick else 0
     chosen = stages[first:first + 1] if only else stages[first:]
+    # checks (always stages) before the pick still gate it: --from S5a must not skip S0
+    chosen = [s for s in stages[:first] if s.always] + list(chosen)
     producers = {o: s.name for s in stages for o in s.outputs}
 
     ctx.out.mkdir(parents=True, exist_ok=True)
     status: dict[str, Any] = {"status": "running", "stages": {}}
     for stage in chosen:
+        if stage.always:
+            if stage.outputs:
+                raise ValueError(f"{stage.name}: an always stage writes no outputs")
+            try:
+                stage.run(ctx, ctx.out)
+            except StageStop as stop:
+                return _stopped(stage, stop, ctx.out, status, log)
+            log(f"{stage.name} done")
+            status["stages"][stage.name] = {"state": "done"}
+            _write_status(ctx.out, status)
+            continue
         missing = _missing_input(stage, ctx, producers)
         if missing:
             log(missing)
@@ -140,11 +173,7 @@ def run_stages(
         try:
             _run_one(stage, ctx, digest)
         except StageStop as stop:
-            log(f"{stage.name} stopped: {stop.reason}")
-            status["stages"][stage.name] = {"state": "failed", "reason": stop.reason}
-            status.update(status=stop.status, reason=stop.reason)
-            _write_status(ctx.out, status)
-            return stop.code
+            return _stopped(stage, stop, ctx.out, status, log)
         except Exception as e:
             status["stages"][stage.name] = {"state": "failed", "reason": repr(e)}
             status.update(status="error", reason=repr(e))
@@ -154,7 +183,7 @@ def run_stages(
         status["stages"][stage.name] = {"state": "done"}
         _write_status(ctx.out, status)
     for stage in stages:
-        if stage not in chosen:
+        if stage not in chosen and not stage.always:
             fresh = all(ctx.path(i).exists() for i in stage.inputs) and _is_fresh(
                 stage, ctx, stage_hash(stage, ctx))
             status["stages"][stage.name] = {"state": "skipped" if fresh else "stale"}

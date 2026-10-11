@@ -18,9 +18,19 @@ opts=()
 [[ $c == *30deg* || $c == *45deg* ]] && opts+=(ellipse)
 [[ $c == 20261005_* || ($c == 20261007_* && $c == *_0deg_*) ]] && opts+=(--radius 70:140)
 log=$ev/$c.log
+# person+pose are the slow steps: reuse them from a shared cache while the clip
+# and the person/pose code are unchanged (VERIFY_NO_CACHE=1 forces a rerun).
+cache=$root/.scratch/verify/cache/$c
+key=$({ stat -f '%z %m' "$clip"; cat src/snatch/person.py src/snatch/pose.py src/snatch/video.py \
+  scripts/extract_person.py scripts/extract_pose.py; } | shasum | cut -c1-16)
 {
-  uv run python scripts/extract_person.py "$clip" "$out"
-  uv run python scripts/extract_pose.py "$clip" "$out"
+  if [[ -z $VERIFY_NO_CACHE && -s $cache/$key/raw_pose.npz ]]; then
+    cp "$cache/$key/person.npz" "$cache/$key/raw_pose.npz" "$out/" && echo "person+pose: cache $key"
+  else
+    uv run python scripts/extract_person.py "$clip" "$out"
+    uv run python scripts/extract_pose.py "$clip" "$out"
+    mkdir -p "$cache/$key" && cp "$out/person.npz" "$out/raw_pose.npz" "$cache/$key/"
+  fi
   [[ $c == *_bar_* ]] || uv run python scripts/track_plate.py "$clip" "$out" "${opts[@]}"
   uv run python scripts/analyze.py "$clip" "$out"
   [[ $c == *_bar_* ]] || uv run python scripts/compare_phases.py "$out"
