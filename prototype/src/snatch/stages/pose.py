@@ -1,10 +1,11 @@
 """S2: pose the lifter in every frame (snatch.pose) and find which way they face.
 
 Whole clip for now (S5a later limits it to the attempt windows). raw_pose.npz
-carries the frame times of S-1 as `t` and `facing`: "right" or "left", the way
-the toes point in the image. The near side follows from it (pose.SIDE_OF), and
-the leg the model scores higher must be that side, else the clip is mirrored or
-the legs are swapped. No facing majority, or a disagreement, stops with exit 8.
+carries the frame times of S-1 as `t`. facing.json holds `facing`: "right" or
+"left", the way the toes point in the image, with the votes and leg scores it
+came from. The near side follows from it (pose.SIDE_OF), and the leg the model
+scores higher must be that side, else the clip is mirrored or the legs are
+swapped. No facing majority, or a disagreement, stops with exit 8.
 Progress goes to raw_pose_partial.npz in out/<clip> every 500 frames, tagged
 with the stage hash; a rerun with the same inputs resumes from it.
 """
@@ -25,7 +26,8 @@ OVERLAY = "overlays/2_pose.mp4"
 PARTIAL = "raw_pose_partial.npz"
 
 
-def check_facing(kps: np.ndarray, scores: np.ndarray) -> str:
+def check_facing(kps: np.ndarray, scores: np.ndarray) -> dict:
+    """facing.json: facing, its votes and the leg scores; StageStop (exit 8) without a clear facing."""
     right, left = pose.facing_votes(kps, scores)
     votes = f"toe votes right {right}, left {left}"
     face = pose.facing(kps, scores)
@@ -36,7 +38,7 @@ def check_facing(kps: np.ndarray, scores: np.ndarray) -> str:
         raise StageStop(FACING_EXIT, "facing_ambiguous",
                         f"facing {face} ({votes}) but the {near} leg scores higher "
                         f"({pose.leg_scores(scores)}): mirrored clip or swapped legs?")
-    return face
+    return {"facing": face, "votes": {"right": right, "left": left}, "leg_scores": pose.leg_scores(scores)}
 
 
 def _resume(path: Path, digest: str) -> tuple[dict[str, np.ndarray] | None, int]:
@@ -73,14 +75,15 @@ def run(ctx: Context, tmp: Path) -> None:
                    progress=lambda i: print(f"S2 pose frame {i}/{info.n_frames} {time.time() - t0:.0f}s",
                                             flush=True) if i % 800 == 0 else None)
     partial.unlink(missing_ok=True)
-    face = check_facing(raw["keypoints"], raw["scores"])
+    facing = check_facing(raw["keypoints"], raw["scores"])
     meta = dict(fps=clip["fps"], t=t, width=info.width, height=info.height, rotation=info.rotation,
                 model=pose.MODEL_NAME, clip=ctx.clip.name, seconds=time.time() - t0,
-                machine=platform.platform(), det_every=person["det_every"], facing=face)
+                machine=platform.platform(), det_every=person["det_every"])
     arrays = raw | {"n_people": person["n_people"]} | {k: np.asarray(v) for k, v in meta.items()}
     np.savez_compressed(tmp / "raw_pose.npz", allow_pickle=False, **arrays)
+    (tmp / "facing.json").write_text(json.dumps(facing, indent=2) + "\n")
     (tmp / OVERLAY).parent.mkdir(parents=True, exist_ok=True)
     overlay.render(str(ctx.clip), str(tmp / OVERLAY), poses=[arrays], boxes=True, step=4, zoom=True)
 
 
-STAGE = Stage("S2", (CLIP, "clip.json", "frame_times.npy", "person.npz"), ("raw_pose.npz", OVERLAY), run)
+STAGE = Stage("S2", (CLIP, "clip.json", "frame_times.npy", "person.npz"), ("raw_pose.npz", "facing.json", OVERLAY), run)

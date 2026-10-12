@@ -51,7 +51,7 @@ def check_pose(out: Path) -> str:
     assert not (out / "raw_pose_partial.npz").exists(), "raw_pose_partial.npz left behind"
     posed = int((~np.isnan(p["keypoints"]).all((1, 2))).sum())
     assert posed == len(t), f"posed {posed} of {len(t)} frames (whole clip)"
-    face = str(p["facing"])
+    face = json.loads((out / "facing.json").read_text())["facing"]
     m = re.search(r"_(left|right)_", str(p["clip"]))
     assert m is None or m.group(1) == face, f"facing {face}, the filename says {m.group(1) if m else ''}"
     ankle = float(np.median(p["scores"][:, 15:17].max(1)))

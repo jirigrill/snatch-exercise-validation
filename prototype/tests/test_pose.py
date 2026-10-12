@@ -157,7 +157,7 @@ def test_s2_stops_with_exit_8_on_ambiguous_facing_or_a_disagreeing_near_side():
         check_facing(*_feet([30] * 5 + [-30] * 5))
     assert stop.value.code == 8
     kps, scores = _feet([30] * 10)
-    assert check_facing(kps, scores) == "right"
+    assert check_facing(kps, scores)["facing"] == "right"
     scores[:, [11, 13, 15, 20, 22, 24]] = 0.95  # left leg scores higher, toes point right
     with pytest.raises(StageStop, match="mirrored") as stop:
         check_facing(kps, scores)
