@@ -11,7 +11,7 @@
 A lifter films a side-on snatch (`vids/<date>_<n>_<who>_<variant>_<load>_<N>rep_<outcome>_<angle>.MOV`); the analyst runs the scripts on it and reads phase_sheet.jpg.
 
 ## Driving it with the shell harness
-`.claude/skills/verify/scripts/run_clip.sh` (default clip, ~50 s). For a different clip pass its path; for a bar-only clip the plate steps are skipped automatically.
+Old scripts, driven by hand (`run_clip.sh` drives pipeline v2 only; these move into v2 stages): `extract_person.py` → `extract_pose.py` → `track_plate.py` → `analyze.py` → `compare_phases.py`, each `<clip> <evidence dir>` from `prototype/`.
 Proof: `OK evidence:` line; phases.json has `N` reps matching the clip name, events ordered setup < transition < catch < lockout; phase_sheet.jpg skeleton on the lifter in all 4 columns; `compare_phases.py` table shows v1/v2 transition, catch, lockout within a few frames.
 
 ## Gotchas

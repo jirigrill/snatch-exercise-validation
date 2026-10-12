@@ -7,10 +7,10 @@ Pipeline v2 spec: `docs/pipeline-v2.html`. Work queue: `.scratch/plan/README.md`
 - Stop and ask on spec ambiguity instead of guessing.
 - Finish: commit, push, open a PR (not draft) with the check results and the evidence path, then stop. Never merge.
 
-## Checks before commit
+## Checks after each commit to the branch/PR
 1. `uv run pytest -q` passes; `uv run pyright` error count ≤ 56.
-2. `/verify` skill: `run_clip.sh` on T1. Look at the output images.
-3. Milestone items only: T1–T7 vs main, every diff explained. T7 = XFAIL exit 4; T5 exit 6.
+2. Run the `/verify` skill: `run_clip.sh` on T1 (pipeline v2). Look at the overlays. Put the result and the evidence path in the PR.
+3. Milestone items only: T1–T7 vs main, every diff explained. T7 = 0 reps (standup); T5 exit 6 (once S3 exists; add it to run_clip.sh as an expected stop).
 
 ## Tests
 - Clip runs are the main test. Do not write a unit test per stage.

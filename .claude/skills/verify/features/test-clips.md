@@ -12,7 +12,7 @@ T1–T5 sources: `vids/spike/20261007_*_jiri_v3_*.MOV` (side view, 240 fps, 1920
 | T4 | `20261007_7_…powersnatch_5kg_3rep_success_0deg_left` | other facing side | 2.86 / 8.02 | 687 | 1458 | 1 attempt, power, completed, side ≠ T1 |
 | T5 | `20261007_2_…powersnatch_bar_1rep_success_0deg_right` | calibrate (C1–C3), analyze exit 6 | uncut (remux) | 0 | 3157 | skeleton.json; analyze → exit 6 |
 | T6 | `20261001_3_…powersnatch_5kg_1rep_success_0deg_60fps` | 60 fps snatch, S−1 rate check | 2.58 / 6.68 | 155 | 248 | 1 attempt, completed |
-| T7 | `20261001_2_…standup_5kg_1rep_success_0deg_60fps` | 60 fps expected failure | 1.50 / 6.50 | 90 | 302 | 0 reps (run_clip.sh FAIL: no phase_sheet.jpg) |
+| T7 | `20261001_2_…standup_5kg_1rep_success_0deg_60fps` | 60 fps expected failure | 1.50 / 6.50 | 90 | 302 | 0 reps |
 
 Names: `T<n>_<source stem with 3rep→1rep>_240fps.MOV`; T6/T7: `T<n>_<source stem>_60fps.MOV`. The `_240fps` token stays: the remux rewrites the rate tags and S−1 checks against the token.
 
@@ -26,7 +26,7 @@ ffmpeg -ss <start> -to <end> -i spike/<src>.MOV -c copy -tag:v hvc1 -map 0 test/
 Apple players only play HEVC tagged `hvc1`; the 60 fps ladder sources carry `hev1`, so the cut clips need the re-tag.
 Check: `codec_tag_string` is `hvc1` for all 7 clips; `ffprobe -select_streams v:0 -show_entries packet=pts_time` gives uneven deltas (min 0.00375 s, max up to 0.0167 s), same 1920x1080 and rotation −90 as the source.
 
-## Measured (current scripts, `run_clip.sh`, M4, pose lock held)
+## Measured (old scripts before `run_clip.sh` moved to pipeline v2, M4, pose lock held)
 | Id | Runtime | v1 reps | v2 reps | v1 event shift vs source − offset (frames) |
 |---|---|---|---|---|
 | T1 | 152 s | 1 | 0 | setup +7, transition −1, catch −3, lockout +16 |

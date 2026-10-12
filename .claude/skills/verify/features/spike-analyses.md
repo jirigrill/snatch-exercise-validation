@@ -11,7 +11,7 @@ All scripts live in `prototype/scripts/studies/`.
 Analyst compares views/clips from the 2026-10-07 spike (`vids/spike/`, results in `docs/results/33-36`).
 
 ## Driving it with the shell harness
-These read a finished pipeline dir `out/<clip>/` (raw_pose.npz, plate.npz). They are not part of `run_clip.sh`. Run `run_clip.sh` on a `vids/spike/` clip first (240 fps: slow), or point them at the committed `prototype/out/<clip>` dirs; they **write into `out/<clip>`**, so copy the dir to a scratch location and run from a copy of `prototype/` when you must not touch committed results, or verify with `git status`/`git diff prototype/out` that outputs are unchanged.
+These read a finished pipeline dir `out/<clip>/` (raw_pose.npz, plate.npz). They are not part of `run_clip.sh`. Run the old scripts (pose-and-phases.md) on a `vids/spike/` clip first (240 fps: slow), or point them at the committed `prototype/out/<clip>` dirs; they **write into `out/<clip>`**, so copy the dir to a scratch location and run from a copy of `prototype/` when you must not touch committed results, or verify with `git status`/`git diff prototype/out` that outputs are unchanged.
 Proof: output file exists, numbers match `docs/results/3x-*.md` for the same clips (e.g. D2 summary vs `34-d2-arm-bend.md`).
 
 ## Gotchas
