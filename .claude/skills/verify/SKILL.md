@@ -43,16 +43,22 @@ Adding a stage: the stage goes into `snatch.stages.STAGES`; `run_clip.sh` drives
 Manual run: `uv run python scripts/pipeline.py <clip> --athlete <id> [--height <m>] --out <evidence>/<clip> --athletes <evidence>/athletes [--only S | --from S] [--force]`. Always pass `--out` and `--athletes` under the evidence root.
 
 ### Levels
-- **Per commit to a branch/PR:** `pytest -q` + `pyright` (count ≤ baseline) + `run_clip.sh` on T1, and look at the overlays.
-- **Milestone items only** (`.scratch/plan/README.md`): `run_clip.sh` on T1–T7 (T5 bar-only, T6/T7 60 fps) vs main, every diff explained.
+- **Per commit to a branch/PR:** `pytest -q` + `pyright` (count ≤ baseline) + `run_clip.sh` on T1, look at the frame sheets, then `publish_evidence.sh` to the PR.
+- **Milestone items only** (`.scratch/plan/README.md`): `run_clip.sh` on T1–T7 (T5 bar-only, T6/T7 60 fps) into one evidence root vs main, every diff explained; publish that root.
 
 Test clips T1–T7 (`vids/test/`): what each covers and how to rebuild them in [features/test-clips.md](features/test-clips.md). Doctor fails when they are missing. 240 fps clips in `vids/` and `vids/spike/` take minutes to an hour (detector ~0.4 s per detected frame on CPU). Per-feature recipes: `features/README.md`.
 
 ## Evidence
-Per proof keep, under `.scratch/verify/<ts>/` (gitignored, survives cleanup):
+Per proof keep, under `.scratch/verify/<ts>/` (gitignored, survives local cleanup) and published to the PR:
 - the run log (`<clip>.log`, the two check lines) and the `OK evidence:` line;
-- **look at** the overlays in `<clip>/overlays/`: `0_clip_sheet.jpg` (the clip's frames), `1_person.mp4` (box on the lifter in every phase; thin = interpolated, red = across a missed detection). Open them, an existing file is not proof;
+- **look at** the images in `<clip>/overlays/` with Read (an mp4 can't be viewed; `run_clip.sh` writes `<name>_sheet.jpg`, 8 evenly spaced frames, for every overlay mp4): `0_clip_sheet.jpg` (the clip's frames), `1_person_sheet.jpg` (box on the lifter in every phase; thin = interpolated, red = across a missed detection). An existing file is not proof;
 - for a code change that changes a stage's outputs: same clip before/after (`git stash` or a worktree), diff the outputs; any diff must be explained.
+
+Publish to the PR (after the commit is pushed, so the log's `commit` line names it):
+```
+.claude/skills/verify/scripts/publish_evidence.sh <evidence_root>
+```
+Commits the root to the branch `evidence/pr-<n>` (own history, never merged) and comments on the PR: the commit under test, the check lines, every jpg inline, links to the mp4, npz, json and log, all pinned to the evidence commit. The checkout and its index are not touched. `.github/workflows/delete-evidence.yml` deletes `evidence/pr-<n>` when the PR closes, so nothing is kept after the merge (the comment text stays; images and links break). Never merge or open a PR from `evidence/*`.
 
 Standards: drive the real pipeline on real clips, not a function in a REPL; no stray writes into `prototype/out/`.
 
