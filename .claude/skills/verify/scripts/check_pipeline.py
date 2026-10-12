@@ -1,6 +1,6 @@
 """Check one pipeline.py run in out/<clip> against snatch.stages.STAGES (run_clip.sh).
 
-usage: uv run python check_pipeline.py <out dir> first|rerun|only <last stage>
+usage: uv run python check_pipeline.py <out dir> first|rerun
 
 Every run: status ok, the stages in pipeline order, each in the state the run
 expects, and every output of a stage that ran or was kept non-empty. Then each
@@ -18,12 +18,8 @@ from snatch.stage import Stage
 from snatch.stages import STAGES
 
 
-def expected(stage: Stage, run: str, last: str) -> str:
-    if stage.always or run == "first":
-        return "done"
-    if run == "rerun":
-        return "skipped"
-    return "done" if stage.name == last else "up_to_date"
+def expected(stage: Stage, run: str) -> str:
+    return "done" if stage.always or run == "first" else "skipped"
 
 
 def check_probe(out: Path) -> str:
@@ -49,10 +45,10 @@ def check_person(out: Path) -> str:
 CHECKS = {"S-1": check_probe, "S1": check_person}
 
 
-def main(out: Path, run: str, last: str) -> int:
+def main(out: Path, run: str) -> int:
     status = json.loads((out / "pipeline_status.json").read_text())
     got = {name: s["state"] for name, s in status["stages"].items()}
-    want = {s.name: expected(s, run, last) for s in STAGES}
+    want = {s.name: expected(s, run) for s in STAGES}
     errors = []
     if status["status"] != "ok":
         errors.append(f"status {status['status']}: {status.get('reason')}")
@@ -76,4 +72,4 @@ def main(out: Path, run: str, last: str) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(Path(sys.argv[1]), sys.argv[2], sys.argv[3]))
+    sys.exit(main(Path(sys.argv[1]), sys.argv[2]))

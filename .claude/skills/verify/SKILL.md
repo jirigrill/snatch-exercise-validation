@@ -21,19 +21,20 @@ Checks uv, `.venv`, imports, both ONNX models, ffprobe, test clips T1–T7 in `v
 ## Drive
 Fast gate (3 s, no video): `cd prototype && uv run pytest -q` and `uv run pyright` (baseline on main: 56 errors, so compare counts before/after, don't expect 0).
 
-End-to-end: pipeline v2 (`scripts/pipeline.py`, spec `docs/pipeline-v2.html`) on one clip (~50 s on T1):
+End-to-end: pipeline v2 (`scripts/pipeline.py`, spec `docs/pipeline-v2.html`) on one clip (~30 s on T1, ~0 s on a cache hit):
 ```
 .claude/skills/verify/scripts/run_clip.sh [clip.MOV] [evidence_root]
 ```
-Default clip `vids/test/T1_*.MOV`, default root `.scratch/verify/<UTC ts>/`. Writes `<root>/<clip>/` (pipeline outputs), `<root>/<clip>.log` and a placeholder athlete `verify` (`{}` skeleton.json until C3 calibrate exists, height 1.73 m) in `<root>/athletes/`. On a fresh `<root>/<clip>/` it runs `pipeline.py` three times and checks each run with `scripts/check_pipeline.py`:
+Default clip `vids/test/T1_*.MOV`, default root `.scratch/verify/<UTC ts>/`. Writes `<root>/<clip>/` (pipeline outputs), `<root>/<clip>.log` and a placeholder athlete `verify` (`{}` skeleton.json until C3 calibrate exists, height 1.73 m) in `<root>/athletes/`. On a fresh `<root>/<clip>/` it runs `pipeline.py` twice and checks each run with `scripts/check_pipeline.py`:
 
 | Run | Command | Expected states |
 |---|---|---|
 | first | all stages | every stage `done` |
 | rerun | the same again | hashed stages `skipped`, S0 `done` |
-| only | `--only <last stage>` | the last stage `done`, S0 `done`, the others `up_to_date` |
 
-Each check: exit 0, `pipeline_status.json` status `ok`, stages in the order of `snatch.stages.STAGES`, every stage output non-empty, and after the first run each stage's content check (`CHECKS` in `check_pipeline.py`: S-1 frame times vs clip.json; S1 box on every frame, `t` = frame_times.npy, lifter found on ≥ 90 % of detector runs). Last, `git status --porcelain prototype/out` must be empty. Prints `OK evidence: <dir>`, exit 0; anything else is `FAIL`, exit 1. No cache: every call reruns.
+Each check: exit 0, `pipeline_status.json` status `ok`, stages in the order of `snatch.stages.STAGES`, every stage output non-empty, and after the first run each stage's content check (`CHECKS` in `check_pipeline.py`: S-1 frame times vs clip.json; S1 box on every frame, `t` = frame_times.npy, lifter found on ≥ 90 % of detector runs). Last, `git status --porcelain prototype/out` must be empty. Prints `OK evidence: <dir>`, exit 0; anything else is `FAIL`, exit 1. `--only` / `--from` (`up_to_date` / `stale` states) are covered by `tests/test_stage.py`, not here.
+
+Cache: a passing result (outputs + log) is stored in `.scratch/verify/cache/<clip>/<key>/`. The key covers the clip (size + mtime), all of `src/snatch/**/*.py`, `scripts/pipeline.py`, `uv.lock`, `run_clip.sh` and `check_pipeline.py`. On a hit the script prints `cache <key>`, copies the stored outputs into the evidence dir and replays the check lines (~1 s). Only a passing run is stored. `VERIFY_NO_CACHE=1` forces a rerun; use it for timing claims.
 
 Stages today: S-1 probe, S0 athlete check, S1 person. Pipeline exits: 2 = no skeleton, 7 = no height, 3 = bad clip, 9 = missing input.
 
@@ -45,11 +46,11 @@ Manual run: `uv run python scripts/pipeline.py <clip> --athlete <id> [--height <
 - **Per commit to a branch/PR:** `pytest -q` + `pyright` (count ≤ baseline) + `run_clip.sh` on T1, and look at the overlays.
 - **Per PR:** `run_clip.sh` on T1–T7 (T5 bar-only, T6/T7 60 fps). Before/after vs the parent branch when a stage's outputs change.
 
-Test clips T1–T7 (`vids/test/`): what each covers and how to rebuild them in [features/test-clips.md](features/test-clips.md). Doctor warns when they are missing. 240 fps clips in `vids/` and `vids/spike/` take minutes to an hour (detector ~0.4 s per detected frame on CPU). Per-feature recipes: `features/README.md`.
+Test clips T1–T7 (`vids/test/`): what each covers and how to rebuild them in [features/test-clips.md](features/test-clips.md). Doctor fails when they are missing. 240 fps clips in `vids/` and `vids/spike/` take minutes to an hour (detector ~0.4 s per detected frame on CPU). Per-feature recipes: `features/README.md`.
 
 ## Evidence
 Per proof keep, under `.scratch/verify/<ts>/` (gitignored, survives cleanup):
-- the run log (`<clip>.log`, the three check lines) and the `OK evidence:` line;
+- the run log (`<clip>.log`, the two check lines) and the `OK evidence:` line;
 - **look at** the overlays in `<clip>/overlays/`: `0_clip_sheet.jpg` (the clip's frames), `1_person.mp4` (box on the lifter in every phase; thin = interpolated, red = across a missed detection). Open them, an existing file is not proof;
 - for a code change that changes a stage's outputs: same clip before/after (`git stash` or a worktree), diff the outputs; any diff must be explained.
 
