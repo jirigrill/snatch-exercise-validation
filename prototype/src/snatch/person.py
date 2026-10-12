@@ -93,6 +93,18 @@ def interpolate_boxes(boxes: np.ndarray) -> np.ndarray:
     return np.stack([np.interp(t, seen, boxes[seen, c]) for c in range(4)], 1).astype(boxes.dtype)
 
 
+def gaps(detected: np.ndarray, every: int) -> np.ndarray:
+    """True where the box is interpolated across a missed detection.
+
+    The detector runs on every `every`-th frame; a frame is a gap when the
+    run nearest to it found no lifter.
+    """
+    n = len(detected)
+    last_run = (n - 1) // every * every
+    nearest = np.minimum((np.arange(n) + every // 2) // every * every, last_run)
+    return ~detected[nearest]
+
+
 def detect(images: Iterable[np.ndarray], n_frames: int, every: int, det,
            progress: Callable[[int], None] | None = None) -> dict[str, np.ndarray]:
     """Person boxes for every frame: detect every `every`-th frame, interpolate the rest.

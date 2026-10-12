@@ -4,7 +4,8 @@ One renderer for every step of the pipeline. scripts/overlay_video.py is its
 command line; extract_person.py, extract_pose.py and track_plate.py call that
 script when given --overlay (`call_script`). Each layer is optional:
 
-- person: lifter box per frame; thick = the detector ran there, thin = interpolated
+- person: lifter box per frame; thick = the detector ran there, thin = interpolated,
+          red = interpolated across a missed detection
 - poses:  one or two raw_pose runs; green = first, magenta = second (with two,
           only frames posed in both are shown, and each is labelled with the
           largest joint distance between the runs, red border above `flag_px`)
@@ -21,6 +22,7 @@ import cv2
 import numpy as np
 
 from snatch.angles import COCO, HALPE26
+from snatch.person import gaps
 from snatch.video import frames, probe
 
 EDGES = [("shoulder", "elbow"), ("elbow", "wrist"), ("shoulder", "hip"), ("hip", "knee"),
@@ -30,6 +32,7 @@ FOOT_EDGES = [("ankle", "heel"), ("heel", "big_toe"), ("big_toe", "small_toe"),
 POSE_COLORS = ((0, 255, 0), (255, 0, 255))  # BGR: green, magenta
 PERSON_COLOR = (255, 200, 0)  # BGR: light blue
 PLATE_COLOR = (0, 140, 255)  # BGR: orange
+GAP_COLOR = (0, 0, 255)  # BGR: red
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "overlay_video.py"
 
 Arrays = Mapping[str, np.ndarray]
@@ -119,6 +122,8 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
                       else (0, 0, info.width, info.height))
     size = (max(1, int((x1 - x0) * scale)), max(1, int((y1 - y0) * scale)))
     writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, size)
+    gap_mask = (gaps(person["detected"], int(person["det_every"]))
+                if person is not None and "det_every" in person else None)
     want, flagged, written = set(show.tolist()), 0, 0
     for i, img in enumerate(frames(clip, info)):
         if i > show[-1]:
@@ -129,8 +134,9 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
         labels = [f"f{i}"]
         if person is not None:
             seen = bool(person["detected"][i]) if "detected" in person else True
-            _box(img, person["bbox"][i], PERSON_COLOR, 6 if seen else 2)
-            labels.append("person: detected" if seen else "person: interpolated")
+            gap = gap_mask is not None and bool(gap_mask[i])
+            _box(img, person["bbox"][i], GAP_COLOR if gap else PERSON_COLOR, 6 if seen else 2)
+            labels.append("person: detected" if seen else "person: missed" if gap else "person: interpolated")
         if plate is not None and bool(plate["found"][i]):
             c = (int(plate["hub_x"][i]), int(plate["hub_y"][i]))
             cv2.ellipse(img, c, (int(plate["a"][i]), int(plate["b"][i])),
