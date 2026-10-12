@@ -19,13 +19,17 @@ Ready = doctor passes. Teardown = none (each step exits).
 Checks uv, `.venv`, imports, both ONNX models, ffprobe, clips in `vids/ladder/`, CoreML provider. Any `FAIL` -> fix before driving. `vids/` is gitignored and not in a fresh clone: no clips = nothing to drive except `pytest`.
 
 ## Drive
-Fast gate (3 s, no video): `cd prototype && uv run pytest -q` (123 tests) and `uv run pyright` (baseline on main: 56 errors, so compare counts before/after, don't expect 0).
+Fast gate (3 s, no video): `cd prototype && uv run pytest -q` and `uv run pyright` (baseline on main: 56 errors, so compare counts before/after, don't expect 0).
 
 End-to-end on one clip (~50 s for the default 60 fps clip, 625 frames):
 ```
 .claude/skills/verify/scripts/run_clip.sh [clip.MOV] [evidence_root]
 ```
-Runs person -> pose -> plate -> analyze -> compare into `.scratch/verify/<UTC ts>/<clip>/` (never `prototype/out/`, which holds committed results), asserts outputs exist and at least one rep was found, prints `OK evidence: <dir>`.
+Runs person -> pose -> plate -> analyze -> compare into `.scratch/verify/<UTC ts>/<clip>/` (never `prototype/out/`, which holds committed results), asserts outputs exist and at least one rep was found, prints `OK evidence: <dir>`. Steps pose, plate and analyze (analyze + compare) are each cached in `.scratch/verify/cache/<clip>/<step>-<key>/`. A key covers the clip (size+mtime), all of `src/snatch/**/*.py` plus `uv.lock`, the step's scripts, plate options, and the keys of the steps it reads from, so a change upstream reruns everything below it. An entry is stored only if all of the step's outputs exist; a hit is used only if the entry is complete. On a cache hit the log says `<step>: cache <key>`. A rerun with nothing changed takes about 0 s against about 70 s cold. `VERIFY_NO_CACHE=1` forces a rerun.
+
+Expected failures: `EXPECTED_FAIL` in `run_clip.sh` lists clip prefixes whose phase check is known to fail. Today that is `20261001_2_` and its cut `T7_` (standup, no snatch, so there are no phases to find). Such a clip still runs every step. Only its phase check (no reps in `phases.json`) prints `XFAIL (expected): …` and exits **4**. A crash or a missing output stays `FAIL`, exit 1. In a batch, count exit 4 as expected and exit 1 as a real failure. If a listed clip passes, the script prints `XPASS`; take it off the list. `--det-every 96` was measured against 24 on T1 at 240 fps: boxes differ p95 50 px (max 26% of box height) during the lift, so the default stays 24.
+
+Pipeline v2 runner (S-1 probe, S0 athlete check so far): `uv run python scripts/pipeline.py <clip> --athlete <id> [--height <m>] --out <evidence>/<clip> --athletes <evidence>/athletes`. Exit 2 = no skeleton, 7 = no height, 3 = bad clip, 9 = missing input. Always pass `--out` and `--athletes` under the evidence root, and look at `overlays/0_clip_sheet.jpg`.
 
 Step order and what each reads/writes (all `uv run python scripts/…` from `prototype/`):
 
