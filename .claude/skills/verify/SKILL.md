@@ -44,7 +44,7 @@ Manual run: `uv run python scripts/pipeline.py <clip> --athlete <id> [--height <
 
 ### Levels
 - **Per commit to a branch/PR:** `pytest -q` + `pyright` (count ≤ baseline) + `run_clip.sh` on T1, and look at the overlays.
-- **Per PR:** `run_clip.sh` on T1–T7 (T5 bar-only, T6/T7 60 fps). Before/after vs the parent branch when a stage's outputs change.
+- **Milestone items only** (`.scratch/plan/README.md`): `run_clip.sh` on T1–T7 (T5 bar-only, T6/T7 60 fps) vs main, every diff explained.
 
 Test clips T1–T7 (`vids/test/`): what each covers and how to rebuild them in [features/test-clips.md](features/test-clips.md). Doctor fails when they are missing. 240 fps clips in `vids/` and `vids/spike/` take minutes to an hour (detector ~0.4 s per detected frame on CPU). Per-feature recipes: `features/README.md`.
 
