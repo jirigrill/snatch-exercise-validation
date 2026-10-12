@@ -16,7 +16,7 @@ out=$ev/$c
 mkdir -p "$out"
 cd "$root/prototype"
 # Clips whose phase check is known to fail (prefix match). Keep in sync with SKILL.md.
-EXPECTED_FAIL=(20261001_2_)  # standup, no snatch: phase finder has nothing to find
+EXPECTED_FAIL=(20261001_2_ T7_)  # standup, no snatch (ladder clip and its cut T7): phase finder has nothing to find
 xfail=
 for p in "${EXPECTED_FAIL[@]}"; do [[ $c == "$p"* ]] && xfail=1; done
 fail() { echo "FAIL: $1"; exit 1; }
