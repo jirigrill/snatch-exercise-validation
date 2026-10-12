@@ -65,3 +65,11 @@ def test_detect_returns_interpolated_boxes_and_marks_the_detected_frames():
     assert out["detected"].tolist() == [True, False, False, False, True, False, False, False, True]
     assert out["bbox"][2].tolist() == pytest.approx((lifter + 2).tolist())  # on the line
     assert out["n_people"].tolist() == [1, 0, 0, 0, 1, 0, 0, 0, 1]
+
+
+def test_gaps_mark_frames_interpolated_across_a_missed_detection():
+    detected = np.zeros(100, bool)
+    detected[[0, 24, 72, 96]] = True  # the run at 48 missed; 97-99 follow the last run
+    gap = person.gaps(detected, every=24)
+    assert np.flatnonzero(gap).tolist() == list(range(36, 60))
+    assert person.gaps(np.zeros(5, bool), every=24).all()

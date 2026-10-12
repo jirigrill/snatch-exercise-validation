@@ -3,8 +3,10 @@
 A stage hashes the bytes of its input files, its params and its version into
 `<stage>.meta.json`. It writes its outputs into a temp directory, and only a
 stage that returns has them renamed into place, so a crash never leaves a
-file that looks done. `pipeline_status.json` holds each stage's state. An
-`always` stage (a check, no outputs) runs every time and keeps no meta.
+file that looks done. `pipeline_status.json` holds each stage's state in
+pipeline order: done, skipped (hash unchanged) or failed; a stage that --only
+or --from did not pick is up_to_date or stale. An `always` stage (a check, no
+outputs) runs every time and keeps no meta.
 `SKELETON` names the athlete's skeleton.json as an input, so a stage that lists
 it reruns when the calibration changes.
 """
@@ -186,7 +188,8 @@ def run_stages(
         if stage not in chosen and not stage.always:
             fresh = all(ctx.path(i).exists() for i in stage.inputs) and _is_fresh(
                 stage, ctx, stage_hash(stage, ctx))
-            status["stages"][stage.name] = {"state": "skipped" if fresh else "stale"}
+            status["stages"][stage.name] = {"state": "up_to_date" if fresh else "stale"}
+    status["stages"] = {s.name: status["stages"][s.name] for s in stages if s.name in status["stages"]}
     status["status"] = "ok"
     _write_status(ctx.out, status)
     return 0

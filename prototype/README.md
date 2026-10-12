@@ -4,7 +4,7 @@ The measurement pipeline for the validation (see `../docs/STATUS.md` for what it
 
 ## Pipeline (one clip)
 
-`scripts/run_all.sh` runs steps 0–4 for every clip in `../vids/` and fills only what is missing. `../.claude/skills/verify/scripts/run_clip.sh` runs them for one clip into a scratch folder. Each step writes to `out/<clip>/`.
+`scripts/run_all.sh` runs steps 0–4 for every clip in `../vids/` and fills only what is missing. Each step writes to `out/<clip>/`.
 
 | Step | Script | Reads | Writes |
 |---|---|---|---|
