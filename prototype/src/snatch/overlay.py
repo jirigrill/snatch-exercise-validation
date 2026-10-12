@@ -1,17 +1,19 @@
 """Draw pipeline results on the video: person boxes, pose skeletons, plate outline.
 
-One renderer for every step of the pipeline. scripts/overlay_video.py is its
+One renderer for every step of the pipeline, so a layer looks the same in
+every stage's overlay (the colors below). scripts/overlay_video.py is its
 command line; extract_person.py, extract_pose.py and track_plate.py call that
 script when given --overlay (`call_script`). Each layer is optional:
 
-- person: lifter box per frame; thick = the detector ran there, thin = interpolated,
-          red = interpolated across a missed detection
-- poses:  one or two raw_pose runs; green = first, magenta = second, grey = a
-          joint scored under FADE_SCORE (with two,
-          only frames posed in both are shown, and each is labelled with the
-          largest joint distance between the runs, red border above `flag_px`)
-- plate:  plate outline (ellipse) and hub
-- boxes:  also draw each pose run's person box and the crop given to the pose model
+- person: lifter box per frame (light blue); thick = the detector ran there,
+          thin = interpolated, red = interpolated across a missed detection
+- poses:  one or two raw_pose runs. One run: left side red, right side green,
+          centre (head, neck, mid hip) white. Two runs: green = first, magenta =
+          second, the left side darker; only frames posed in both are shown, each
+          labelled with the largest joint distance between the runs, red border
+          above `flag_px`. Grey = a joint scored under FADE_SCORE.
+- plate:  plate outline (ellipse, orange) and hub
+- boxes:  also draw the crop given to the pose model (yellow)
 """
 
 import subprocess
@@ -30,8 +32,11 @@ EDGES = [("shoulder", "elbow"), ("elbow", "wrist"), ("shoulder", "hip"), ("hip",
          ("knee", "ankle")]
 FOOT_EDGES = [("ankle", "heel"), ("heel", "big_toe"), ("big_toe", "small_toe"),
               ("ankle", "big_toe")]
-POSE_COLORS = ((0, 255, 0), (255, 0, 255))  # BGR: green, magenta
+# BGR
+LEFT_COLOR, RIGHT_COLOR, CENTRE_COLOR = (0, 0, 255), (0, 220, 0), (255, 255, 255)  # one run
+POSE_COLORS = ((0, 255, 0), (255, 0, 255))  # two runs: green, magenta; left side darker
 PERSON_COLOR = (255, 200, 0)  # BGR: light blue
+CROP_COLOR = (0, 255, 255)  # BGR: yellow
 PLATE_COLOR = (0, 140, 255)  # BGR: orange
 GAP_COLOR = (0, 0, 255)  # BGR: red
 FADED_COLOR = (150, 150, 150)  # BGR: grey, a joint under FADE_SCORE
@@ -80,11 +85,12 @@ def _box(img: np.ndarray, b: np.ndarray, color: tuple[int, int, int], thick: int
         cv2.rectangle(img, (int(b[0]), int(b[1])), (int(b[2]), int(b[3])), color, thick)
 
 
-def _skeleton(img: np.ndarray, k: np.ndarray, color: tuple[int, int, int],
+def _skeleton(img: np.ndarray, k: np.ndarray, colors: tuple[tuple[int, int, int], ...],
               scores: np.ndarray | None = None) -> None:
-    """Joints and bones; with scores, those under FADE_SCORE are drawn thin and grey."""
+    """Joints and bones in colors (left, right, centre); under FADE_SCORE thin and grey."""
     names, edges = (HALPE26, EDGES + FOOT_EDGES) if len(k) >= len(HALPE26) else (COCO, EDGES)
     low = scores < FADE_SCORE if scores is not None else np.zeros(len(k), bool)
+    side_color = {"l": colors[0], "r": colors[1]}
     for side in ("l", "r"):
         for a, b in edges:
             ia, ib = names[f"{side}_{a}"], names[f"{side}_{b}"]
@@ -92,10 +98,18 @@ def _skeleton(img: np.ndarray, k: np.ndarray, color: tuple[int, int, int],
             if not (np.isnan(pa).any() or np.isnan(pb).any()):
                 faded = low[ia] or low[ib]
                 cv2.line(img, tuple(map(int, pa)), tuple(map(int, pb)),
-                         FADED_COLOR if faded else color, 2 if faded else 4)
-    for p, faded in zip(k, low):
+                         FADED_COLOR if faded else side_color[side], 2 if faded else 4)
+    point_color = {i: side_color[name[0]] if name[1] == "_" else colors[2] for name, i in names.items()}
+    for i, (p, faded) in enumerate(zip(k, low)):
         if not np.isnan(p).any():
-            cv2.circle(img, tuple(map(int, p)), 4 if faded else 6, FADED_COLOR if faded else color, -1)
+            cv2.circle(img, tuple(map(int, p)), 4 if faded else 6, FADED_COLOR if faded else point_color[i], -1)
+
+
+def pose_colors(n_runs: int) -> list[tuple[tuple[int, int, int], ...]]:
+    """(left, right, centre) per run: red/green/white for one run, the run color (left darker) for two."""
+    if n_runs == 1:
+        return [(LEFT_COLOR, RIGHT_COLOR, CENTRE_COLOR)]
+    return [((b // 2, g // 2, r // 2), (b, g, r), (b, g, r)) for b, g, r in POSE_COLORS[:n_runs]]
 
 
 def _points(i: np.ndarray, person: Arrays | None, poses: Sequence[Arrays],
@@ -118,8 +132,12 @@ def _points(i: np.ndarray, person: Arrays | None, poses: Sequence[Arrays],
 def render(clip: str, out_path: str, *, person: Arrays | None = None,
            poses: Sequence[Arrays] = (), plate: Arrays | None = None, boxes: bool = False,
            start: int = 0, end: int | None = None, step: int = 1, fps: float = 30.0,
-           scale: float = 0.5, zoom: bool = False, flag_px: float = 10.0) -> dict[str, int]:
-    """Write the overlay video; returns {"frames": written, "flagged": above flag_px}."""
+           scale: float = 0.5, zoom: bool = False, flag_px: float = 10.0,
+           note: str | None = None) -> dict[str, int]:
+    """Write the overlay video; returns {"frames": written, "flagged": above flag_px}.
+
+    note: an extra label line on every frame (e.g. facing and the color legend).
+    """
     info = probe(clip)
     show = shown_frames(info.n_frames, start, end, step, poses, plate)
     if not len(show):
@@ -140,7 +158,7 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
         if i not in want:
             continue
         img = img.copy()
-        labels = [f"f{i}"]
+        labels = [f"f{i}"] + ([note] if note else [])
         if person is not None:
             seen = bool(person["detected"][i]) if "detected" in person else True
             gap = gap_mask is not None and bool(gap_mask[i])
@@ -151,11 +169,10 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
             cv2.ellipse(img, c, (int(plate["a"][i]), int(plate["b"][i])),
                         float(plate["angle"][i]), 0, 360, PLATE_COLOR, 4)
             cv2.circle(img, c, 8, (0, 0, 255), -1)
-        for p, color in zip(poses, POSE_COLORS):
+        for p, colors in zip(poses, pose_colors(len(poses))):
             if boxes:
-                _box(img, p["bbox"][i], color, 2)
-                _box(img, p["pose_bbox"][i], color, 6)
-            _skeleton(img, p["keypoints"][i], color, p["scores"][i] if "scores" in p else None)
+                _box(img, p["pose_bbox"][i], CROP_COLOR, 2)
+            _skeleton(img, p["keypoints"][i], colors, p["scores"][i] if "scores" in p else None)
         if dist is not None:
             worst = float(np.nanmax(dist[i]))
             labels.append(f"max diff {worst:.1f} px")

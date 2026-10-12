@@ -7,11 +7,12 @@ usage: uv run python scripts/overlay_video.py ../vids/<clip>.MOV out.mp4
 reads  the video and the npz files given; writes out.mp4
 
 Layers: person boxes (thick = detector ran, thin = interpolated), pose skeleton
-(green = first --pose, magenta = second), plate outline + hub. With two --pose
+(one --pose: left red, right green; two: green = first, magenta = second),
+plate outline + hub. With two --pose
 files only frames posed in both are shown, each labelled with the largest joint
 distance between the two runs; a red border marks frames above 10 px (compare
-a fast run against a full run). --boxes also draws each pose run's person box
-and the crop given to the pose model. --zoom crops to everything drawn; --step N
+a fast run against a full run). --boxes also draws the crop given to the pose
+model. --zoom crops to everything drawn; --step N
 shows every Nth frame; --fps is the playback rate (240 fps footage, --step 4,
 --fps 15 is 4x slow motion).
 
