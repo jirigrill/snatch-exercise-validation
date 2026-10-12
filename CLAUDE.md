@@ -13,6 +13,7 @@ Pipeline v2 spec: `docs/pipeline-v2.html`. Work queue: `.scratch/plan/README.md`
 3. Milestone items only: T1–T7 vs main, every diff explained. T7 = 0 reps (standup); T5 exit 6 (once S3 exists; add it to run_clip.sh as an expected stop).
 
 A FAIL (or a sheet that looks wrong) means fix and rerun, or stop and report it in the PR. Never finish with a failing check.
+A Stop hook (`.claude/hooks/require-evidence.sh`) blocks finishing on a PR branch until HEAD is pushed and the PR has ✅ evidence for it (or for an earlier commit with the same `prototype/` and verify scripts).
 
 ## Tests
 - Clip runs are the main test. Do not write a unit test per stage.
