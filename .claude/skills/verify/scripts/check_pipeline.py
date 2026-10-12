@@ -9,6 +9,7 @@ when there is something to check beyond its files existing, a function here.
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -42,7 +43,22 @@ def check_person(out: Path) -> str:
     return f"lifter on {found}/{runs} detector runs"
 
 
-CHECKS = {"S-1": check_probe, "S1": check_person}
+def check_pose(out: Path) -> str:
+    p = np.load(out / "raw_pose.npz")
+    t = np.load(out / "frame_times.npy")
+    assert p["keypoints"].shape == (len(t), 26, 2), f"keypoints {p['keypoints'].shape} for {len(t)} frames"
+    assert np.array_equal(p["t"], t), "raw_pose.npz t is not frame_times.npy"
+    assert not (out / "raw_pose_partial.npz").exists(), "raw_pose_partial.npz left behind"
+    posed = int((~np.isnan(p["keypoints"]).all((1, 2))).sum())
+    assert posed == len(t), f"posed {posed} of {len(t)} frames (whole clip)"
+    face = str(p["facing"])
+    m = re.search(r"_(left|right)_", str(p["clip"]))
+    assert m is None or m.group(1) == face, f"facing {face}, the filename says {m.group(1) if m else ''}"
+    ankle = float(np.median(p["scores"][:, 15:17].max(1)))
+    return f"{posed} frames posed, facing {face}, median best ankle score {ankle:.2f}"
+
+
+CHECKS = {"S-1": check_probe, "S1": check_person, "S2": check_pose}
 
 
 def main(out: Path, run: str) -> int:

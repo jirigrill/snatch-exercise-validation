@@ -130,32 +130,51 @@ def run(images: Iterable[np.ndarray], n_frames: int, boxes: np.ndarray,
     return out
 
 
-def facing(kps: np.ndarray, scores: np.ndarray, side: str = "r",
-           min_score: float = 0.3, majority: float = 2 / 3) -> str | None:
-    """"right" or "left": the sign of heel -> toe x over frames where both are confident.
+SIDE_OF = {"right": "r", "left": "l"}  # camera on the lifter's right sees the right leg
 
-    Needs Halpe-26 feet. None without feet, without a confident frame, or when
-    neither sign holds `majority` of the votes.
+
+def facing_votes(kps: np.ndarray, scores: np.ndarray, min_score: float = 0.3) -> tuple[int, int]:
+    """(right, left): foot-frames whose heel -> toe x points to image +x / -x.
+
+    Both feet vote, each in the frames where its heel and big toe are confident.
+    Needs Halpe-26 feet, (0, 0) without them.
     """
     if kps.shape[1] < N_KEYPOINTS:
+        return 0, 0
+    right = left = 0
+    for side in ("l", "r"):
+        toe, heel = HALPE26[f"{side}_big_toe"], HALPE26[f"{side}_heel"]
+        seen = (scores[:, toe] >= min_score) & (scores[:, heel] >= min_score)
+        dx = kps[seen, toe, 0] - kps[seen, heel, 0]
+        right += int((dx > 0).sum())
+        left += int((dx < 0).sum())
+    return right, left
+
+
+def facing(kps: np.ndarray, scores: np.ndarray, min_score: float = 0.3,
+           majority: float = 2 / 3) -> str | None:
+    """"right" or "left": the way the toes point (facing_votes), or None without a `majority`."""
+    right, left = facing_votes(kps, scores, min_score)
+    if not right + left:
         return None
-    toe, heel = HALPE26[f"{side}_big_toe"], HALPE26[f"{side}_heel"]
-    seen = (scores[:, toe] >= min_score) & (scores[:, heel] >= min_score)
-    dx = kps[seen, toe, 0] - kps[seen, heel, 0]
-    dx = dx[dx != 0]
-    if not len(dx):
-        return None
-    right = float((dx > 0).mean())
-    if right >= majority:
+    if right >= majority * (right + left):
         return "right"
-    if 1 - right >= majority:
+    if left >= majority * (right + left):
         return "left"
     return None
 
 
 def near_side(scores: np.ndarray) -> str:
     """"l" or "r": the leg whose keypoints score higher on average (the one the camera sees)."""
+    legs = leg_scores(scores)
+    return "r" if legs["r"] >= legs["l"] else "l"
+
+
+def leg_scores(scores: np.ndarray) -> dict[str, float]:
+    """Mean keypoint score of each leg (Halpe-26: hip down to the foot)."""
+    return {s: round(float(np.nanmean(scores[:, _leg(s)])), 3) for s in ("l", "r")}
+
+
+def _leg(side: str) -> list[int]:
     parts = ("hip", "knee", "ankle", "big_toe", "small_toe", "heel")
-    idx = {s: [HALPE26[f"{s}_{p}"] for p in parts if HALPE26[f"{s}_{p}"] < scores.shape[1]]
-           for s in ("l", "r")}
-    return "r" if np.nanmean(scores[:, idx["r"]]) >= np.nanmean(scores[:, idx["l"]]) else "l"
+    return [HALPE26[f"{side}_{p}"] for p in parts]

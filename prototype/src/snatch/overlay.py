@@ -6,7 +6,8 @@ script when given --overlay (`call_script`). Each layer is optional:
 
 - person: lifter box per frame; thick = the detector ran there, thin = interpolated,
           red = interpolated across a missed detection
-- poses:  one or two raw_pose runs; green = first, magenta = second (with two,
+- poses:  one or two raw_pose runs; green = first, magenta = second, grey = a
+          joint scored under FADE_SCORE (with two,
           only frames posed in both are shown, and each is labelled with the
           largest joint distance between the runs, red border above `flag_px`)
 - plate:  plate outline (ellipse) and hub
@@ -33,6 +34,8 @@ POSE_COLORS = ((0, 255, 0), (255, 0, 255))  # BGR: green, magenta
 PERSON_COLOR = (255, 200, 0)  # BGR: light blue
 PLATE_COLOR = (0, 140, 255)  # BGR: orange
 GAP_COLOR = (0, 0, 255)  # BGR: red
+FADED_COLOR = (150, 150, 150)  # BGR: grey, a joint under FADE_SCORE
+FADE_SCORE = 0.3
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "overlay_video.py"
 
 Arrays = Mapping[str, np.ndarray]
@@ -77,16 +80,22 @@ def _box(img: np.ndarray, b: np.ndarray, color: tuple[int, int, int], thick: int
         cv2.rectangle(img, (int(b[0]), int(b[1])), (int(b[2]), int(b[3])), color, thick)
 
 
-def _skeleton(img: np.ndarray, k: np.ndarray, color: tuple[int, int, int]) -> None:
+def _skeleton(img: np.ndarray, k: np.ndarray, color: tuple[int, int, int],
+              scores: np.ndarray | None = None) -> None:
+    """Joints and bones; with scores, those under FADE_SCORE are drawn thin and grey."""
     names, edges = (HALPE26, EDGES + FOOT_EDGES) if len(k) >= len(HALPE26) else (COCO, EDGES)
+    low = scores < FADE_SCORE if scores is not None else np.zeros(len(k), bool)
     for side in ("l", "r"):
         for a, b in edges:
-            pa, pb = k[names[f"{side}_{a}"]], k[names[f"{side}_{b}"]]
+            ia, ib = names[f"{side}_{a}"], names[f"{side}_{b}"]
+            pa, pb = k[ia], k[ib]
             if not (np.isnan(pa).any() or np.isnan(pb).any()):
-                cv2.line(img, tuple(map(int, pa)), tuple(map(int, pb)), color, 4)
-    for p in k:
+                faded = low[ia] or low[ib]
+                cv2.line(img, tuple(map(int, pa)), tuple(map(int, pb)),
+                         FADED_COLOR if faded else color, 2 if faded else 4)
+    for p, faded in zip(k, low):
         if not np.isnan(p).any():
-            cv2.circle(img, tuple(map(int, p)), 6, color, -1)
+            cv2.circle(img, tuple(map(int, p)), 4 if faded else 6, FADED_COLOR if faded else color, -1)
 
 
 def _points(i: np.ndarray, person: Arrays | None, poses: Sequence[Arrays],
@@ -146,7 +155,7 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
             if boxes:
                 _box(img, p["bbox"][i], color, 2)
                 _box(img, p["pose_bbox"][i], color, 6)
-            _skeleton(img, p["keypoints"][i], color)
+            _skeleton(img, p["keypoints"][i], color, p["scores"][i] if "scores" in p else None)
         if dist is not None:
             worst = float(np.nanmax(dist[i]))
             labels.append(f"max diff {worst:.1f} px")
