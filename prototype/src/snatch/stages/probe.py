@@ -14,7 +14,7 @@ import cv2
 import numpy as np
 
 from snatch.stage import CLIP, Context, Stage, StageStop
-from snatch.video import rotated_size
+from snatch.video import decoded_pts, rotated_size
 
 BAD_CLIP_EXIT = 3
 MIN_DURATION_S = 2.0
@@ -106,7 +106,7 @@ def _ffprobe(path: Path) -> tuple[dict, dict, np.ndarray]:
         raise StageStop(BAD_CLIP_EXIT, "bad_clip", "unreadable: no video stream")
     pts = [float(p["pts_time"]) for p in data.get("packets", []) if "pts_time" in p]
     tags = data.get("format", {}).get("tags", {})
-    return data["streams"][0], tags, np.sort(np.array(pts)) if pts else np.array([])
+    return data["streams"][0], tags, decoded_pts(np.array(pts))
 
 
 def _rate(s: str) -> float:

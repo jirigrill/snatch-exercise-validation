@@ -26,8 +26,9 @@ phase_fail() {
   fail "$1"
 }
 opts=()
+src_stem=${c#T[0-9]_}  # test clips T<n>_<source stem>: same camera, same plate options
 [[ $c == *30deg* || $c == *45deg* ]] && opts+=(ellipse)
-[[ $c == 20261005_* || ($c == 20261007_* && $c == *_0deg_*) ]] && opts+=(--radius 70:140)
+[[ $src_stem == 20261005_* || ($src_stem == 20261007_* && $c == *_0deg_*) ]] && opts+=(--radius 70:140)
 bar=; [[ $c == *_bar_* ]] && bar=1
 log=$ev/$c.log
 # Every step is cached in .scratch/verify/cache/<clip>/<step>-<key>/ (VERIFY_NO_CACHE=1

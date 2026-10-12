@@ -18,7 +18,7 @@ import cv2
 import numpy as np
 
 PLATE_DIAMETER_M = 0.45  # bumper plate (IWF standard), also the 5 kg used here
-MAX_STEP_PX = 30.0  # plate travel per 240 fps frame, ~3.6 m/s at 820 px/m
+MAX_SPEED_PX_S = 7200.0  # px/s at 1080 px frame width (~8.8 m/s at 820 px/m)
 
 Outline = tuple[float, float, float, float, float]  # cx, cy, a, b, angle (deg)
 
@@ -69,7 +69,7 @@ def typical_radius(cands: Iterable[np.ndarray], dark: float = 70) -> float:
     return float(np.median(best or [c[0, 2] for c in cands]))
 
 
-def track(cands: list[np.ndarray], r0: float, max_step_px: float,
+def track(cands: list[np.ndarray], r0: float, t: np.ndarray, max_speed_px_s: float,
           r_tol: float = 0.15, miss_cost: float = 1.0, reentry_cost: float = 5.0,
           rank_cost: float = 0.05, max_gap: int = 24, dark_ok: float = 60,
           dark_span: float = 40) -> np.ndarray:
@@ -79,7 +79,8 @@ def track(cands: list[np.ndarray], r0: float, max_step_px: float,
     radius off r0, disc brighter than dark_ok grey: +1 per dark_span) or
     `miss_cost` per frame without one; 0.5 * (step / allowed)^2 for moving
     between chosen candidates k frames apart (k <= max_gap), where allowed =
-    k * max_step_px and longer steps are forbidden; and `reentry_cost` each time the path starts again after
+    max_speed_px_s times their time gap in `t` (s) and longer
+    steps are forbidden; and `reentry_cost` each time the path starts again after
     longer gaps (or at the start), where position is unconstrained.
     """
     n = len(cands)
@@ -98,40 +99,39 @@ def track(cands: list[np.ndarray], r0: float, max_step_px: float,
     # back pointers: (frame, candidate) or candidate -1 = the lost state there
     cost: list[np.ndarray] = []
     back: list[tuple[np.ndarray, np.ndarray]] = []
-    lost = np.zeros(n)  # best cost with the plate lost at frame t
-    lost_from = np.full(n, -1)  # candidate at t-1 it was lost after, or -1
-    for t in range(n):
-        k = len(keep[t])
-        best = np.full(k, reentry_cost + (lost[t - 1] if t else 0.0))
-        from_t, from_s = np.full(k, t - 1 if t else -1), np.full(k, -1)
-        for gap in range(1, min(max_gap, t) + 1):
-            p = t - gap
+    lost = np.zeros(n)  # best cost with the plate lost at frame f
+    lost_from = np.full(n, -1)  # candidate at f-1 it was lost after, or -1
+    for f in range(n):
+        k = len(keep[f])
+        best = np.full(k, reentry_cost + (lost[f - 1] if f else 0.0))
+        from_t, from_s = np.full(k, f - 1 if f else -1), np.full(k, -1)
+        for gap in range(1, min(max_gap, f) + 1):
+            p = f - gap
             if not len(keep[p]) or not k:
                 continue
-            allowed = gap * max_step_px
-            step = np.linalg.norm(pos[p][:, None] - pos[t][None], axis=2)
+            allowed = (t[f] - t[p]) * max_speed_px_s
+            step = np.linalg.norm(pos[p][:, None] - pos[f][None], axis=2)
             move = np.where(step <= allowed, 0.5 * (step / allowed) ** 2, np.inf)
             total = cost[p][:, None] + move + miss_cost * (gap - 1)
             i = np.argmin(total, axis=0)
             better = total[i, np.arange(k)] < best
             best[better] = total[i, np.arange(k)][better]
             from_t[better], from_s[better] = p, i[better]
-        cost.append(best + unary[t])
+        cost.append(best + unary[f])
         back.append((from_t, from_s))
-        # lost at t: stay lost, or lose the plate after a candidate at t-1
-        prev = lost[t - 1] if t else 0.0
-        if t and len(cost[t - 1]) and cost[t - 1].min() < prev:
-            prev, lost_from[t] = cost[t - 1].min(), int(np.argmin(cost[t - 1]))
-        lost[t] = prev + miss_cost
+        prev = lost[f - 1] if f else 0.0
+        if f and len(cost[f - 1]) and cost[f - 1].min() < prev:
+            prev, lost_from[f] = cost[f - 1].min(), int(np.argmin(cost[f - 1]))
+        lost[f] = prev + miss_cost
     chosen = np.full(n, -1)
-    t = n - 1
-    s = int(np.argmin(cost[t])) if len(cost[t]) and cost[t].min() < lost[t] else -1
-    while t >= 0:
+    f = n - 1
+    s = int(np.argmin(cost[f])) if len(cost[f]) and cost[f].min() < lost[f] else -1
+    while f >= 0:
         if s >= 0:
-            chosen[t] = keep[t][s]
-            t, s = int(back[t][0][s]), int(back[t][1][s])
+            chosen[f] = keep[f][s]
+            f, s = int(back[f][0][s]), int(back[f][1][s])
         else:
-            t, s = t - 1, int(lost_from[t])
+            f, s = f - 1, int(lost_from[f])
     return chosen
 
 
@@ -384,18 +384,21 @@ def gap_seeds(seeds: np.ndarray, max_gap: int = 24) -> np.ndarray:
     return out
 
 
-def detect(read_frames: Callable[[], Iterable[np.ndarray]], n_frames: int,
+def detect(read_frames: Callable[[], Iterable[np.ndarray]], t: np.ndarray,
            r_min: float = 110, r_max: float = 260,
-           max_step_px: float = MAX_STEP_PX,
+           max_speed_px_s: float = MAX_SPEED_PX_S,
            progress: Callable[[str, int], None] | None = None,
            model: str = "circle") -> dict[str, np.ndarray]:
     """Per-frame plate outline for one clip (three decodes of the frames).
+
+    `t`: frame times (s).
 
     The outline is refit around the tracked Hough circle; in short gaps of
     the track, around the circle interpolated across the gap (found only if
     that refit succeeds). Where a tracked circle's refit fails, the circle
     itself is the outline.
     """
+    n_frames = len(t)
     cands = []
     for i, img in enumerate(read_frames()):
         if i >= n_frames:
@@ -405,7 +408,7 @@ def detect(read_frames: Callable[[], Iterable[np.ndarray]], n_frames: int,
             progress("candidates", i)
     cands += [np.empty((0, 4))] * (n_frames - len(cands))
     r0 = typical_radius(cands)
-    chosen = track(cands, r0, max_step_px)
+    chosen = track(cands, r0, t, max_speed_px_s)
     tracked = np.full((n_frames, 3), np.nan)
     tracked[chosen >= 0] = [cands[i][chosen[i], :3]
                             for i in np.flatnonzero(chosen >= 0)]

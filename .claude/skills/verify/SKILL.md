@@ -8,7 +8,7 @@ description: Drive and prove the snatch-exercise-validation prototype (Python CL
 Surface: **CLI pipeline, no server, no UI.** A user runs `uv run python scripts/<step>.py <clip.MOV> out/<clip>` and reads files (npz, json, csv, jpg, png, mp4). All commands run from `prototype/` (uv project, Python 3.12). Paths below are relative to the repo root unless stated. Only the Mac is supported (pose runs on CoreML).
 
 ## Launch
-Nothing to start. One-time: `cd prototype && uv sync`. Models (`~/.cache/rtmlib/hub/checkpoints`: RTMPose-x 189 MB, YOLOX-x 378 MB) download on first pose run.
+Nothing to start. One-time: `cd prototype && uv sync`. Models (`~/.cache/rtmlib/hub/checkpoints`: RTMPose-x body7 halpe26, YOLOX-x 378 MB) download on first pose run. The halpe26 pose model needs one network download; doctor prints the command when it is missing.
 
 Ready = doctor passes. Teardown = none (each step exits).
 
@@ -41,7 +41,7 @@ Step order and what each reads/writes (all `uv run python scripts/…` from `pro
 | 3 | `analyze.py <clip> <out>` | raw_pose, plate | angles.csv, phases.json, phase_sheet.jpg, overlay.mp4 |
 | 4 | `compare_phases.py <out>` | raw_pose, plate | phases_v2.json, phases_v1_v2.md |
 
-Plate options depend on the clip name (see `prototype/scripts/run_all.sh`): `ellipse` for 30deg/45deg, `--radius 70:140` for 20261005_* and 20261007_*_0deg_*. Bar-only clips (`_bar_`) have no plate: skip 2 and 4. `scripts/run_all.sh` batches all clips into `prototype/out/` and **writes there**; don't use it for verification unless asked.
+Plate options depend on the clip name (see `prototype/scripts/run_all.sh`): `ellipse` for 30deg/45deg, `--radius 70:140` for 20261005_* and 20261007_*_0deg_*. Test clips `T<n>_<source stem>` get the options of their source stem (before this, T1–T4 ran with the default radius, the plate check failed and v2 found 0 reps). Bar-only clips (`_bar_`) have no plate: skip 2 and 4. `scripts/run_all.sh` batches all clips into `prototype/out/` and **writes there**; don't use it for verification unless asked.
 
 ### Levels
 - **Per commit:** `pytest -q` + `pyright` (count ≤ baseline) + `run_clip.sh` on T1.

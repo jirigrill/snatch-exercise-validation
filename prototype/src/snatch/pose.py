@@ -1,17 +1,21 @@
-"""Run RTMPose-x (body7, 384x288) on the lifter's box in every frame, via rtmlib.
+"""Run RTMPose-x (body7 halpe26, 384x288) on the lifter's box in every frame, via rtmlib.
 
 The person boxes come from snatch.person (saved once per clip by
 scripts/extract_person.py). The pose model runs on CoreML. Output keypoints
-are COCO-17, image pixels of the rotated (portrait) frame.
+are Halpe-26 (COCO-17 first, then head, neck, hip, toes and heels), image
+pixels of the rotated (portrait) frame.
 """
 
 from collections.abc import Iterable
 
 import numpy as np
 from rtmlib import RTMPose
-from rtmlib.tools.solution.body import Body
+from rtmlib.tools.solution.body_with_feet import BodyWithFeet
 
-MODEL_NAME = "rtmpose-x_simcc-body7_pt-body7_700e-384x288"
+from snatch.angles import HALPE26
+
+MODEL_NAME = "rtmpose-x_simcc-body7_pt-body7-halpe26_700e-384x288"
+N_KEYPOINTS = len(HALPE26)
 
 
 def track_box(det: np.ndarray | None, prev_kps: np.ndarray | None,
@@ -40,7 +44,7 @@ def track_box(det: np.ndarray | None, prev_kps: np.ndarray | None,
 
 
 def load_model(pose_device: str = "mps") -> RTMPose:
-    cfg = Body.MODE["performance"]
+    cfg = BodyWithFeet.MODE["performance"]
     return RTMPose(cfg["pose"], model_input_size=cfg["pose_input_size"],
                    backend="onnxruntime", device=pose_device)
 
@@ -89,8 +93,8 @@ def run(images: Iterable[np.ndarray], n_frames: int, boxes: np.ndarray,
         raise ValueError(f"{len(boxes)} boxes for {n_frames} frames")
     active = range_mask(n_frames, ranges)
     model = load_model(pose_device)
-    kps = np.full((n_frames, 17, 2), np.nan, np.float32)
-    scores = np.zeros((n_frames, 17), np.float32)
+    kps = np.full((n_frames, N_KEYPOINTS, 2), np.nan, np.float32)
+    scores = np.zeros((n_frames, N_KEYPOINTS), np.float32)
     det_bbox = np.full((n_frames, 4), np.nan, np.float32)
     pose_bbox = np.full((n_frames, 4), np.nan, np.float32)
     n_people = np.zeros(n_frames, np.int16)
@@ -124,3 +128,34 @@ def run(images: Iterable[np.ndarray], n_frames: int, boxes: np.ndarray,
         if checkpoint and (i + 1) % checkpoint_every == 0:
             checkpoint(out, i + 1)
     return out
+
+
+def facing(kps: np.ndarray, scores: np.ndarray, side: str = "r",
+           min_score: float = 0.3, majority: float = 2 / 3) -> str | None:
+    """"right" or "left": the sign of heel -> toe x over frames where both are confident.
+
+    Needs Halpe-26 feet. None without feet, without a confident frame, or when
+    neither sign holds `majority` of the votes.
+    """
+    if kps.shape[1] < N_KEYPOINTS:
+        return None
+    toe, heel = HALPE26[f"{side}_big_toe"], HALPE26[f"{side}_heel"]
+    seen = (scores[:, toe] >= min_score) & (scores[:, heel] >= min_score)
+    dx = kps[seen, toe, 0] - kps[seen, heel, 0]
+    dx = dx[dx != 0]
+    if not len(dx):
+        return None
+    right = float((dx > 0).mean())
+    if right >= majority:
+        return "right"
+    if 1 - right >= majority:
+        return "left"
+    return None
+
+
+def near_side(scores: np.ndarray) -> str:
+    """"l" or "r": the leg whose keypoints score higher on average (the one the camera sees)."""
+    parts = ("hip", "knee", "ankle", "big_toe", "small_toe", "heel")
+    idx = {s: [HALPE26[f"{s}_{p}"] for p in parts if HALPE26[f"{s}_{p}"] < scores.shape[1]]
+           for s in ("l", "r")}
+    return "r" if np.nanmean(scores[:, idx["r"]]) >= np.nanmean(scores[:, idx["l"]]) else "l"

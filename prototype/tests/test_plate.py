@@ -117,13 +117,13 @@ def test_track_prefers_the_dark_moving_plate_over_a_bright_static_circle():
         plate = [100 + 5.0 * t, 800 - 2.0 * t, 175, 45]
         logo = [600, 300, 175, 120]  # same size, static, ranked first
         cands.append(np.array([logo, plate]))
-    chosen = track(cands, r0=175, max_step_px=20)
+    chosen = track(cands, r0=175, t=np.arange(len(cands)) / 100, max_speed_px_s=2000)
     assert (chosen == 1).all()
 
 
 def test_track_follows_the_smooth_path_not_the_top_ranked_circle():
     cands = _plate_with_distractors()
-    chosen = track(cands, r0=175, max_step_px=20)
+    chosen = track(cands, r0=175, t=np.arange(len(cands)) / 100, max_speed_px_s=2000)
     for t, k in enumerate(chosen):
         assert k >= 0
         assert cands[t][k][0] == pytest.approx(100 + 5.0 * t)
@@ -133,7 +133,7 @@ def test_track_marks_frames_without_the_plate_as_missing():
     cands = _plate_with_distractors()
     for t in (20, 21, 22):  # plate not detected: only distractors left
         cands[t] = cands[t][cands[t][:, 0] != 100 + 5.0 * t]
-    chosen = track(cands, r0=175, max_step_px=20)
+    chosen = track(cands, r0=175, t=np.arange(len(cands)) / 100, max_speed_px_s=2000)
     assert [chosen[t] for t in (20, 21, 22)] == [-1, -1, -1]
     assert cands[23][chosen[23]][0] == pytest.approx(100 + 5.0 * 23)
 
@@ -141,7 +141,7 @@ def test_track_marks_frames_without_the_plate_as_missing():
 def test_track_handles_frames_with_no_candidates():
     cands = _plate_with_distractors(10)
     cands[4] = np.empty((0, 3))
-    chosen = track(cands, r0=175, max_step_px=20)
+    chosen = track(cands, r0=175, t=np.arange(len(cands)) / 100, max_speed_px_s=2000)
     assert chosen[4] == -1
     assert chosen[5] >= 0
 
@@ -198,3 +198,23 @@ def test_fit_outline_ellipse_mode_with_axis_limits():
     cx, cy, a, b, _ = out
     assert (cx, cy) == pytest.approx((400, 650), abs=1.5)
     assert sorted((a, b)) == pytest.approx([145, 175], abs=3)
+
+
+def _fast_plate(speed_px_s: float, fps: int = 240):
+    t = np.arange(fps) / fps
+    # the false circle hops 3000 px a frame, so no path runs through it
+    return [np.array([[3000.0 * (i % 2 + 1), 5000.0 + 97 * i, 175.0],
+                      [100 + speed_px_s * ti, 800.0, 175.0]])
+            for i, ti in enumerate(t)], t
+
+
+@pytest.mark.parametrize("stride", [1, 4])
+def test_track_step_limit_is_per_second_so_240_and_a_60_fps_subsample_both_pass(stride):
+    cands, t = _fast_plate(6000.0)
+    chosen = track(cands[::stride], r0=175, t=t[::stride], max_speed_px_s=7200.0)
+    assert (chosen == 1).all()
+
+
+def test_track_rejects_a_step_faster_than_the_limit():
+    cands, t = _fast_plate(9000.0, fps=60)
+    assert not (track(cands, r0=175, t=t, max_speed_px_s=7200.0) == 1).all()

@@ -45,7 +45,7 @@ n = len(kps)
 t = frame_times(raw)  # real frame times: 2026-10-05 drops frames
 fps = mean_rate(t)  # for windows in frames
 
-kps_s = smooth_keypoints(kps, fps)
+kps_s = smooth_keypoints(kps, fps, t)
 ang_raw = sagittal_angles(kps, SIDE)
 ang_s = sagittal_angles(kps_s, SIDE)
 
@@ -173,7 +173,7 @@ reps_v2 = []
 if plate_ok:
     assert plate is not None and len(plate["hub_y"]) == n, "plate/pose frame counts differ"
     reps_v2 = find_reps_v2(
-        hub_y=smooth(plate["hub_y"], fps), nose_y=mid_y(kps_s, "nose"),
+        hub_y=smooth(plate["hub_y"], fps, t=t), nose_y=mid_y(kps_s, "nose"),
         hip_y=mid_y(kps_s, "hip"), knee=ang_s["knee"], fps=fps,
         knee_y=mid_y(kps_s, "knee"), t=t)
 hold = json.loads((out / "hold.json").read_text()) if (out / "hold.json").exists() else None

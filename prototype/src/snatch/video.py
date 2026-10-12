@@ -35,6 +35,26 @@ def rotated_size(width: int, height: int, rotation: int) -> tuple[int, int]:
     raise ValueError(f"unsupported rotation {rotation}")
 
 
+def decoded_pts(pts: np.ndarray) -> np.ndarray:
+    """Sorted packet times of the frames the decoder outputs.
+
+    A `-c copy` cut starts at the keyframe before `-ss` and keeps the frames
+    before the cut point as packets with negative times; the edit list makes
+    the decoder skip them. They are not frames of the clip.
+    """
+    pts = np.sort(np.asarray(pts, float))
+    return pts[pts >= 0]
+
+
+def packet_times(path: str) -> np.ndarray:
+    out = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+         "packet=pts_time", "-of", "csv=p=0", path],
+        check=True, capture_output=True, text=True,
+    ).stdout
+    return decoded_pts(np.array([float(x.strip(",")) for x in out.split() if x.strip(",") != "N/A"]))
+
+
 def probe(path: str) -> ClipInfo:
     out = subprocess.run(
         ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_streams",
@@ -48,7 +68,7 @@ def probe(path: str) -> ClipInfo:
             rotation = int(sd["rotation"])
     num, den = s["r_frame_rate"].split("/")
     w, h = rotated_size(int(s["width"]), int(s["height"]), rotation)
-    return ClipInfo(w, h, int(num) / int(den), int(s["nb_frames"]), rotation)
+    return ClipInfo(w, h, int(num) / int(den), len(packet_times(path)), rotation)
 
 
 def frames(path: str, info: ClipInfo | None = None) -> Iterator[np.ndarray]:
@@ -85,12 +105,7 @@ def timestamps(path: str, rate: float | None = None) -> np.ndarray:
     frames gets exactly arange(n) / fps.
     """
     rate = rate or probe(path).fps
-    out = subprocess.run(
-        ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
-         "packet=pts_time", "-of", "csv=p=0", path],
-        check=True, capture_output=True, text=True,
-    ).stdout
-    t = np.sort(np.array([float(x.strip(",")) for x in out.split()]))
+    t = packet_times(path)
     periods = np.maximum(np.round(np.diff(t) * rate), 1)
     return np.r_[0, np.cumsum(periods)] / rate
 

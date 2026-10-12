@@ -50,10 +50,11 @@ def progress(stage, i):
         print(f"{stage} {i}/{info.n_frames} {time.time() - t0:.0f}s", flush=True)
 
 
-res = plate.detect(lambda: frames(clip, info), info.n_frames, progress=progress,
+t = timestamps(clip, info.fps)
+max_speed_px_s = plate.MAX_SPEED_PX_S * info.width / 1080
+res = plate.detect(lambda: frames(clip, info), t, progress=progress,
                    model=model, r_min=radius[0], r_max=radius[1],
-                   # per-frame travel limit, scaled for 20261005_1 (4K, 24 fps)
-                   max_step_px=plate.MAX_STEP_PX * 240 / info.fps * info.width / 1080)
+                   max_speed_px_s=max_speed_px_s)
 n, fps = info.n_frames, info.fps
 found = res["found"]
 print(f"found {found.sum()}/{n} frames ({found.mean():.1%}), ellipse fit "
@@ -69,7 +70,7 @@ travel_m, jumps = 0.0, np.empty(0, int)
 if len(idx):
     travel_m = float(np.ptp(res["hub_y"][found]) / np.nanmedian(res["px_per_m"]))
     step = np.hypot(np.diff(res["hub_x"][idx]), np.diff(res["hub_y"][idx]))
-    jumps = idx[1:][step > plate.MAX_STEP_PX * np.diff(idx) + 15]
+    jumps = idx[1:][step > max_speed_px_s * np.diff(t[idx]) + 15]
 reasons = []
 if found.mean() < 0.9:
     reasons.append(f"found in only {found.mean():.0%} of frames")
@@ -79,7 +80,7 @@ if len(jumps):
     reasons.append(f"{len(jumps)} jumps (frames {', '.join(map(str, jumps[:12]))})")
 status = "ok" if not reasons else "check: " + "; ".join(reasons)
 print(f"status {status} (vertical travel {travel_m:.2f} m)", flush=True)
-meta = dict(fps=fps, t=timestamps(clip, info.fps), width=info.width, height=info.height, clip=Path(clip).name,
+meta = dict(fps=fps, t=t, width=info.width, height=info.height, clip=Path(clip).name,
             plate_diameter_m=plate.PLATE_DIAMETER_M, status=status, model=model,
             travel_m=travel_m, jumps=jumps)
 arrays: dict[str, np.ndarray] = res | {k: np.asarray(v) for k, v in meta.items()}
@@ -89,7 +90,7 @@ with open(out / "plate.csv", "w", newline="") as f:
     w = csv.writer(f)
     w.writerow(["frame", "t_s", *plate.FIELDS])
     for i in range(n):
-        w.writerow([i, f"{i / fps:.5f}"] + [
+        w.writerow([i, f"{t[i]:.5f}"] + [
             int(res[k][i]) if res[k].dtype == bool else
             ("" if np.isnan(res[k][i]) else f"{res[k][i]:.2f}")
             for k in plate.FIELDS])
