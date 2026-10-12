@@ -11,7 +11,8 @@
 # clip (size + mtime), src/snatch, scripts/pipeline.py, uv.lock and these two scripts,
 # so any change that could change the result reruns it. VERIFY_NO_CACHE=1 forces a run.
 # Every overlays/*.mp4 gets a frame sheet overlays/<name>_sheet.jpg (8 frames, evenly spaced),
-# so the result can be checked as an image. The log starts with the commit under test.
+# so the result can be checked as an image. The log starts with the commit under test and
+# ends with the result line (OK evidence: … or FAIL: …).
 # Publish an evidence root to the branch's PR with publish_evidence.sh.
 # Exit 0 = OK, 1 = FAIL.
 set -e
@@ -26,7 +27,7 @@ out=$ev/$c
 athletes=$ev/athletes
 log=$ev/$c.log
 cd "$root/prototype"
-fail() { echo "FAIL: $1"; exit 1; }
+fail() { echo "FAIL: $1" | tee -a "$log"; exit 1; }
 rm -rf "$out"
 echo "commit $(git rev-parse --short HEAD) $(git rev-parse --abbrev-ref HEAD), dirty files: $(git -C "$root" status --porcelain | wc -l | tr -d ' ')" >"$log"
 key=$( { stat -f '%z %m' "$clip"; find src/snatch -type f -name '*.py' | sort | xargs cat
@@ -36,7 +37,7 @@ if [[ -z $VERIFY_NO_CACHE && -f $cache/.done ]]; then
   cp -R "$cache/out" "$out" && tail -n +2 "$cache/log" >>"$log"
   echo "cache $key (VERIFY_NO_CACHE=1 to rerun)" | tee -a "$log"
   grep -v '^==' "$cache/log" | grep -E '^(first|rerun|  )' || true
-  echo "OK evidence: $out"
+  echo "OK evidence: $out" | tee -a "$log"
   exit 0
 fi
 # S0 stops without a skeleton (exit 2); a placeholder until C3 calibrate exists
@@ -61,4 +62,4 @@ for v in "$out"/overlays/*.mp4; do if [ -e "$v" ]; then sheet "$v"; fi; done
 [[ -z $(git -C "$root" status --porcelain prototype/out) ]] || fail "stray writes in prototype/out"
 rm -rf "$cache.tmp" && mkdir -p "$cache.tmp" && cp -R "$out" "$cache.tmp/out" && cp "$log" "$cache.tmp/log" &&
   touch "$cache.tmp/.done" && rm -rf "$cache" && mv "$cache.tmp" "$cache"
-echo "OK evidence: $out"
+echo "OK evidence: $out" | tee -a "$log"

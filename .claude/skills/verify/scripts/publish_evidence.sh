@@ -1,14 +1,17 @@
 #!/bin/bash
 # Publish a run_clip.sh evidence root to the open PR of the current branch.
-# usage: .claude/skills/verify/scripts/publish_evidence.sh <evidence_root>
+# usage: .claude/skills/verify/scripts/publish_evidence.sh <evidence_root> "<review>"
+#   review: what the frame sheets show, one line per sheet (markdown), put under the result
+#   DRY_RUN=1 prints the comment and pushes nothing
 # Commits the root as <root name>/ to the branch evidence/pr-<n> (its own history, never
-# merged), pushes it and comments on the PR: the commit under test, the check lines, every
-# jpg inline and links to the other files, all pinned to the evidence commit. The branch is
-# deleted when the PR closes (.github/workflows/delete-evidence.yml); the comment text
+# merged), pushes it and comments on the PR: per clip ✅ / ❌ from the log's result line,
+# the commit under test, the check lines, the review, every jpg inline and links to the
+# other files, all pinned to the evidence commit. The branch is deleted when the PR closes (.github/workflows/delete-evidence.yml); the comment text
 # stays, its images and links break.
 set -e
 fail() { echo "FAIL: $1"; exit 1; }
-[ -d "$1" ] || fail "usage: publish_evidence.sh <evidence_root>"
+[ -d "$1" ] && [ -n "$2" ] || fail 'usage: publish_evidence.sh <evidence_root> "<review of the frame sheets>"'
+review=$2
 ev=$(cd "$1" && pwd)
 name=$(basename "$ev")
 cd "$(dirname "$0")"
@@ -20,26 +23,39 @@ index=$(mktemp -u)
 body=$(mktemp)
 trap 'rm -rf "$stage" "$index" "$body"' EXIT
 cp -R "$ev" "$stage/$name"
-# a private index, so the checkout and its index stay untouched
-export GIT_INDEX_FILE=$index
-parent=
-if git fetch -q origin "refs/heads/$branch" 2>/dev/null; then
-  parent=$(git rev-parse FETCH_HEAD)
-  git read-tree "$parent"
-else
-  git read-tree --empty
+result() {  # result <log>: the last OK / FAIL line, else the run did not finish
+  local r; r=$(grep -E '^(OK evidence:|FAIL:)' "$1" | tail -1)
+  case $r in "OK evidence:"*) echo "✅ OK" ;; FAIL:*) echo "❌ $r" ;; *) echo "❌ no result line (run did not finish)" ;; esac
+}
+results=$(for log in "$ev"/*.log; do result "$log"; done)
+if grep -q '^❌' <<<"$results"; then overall="❌ FAIL"; else overall="✅ OK"; fi
+commit=DRY_RUN
+if [[ -z $DRY_RUN ]]; then
+  # a private index, so the checkout and its index stay untouched
+  export GIT_INDEX_FILE=$index
+  parent=
+  if git fetch -q origin "refs/heads/$branch" 2>/dev/null; then
+    parent=$(git rev-parse FETCH_HEAD)
+    git read-tree "$parent"
+  else
+    git read-tree --empty
+  fi
+  git --work-tree="$stage" add -f -- "$name"
+  commit=$(git commit-tree "$(git write-tree)" ${parent:+-p "$parent"} -m "verify evidence for PR #$pr: $name")
+  unset GIT_INDEX_FILE
+  git push -q origin "$commit:refs/heads/$branch"
 fi
-git --work-tree="$stage" add -f -- "$name"
-commit=$(git commit-tree "$(git write-tree)" ${parent:+-p "$parent"} -m "verify evidence for PR #$pr: $name")
-unset GIT_INDEX_FILE
-git push -q origin "$commit:refs/heads/$branch"
 url=https://github.com/$repo/blob/$commit/$name
 {
-  echo "## /verify evidence: \`$name\`"
+  echo "## /verify evidence: \`$name\` $overall"
+  echo
+  echo "**Review:**"
+  echo
+  echo "$review"
   for log in "$ev"/*.log; do
     c=$(basename "${log%.log}")
     echo
-    echo "### \`$c\`"
+    echo "### $(result "$log") \`$c\`"
     echo '```'
     head -1 "$log"
     grep -E '^(cache |first|rerun|  )' "$log" || true
@@ -56,4 +72,5 @@ url=https://github.com/$repo/blob/$commit/$name
   echo
   echo "Files: https://github.com/$repo/tree/$commit/$name (branch \`$branch\`, deleted when this PR closes)"
 } >"$body"
+if [[ -n $DRY_RUN ]]; then cat "$body"; exit 0; fi
 gh pr comment "$pr" --body-file "$body"
