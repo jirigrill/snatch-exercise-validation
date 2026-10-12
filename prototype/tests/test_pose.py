@@ -3,6 +3,8 @@ import pytest
 
 from snatch import pose
 from snatch.pose import range_mask, resume_state, track_box
+from snatch.stage import StageStop
+from snatch.stages.pose import check_facing
 
 
 def test_track_box_extends_a_truncated_detection_to_last_frames_keypoints():
@@ -140,3 +142,23 @@ def test_near_side_takes_higher_scoring_leg():
     assert pose.near_side(scores) == "r"
     scores[:, [12, 14, 16, 21, 23, 25]] = 0.1
     assert pose.near_side(scores) == "l"
+
+
+def test_facing_counts_both_feet():
+    kps, scores = _feet([30] * 4)
+    kps[:, 24, 0] = 100  # l heel
+    kps[:, 20, 0] = 70  # l big toe points left
+    assert pose.facing_votes(kps, scores) == (4, 4)
+    assert pose.facing(kps, scores) is None
+
+
+def test_s2_stops_with_exit_8_on_ambiguous_facing_or_a_disagreeing_near_side():
+    with pytest.raises(StageStop) as stop:
+        check_facing(*_feet([30] * 5 + [-30] * 5))
+    assert stop.value.code == 8
+    kps, scores = _feet([30] * 10)
+    assert check_facing(kps, scores)["facing"] == "right"
+    scores[:, [11, 13, 15, 20, 22, 24]] = 0.95  # left leg scores higher, toes point right
+    with pytest.raises(StageStop, match="mirrored") as stop:
+        check_facing(kps, scores)
+    assert stop.value.code == 8
