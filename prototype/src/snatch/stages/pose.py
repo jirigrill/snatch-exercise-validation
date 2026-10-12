@@ -83,9 +83,9 @@ def run(ctx: Context, tmp: Path) -> None:
     np.savez_compressed(tmp / "raw_pose.npz", allow_pickle=False, **arrays)
     (tmp / "facing.json").write_text(json.dumps(facing, indent=2) + "\n")
     (tmp / OVERLAY).parent.mkdir(parents=True, exist_ok=True)
-    note = f"facing {facing['facing']}, near {pose.SIDE_OF[facing['facing']]} | L red, R green, crop yellow"
+    notes = (f"facing {facing['facing']}, near {pose.SIDE_OF[facing['facing']]}", "L red, R green")
     overlay.render(str(ctx.clip), str(tmp / OVERLAY), person=dict(person), poses=[arrays], boxes=True,
-                   step=4, zoom=True, note=note)
+                   step=4, zoom=True, notes=notes)
 
 
 STAGE = Stage("S2", (CLIP, "clip.json", "frame_times.npy", "person.npz"), ("raw_pose.npz", "facing.json", OVERLAY), run)

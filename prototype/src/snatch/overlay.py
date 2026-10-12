@@ -133,10 +133,10 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
            poses: Sequence[Arrays] = (), plate: Arrays | None = None, boxes: bool = False,
            start: int = 0, end: int | None = None, step: int = 1, fps: float = 30.0,
            scale: float = 0.5, zoom: bool = False, flag_px: float = 10.0,
-           note: str | None = None) -> dict[str, int]:
+           notes: Sequence[str] = ()) -> dict[str, int]:
     """Write the overlay video; returns {"frames": written, "flagged": above flag_px}.
 
-    note: an extra label line on every frame (e.g. facing and the color legend).
+    notes: extra label lines on every frame (e.g. facing and the color legend).
     """
     info = probe(clip)
     show = shown_frames(info.n_frames, start, end, step, poses, plate)
@@ -158,7 +158,7 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
         if i not in want:
             continue
         img = img.copy()
-        labels = [f"f{i}"] + ([note] if note else [])
+        labels = [f"f{i}", *notes]
         if person is not None:
             seen = bool(person["detected"][i]) if "detected" in person else True
             gap = gap_mask is not None and bool(gap_mask[i])
