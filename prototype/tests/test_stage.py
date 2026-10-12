@@ -128,6 +128,15 @@ def test_unchosen_stage_with_changed_hash_is_recorded_stale(ctx: Context) -> Non
     assert status["stages"]["A"] == {"state": "stale"}
 
 
+def test_unchosen_fresh_stage_is_up_to_date_and_listed_in_order(ctx: Context) -> None:
+    calls: list[str] = []
+    run_stages(_pipeline(calls), ctx, log=_quiet)
+    run_stages(_pipeline(calls), ctx, only="B", log=_quiet)
+    status = json.loads((ctx.out / "pipeline_status.json").read_text())
+    assert status["stages"] == {"A": {"state": "up_to_date"}, "B": {"state": "done"}}
+    assert list(status["stages"]) == ["A", "B"]
+
+
 def _nested(calls: list[str], stop: bool = False):
     def run(_: Context, tmp: Path) -> None:
         calls.append("A")

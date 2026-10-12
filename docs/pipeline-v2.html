@@ -256,7 +256,7 @@ const D = {
   REP: { t:"Report", tag:"new",
     in:"all step outputs", code:"new: in pipeline.py",
     how:"merge per attempt: phases, key angles, judgement, findings\nfinal label: completed_clean (completed, no error-severity finding)\n             completed_with_errors (completed, ≥ 1 error finding)\n             failed (with reason) / unknown\nwithout S8 output: completed / failed / unknown only\noverlay.mp4 = all layers combined",
-    out:"<code>report.json</code>, <code>pipeline_status.json</code> (per step: done/skipped/failed/stale, hash, time, files)",
+    out:"<code>report.json</code>, <code>pipeline_status.json</code> (per step: done/skipped/failed/stale/up_to_date, hash, time, files)",
     ov:"<code>overlay.mp4</code>: box + filled skeleton + bar path + phase + judgement" },
 };
 const TAGS = { have:"t-have", move:"t-move", new:"t-new", src:"t-src" };
