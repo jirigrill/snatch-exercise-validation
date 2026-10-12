@@ -16,7 +16,7 @@ Ready = doctor passes. Teardown = none (each step exits).
 ```
 .claude/skills/verify/scripts/doctor.sh
 ```
-Checks uv, `.venv`, imports, both ONNX models, ffprobe, clips in `vids/ladder/`, CoreML provider. Any `FAIL` -> fix before driving. `vids/` is gitignored and not in a fresh clone: no clips = nothing to drive except `pytest`.
+Checks uv, `.venv`, imports, both ONNX models, ffprobe, test clips T1–T7 in `vids/test/`, CoreML provider. Any `FAIL` -> fix before driving. `vids/` is gitignored and not in a fresh clone: no clips = nothing to drive except `pytest`.
 
 ## Drive
 Fast gate (3 s, no video): `cd prototype && uv run pytest -q` and `uv run pyright` (baseline on main: 56 errors, so compare counts before/after, don't expect 0).
@@ -40,8 +40,6 @@ Stages today: S-1 probe, S0 athlete check, S1 person. Pipeline exits: 2 = no ske
 Adding a stage: the stage goes into `snatch.stages.STAGES`; `run_clip.sh` drives it with no edit. Add its content check to `CHECKS` in `check_pipeline.py` when there is more to check than its files existing. A stage that stops a clip by design (S3 exit 6 on a bar-only clip, S2 exit 8) needs an expected stop per clip in `run_clip.sh`; none exists yet.
 
 Manual run: `uv run python scripts/pipeline.py <clip> --athlete <id> [--height <m>] --out <evidence>/<clip> --athletes <evidence>/athletes [--only S | --from S] [--force]`. Always pass `--out` and `--athletes` under the evidence root.
-
-Old pipeline (not driven by `run_clip.sh`; its logic moves into v2 stages, see `.scratch/plan/README.md`): `extract_person.py` → `extract_pose.py` → `track_plate.py [ellipse] [--radius LO:HI]` → `analyze.py` → `compare_phases.py`, each `<clip> <out>` from `prototype/`. Plate options by clip name are in `prototype/scripts/run_all.sh`. `run_all.sh` **writes into `prototype/out/`**; don't use it for verification unless asked. `--det-every 96` was measured against 24 on T1 at 240 fps: boxes differ p95 50 px (max 26% of box height) during the lift, so the default stays 24.
 
 ### Levels
 - **Per commit to a branch/PR:** `pytest -q` + `pyright` (count ≤ baseline) + `run_clip.sh` on T1, and look at the overlays.
