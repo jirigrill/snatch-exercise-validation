@@ -190,7 +190,7 @@ def main() -> None:
                                     "case": "raw inputs", "phase": ph, **errors(c, kn_hat, sel)})
         # conditioning: gain and clipped share per phase (table lengths)
         lt, ls = model.lengths(np.hypot(*(ank - hip).T))
-        g = sk.knee_gain(hip, ank, lt, ls, c["facing"])
+        g = skel.knee_gain(hip, ank, lt, ls, c["facing"])
         _, clipped = skel.two_circle_knee(hip, ank, lt, ls, c["facing"])
         for pi, ph in enumerate(PHASES):
             sel = lab == pi
@@ -231,7 +231,7 @@ def elbow_test(c1: dict, c2: dict, p1: list, p2: list) -> list[dict]:
         k = c["k"]
         lu, lf = tab.lengths(np.hypot(*(k[:, W] - k[:, S]).T))
         eh, clipped = skel.two_circle_knee(k[:, S], k[:, W], lu, lf, side)
-        g = sk.knee_gain(k[:, S], k[:, W], lu, lf, side)
+        g = skel.knee_gain(k[:, S], k[:, W], lu, lf, side)
         lab = sk.phase_labels(len(k), e, c["fps"])
         a_obs = joint_angle(k[:, S], k[:, E], k[:, W])
         a_hat = joint_angle(k[:, S], eh, k[:, W])

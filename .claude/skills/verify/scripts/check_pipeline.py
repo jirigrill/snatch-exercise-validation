@@ -77,7 +77,8 @@ def check_calibrate(out: Path, skeleton: Path) -> str:
     assert err["median"] < 10, f"rebuilt knee median {err['median']} px off the visible knee"
     return (f"{side} side, d_ref {e['d_ref']:.0f} px, thigh {th.min():.0f}-{th.max():.0f} px, "
             f"shank {sh.min():.0f}-{sh.max():.0f} px, {e['bins_measured']}/{len(th)} bins measured "
-            f"(r {e['r_range'][0]}-{e['r_range'][1]}), rebuilt knee median {err['median']} / p90 {err['p90']} px")
+            f"(r {e['r_range'][0]}-{e['r_range'][1]}), knee rebuilt on {e['rebuilt_frames']}/{e['frames']} frames: "
+            f"median {err['median']} / p90 {err['p90']} / max {err['max']} px off the visible knee")
 
 
 CHECKS = {"S-1": check_probe, "S1": check_person, "S2": check_pose}

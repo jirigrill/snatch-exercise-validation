@@ -31,6 +31,7 @@ MIN_SCORE = 0.5  # near hip, knee and ankle all at least this: the frame is used
 STAND_DEG = 165.0  # knee and hip above this: standing
 MIN_STANDING = 20  # frames
 MIN_BINS = 3  # length-table bins with enough frames
+MAX_GAIN = 2.0  # rebuild the knee only this well conditioned (36 §1: the hybrid's rule)
 
 
 def unit_normal(hip: np.ndarray, ankle: np.ndarray, facing: float
@@ -63,6 +64,17 @@ def two_circle_knee(hip: np.ndarray, ankle: np.ndarray, l_thigh, l_shank,
     h = np.sqrt(np.where(clipped, 0.0, h2))
     a = np.where(clipped, np.clip(a, -lt, lt), a)
     return hip + a[:, None] * u + h[:, None] * n, clipped
+
+
+def knee_gain(hip: np.ndarray, ankle: np.ndarray, l_thigh, l_shank,
+              facing: float = 1.0, eps: float = 0.5) -> np.ndarray:
+    """px of knee movement per px of thigh-length error (numerical).
+
+    1 at a right-angle knee, grows without bound toward a straight leg.
+    """
+    k0, _ = two_circle_knee(hip, ankle, l_thigh, l_shank, facing)
+    k1, _ = two_circle_knee(hip, ankle, np.asarray(l_thigh) + eps, l_shank, facing)
+    return np.hypot(*(k1 - k0).T) / eps
 
 
 @dataclass(frozen=True)
@@ -153,7 +165,8 @@ def fit(keypoints: np.ndarray, scores: np.ndarray, t: np.ndarray, facing: str
     """Fit the near side's length table on a bar-only clip's raw pose.
 
     Returns (skeleton.json entry, smoothed keypoints, rebuilt near knee (n, 2)
-    over the used frames, NaN elsewhere). FitError when fewer than
+    where S4b would rebuild it (circles meet, gain <= MAX_GAIN), NaN elsewhere;
+    knee_err_px compares it with the visible knee there). FitError when fewer than
     MIN_STANDING standing frames or MIN_BINS filled bins.
     """
     side = "r" if facing == "right" else "l"
@@ -174,14 +187,18 @@ def fit(keypoints: np.ndarray, scores: np.ndarray, t: np.ndarray, facing: str
         raise FitError(f"{filled} length-table bins with enough frames, need {MIN_BINS}")
     tab = length_table(hip[used], knee[used], ank[used], d_ref)
     sign = 1.0 if facing == "right" else -1.0
+    lt, ls = tab.lengths(np.hypot(*(ank - hip).T))
+    test, clipped = two_circle_knee(hip, ank, lt, ls, sign)
+    # the frames S4b would rebuild: circles meet and the leg is bent enough (gain <= MAX_GAIN)
+    good = used & ~clipped & (knee_gain(hip, ank, lt, ls, sign) <= MAX_GAIN)
     rebuilt = np.full_like(knee, np.nan)
-    rebuilt[used] = two_circle_knee(hip[used], ank[used], *tab.lengths(np.hypot(*(ank[used] - hip[used]).T)),
-                                    sign)[0]
-    err = np.hypot(*(rebuilt[used] - knee[used]).T)
+    rebuilt[good] = test[good]
+    err = np.hypot(*(test[good] - knee[good]).T)
     r = np.hypot(*(ank[used] - hip[used]).T) / d_ref
     entry = {"facing": facing, **tab.to_json(), "bins_measured": filled,
              "r_range": [round(float(r.min()), 3), round(float(r.max()), 3)],
-             "frames": int(used.sum()), "standing_frames": int(stand.sum()),
+             "frames": int(used.sum()), "standing_frames": int(stand.sum()), "rebuilt_frames": int(good.sum()),
              "knee_err_px": {"median": round(float(np.median(err)), 2),
-                             "p90": round(float(np.percentile(err, 90)), 2)}}
+                             "p90": round(float(np.percentile(err, 90)), 2),
+                             "max": round(float(err.max()), 2)}}
     return entry, k, rebuilt

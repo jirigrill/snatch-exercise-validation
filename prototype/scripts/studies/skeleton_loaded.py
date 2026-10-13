@@ -196,7 +196,7 @@ def main() -> None:
             kh = rebuild(c, tab)
             hip_, ank_ = k[:, J["hip"]], k[:, J["ankle"]]
             lt_, ls_ = tab.lengths(np.hypot(*(ank_ - hip_).T))
-            use = hidden & (sk.knee_gain(hip_, ank_, lt_, ls_, c["facing"]) <= 2.0)
+            use = hidden & (skel.knee_gain(hip_, ank_, lt_, ls_, c["facing"]) <= 2.0)
             a_hat = joint_angle(hip_, sk.fill_hidden(kn, kh, use), ank_)
             for src, ang in (("RTMPose", a_obs), (f"rebuilt {tname}", a_hat)):
                 if src == "RTMPose" and tname != "C1":

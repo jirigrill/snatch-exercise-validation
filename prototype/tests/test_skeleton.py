@@ -28,7 +28,7 @@ def test_straight_leg_too_long_is_clipped_on_the_line():
 
 
 def test_gain_grows_toward_straight_leg():
-    g = [sk.knee_gain(*_leg(d)[::2], 150.0, 155.0)[0] for d in (90, 140, 170)]
+    g = [skel.knee_gain(*_leg(d)[::2], 150.0, 155.0)[0] for d in (90, 140, 170)]
     assert g[0] == pytest.approx(1.0, abs=0.05)
     assert g[0] < g[1] < g[2]
     assert g[2] > 3

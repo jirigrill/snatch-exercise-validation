@@ -1,6 +1,6 @@
 """Per-lifter 2D skeleton: fill in near-side joints the near plate hides.
 
-The length table and the two-circle knee moved to snatch.skeleton (C3); the
+The length table, the two-circle knee and knee_gain moved to snatch.skeleton (C3); the
 rest moves when S4b fills hidden joints.
 
 Side-on (0 deg) the near plate covers the near knee around the transition
@@ -30,18 +30,7 @@ All points are image pixels, (n, 2), y down.
 
 import numpy as np
 
-from snatch.skeleton import two_circle_knee, unit_normal
-
-
-def knee_gain(hip: np.ndarray, ankle: np.ndarray, l_thigh, l_shank,
-              facing: float = 1.0, eps: float = 0.5) -> np.ndarray:
-    """px of knee movement per px of thigh-length error (numerical).
-
-    1 at a right-angle knee, grows without bound toward a straight leg.
-    """
-    k0, _ = two_circle_knee(hip, ankle, l_thigh, l_shank, facing)
-    k1, _ = two_circle_knee(hip, ankle, np.asarray(l_thigh) + eps, l_shank, facing)
-    return np.hypot(*(k1 - k0).T) / eps
+from snatch.skeleton import unit_normal
 
 
 def local_frame(hip: np.ndarray, ankle: np.ndarray, knee: np.ndarray,
