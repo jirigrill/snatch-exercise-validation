@@ -186,3 +186,18 @@ def test_always_stage_runs_every_time_without_meta(ctx: Context) -> None:
     run_stages(stages, ctx, log=_quiet)
     assert calls == ["S0", "S0"]
     assert not (ctx.out / "S0.meta.json").exists()
+
+
+def test_skeleton_output_goes_to_the_athlete_dir(tmp_path: Path) -> None:
+    clip = tmp_path / "clip.MOV"
+    clip.write_bytes(b"v")
+    ctx = Context(clip, tmp_path / "out", {"athlete": "jiri"}, athletes=tmp_path / "ath")
+    calls: list[str] = []
+
+    def fit(c: Context, tmp: Path) -> None:
+        calls.append("C3")
+        (tmp / SKELETON).write_text("{}")
+    stages = [Stage("C3", (CLIP,), (SKELETON,), fit)]
+    run_stages(stages, ctx, log=_quiet)
+    run_stages(stages, ctx, log=_quiet)
+    assert calls == ["C3"] and ctx.path(SKELETON).exists() and not (ctx.out / SKELETON).exists()

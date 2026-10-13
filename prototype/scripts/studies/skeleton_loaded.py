@@ -23,6 +23,7 @@ from pathlib import Path
 
 import numpy as np
 
+from snatch import skeleton as skel
 from snatch.studies import skeleton as sk
 from snatch.angles import COCO, joint_angle, mid_y, sagittal_angles
 from snatch.studies.height import facing
@@ -52,19 +53,19 @@ def load(clip: str) -> dict:
     c = {"clip": clip, "fps": fps, "t": t, "kraw": raw["keypoints"].astype(float), "k": k,
          "score": raw["scores"], "ang": sagittal_angles(k, "r"), "facing": facing(np.median(k, 0))}
     st = (c["ang"]["knee"] > 165) & (c["ang"]["hip"] > 165)
-    c["d_stand"] = sk.robust_length(k[:, J["hip"]], k[:, J["ankle"]], st)
+    c["d_stand"] = skel.robust_length(k[:, J["hip"]], k[:, J["ankle"]], st)
     return c
 
 
-def table_from(c: dict, mask: np.ndarray) -> sk.LengthTable:
+def table_from(c: dict, mask: np.ndarray) -> skel.LengthTable:
     k = c["k"]
-    return sk.length_table(k[mask, J["hip"]], k[mask, J["knee"]], k[mask, J["ankle"]], c["d_stand"])
+    return skel.length_table(k[mask, J["hip"]], k[mask, J["knee"]], k[mask, J["ankle"]], c["d_stand"])
 
 
-def rebuild(c: dict, tab: sk.LengthTable) -> np.ndarray:
+def rebuild(c: dict, tab: skel.LengthTable) -> np.ndarray:
     hip, ank = c["k"][:, J["hip"]], c["k"][:, J["ankle"]]
     lt, ls = tab.lengths(np.hypot(*(ank - hip).T))
-    return sk.two_circle_knee(hip, ank, lt, ls, c["facing"])[0]
+    return skel.two_circle_knee(hip, ank, lt, ls, c["facing"])[0]
 
 
 def main() -> None:

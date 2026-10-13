@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 from snatch.stage import Context, run_stages
-from snatch.stages import STAGES
+from snatch.stages import CALIBRATE, STAGES
 
 
 def _radius(s: str) -> tuple[int, int]:
@@ -21,7 +21,7 @@ def _radius(s: str) -> tuple[int, int]:
 
 
 def parse(argv: list[str] | None = None) -> tuple[Context, argparse.Namespace]:
-    names = [s.name for s in STAGES]
+    names = list(dict.fromkeys(s.name for s in STAGES + CALIBRATE))
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("clip", type=Path, nargs="?")
     ap.add_argument("--calibrate", type=Path, metavar="BAR.MOV", help="calibrate the skeleton from a bar-only clip")
@@ -40,6 +40,10 @@ def parse(argv: list[str] | None = None) -> tuple[Context, argparse.Namespace]:
     if (args.clip is None) == (args.calibrate is None):
         ap.error("give one clip: <clip.MOV> or --calibrate <bar.MOV>")
     clip = args.calibrate or args.clip
+    stages = CALIBRATE if args.calibrate else STAGES
+    pick = args.only or args.start
+    if pick and pick not in [s.name for s in stages]:
+        ap.error(f"{pick} is not a stage of {'--calibrate' if args.calibrate else 'an analyze run'}")
 
     params = {"athlete": args.athlete, "height": args.height, "load": args.load, "intended": args.intended,
               "radius": args.radius, "calibrate": args.calibrate is not None}
@@ -48,7 +52,7 @@ def parse(argv: list[str] | None = None) -> tuple[Context, argparse.Namespace]:
 
 def main(argv: list[str] | None = None) -> int:
     ctx, args = parse(argv)
-    return run_stages(STAGES, ctx, only=args.only, start=args.start, force=args.force)
+    return run_stages(CALIBRATE if args.calibrate else STAGES, ctx, only=args.only, start=args.start, force=args.force)
 
 
 if __name__ == "__main__":

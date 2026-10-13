@@ -5,7 +5,7 @@ import pytest
 
 from snatch import athlete_store
 from snatch.stage import Context, run_stages
-from snatch.stages import athlete
+from snatch.stages import athlete, side
 
 
 def test_athlete_round_trip(tmp_path: Path) -> None:
@@ -133,3 +133,15 @@ def test_from_a_later_stage_still_runs_s0(tmp_path: Path) -> None:
     lines: list[str] = []
     assert run_stages([athlete.STAGE, later], _ctx(tmp_path), start="S9", log=lines.append) == 2
     assert "S9 done" not in lines
+
+
+@pytest.mark.parametrize("facing, code", [("right", 0), ("left", 2)])
+def test_side_check_needs_the_clips_near_side(tmp_path: Path, facing: str, code: int) -> None:
+    ctx = _ctx(tmp_path)
+    athlete_store.save(ctx.athletes, "jiri", athlete_store.SKELETON, {"r": {}})
+    ctx.out.mkdir()
+    (ctx.out / "facing.json").write_text(json.dumps({"facing": facing}))
+    lines: list[str] = []
+    assert run_stages([side.STAGE], ctx, log=lines.append) == code
+    if code:
+        assert any("No l skeleton" in s and "--calibrate" in s for s in lines)

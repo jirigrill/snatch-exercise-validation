@@ -29,6 +29,8 @@ def test_calibrate_takes_the_bar_clip() -> None:
     ["c.MOV", "--calibrate", "b.MOV", "--athlete", "jiri"],  # two clips
     ["c.MOV", "--athlete", "jiri", "--intended", "split"],
     ["c.MOV", "--athlete", "jiri", "--radius", "70"],
+    ["c.MOV", "--athlete", "jiri", "--only", "C3"],          # C3 is calibrate only
+    ["--calibrate", "b.MOV", "--athlete", "jiri", "--from", "side"],
 ])
 def test_bad_args_exit_2(argv: list[str]) -> None:
     with pytest.raises(SystemExit) as e:

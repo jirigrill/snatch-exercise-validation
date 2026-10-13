@@ -28,6 +28,7 @@ from pathlib import Path
 import matplotlib
 import numpy as np
 
+from snatch import skeleton as skel
 from snatch.studies import skeleton as sk
 from snatch.angles import COCO, joint_angle, mid_y, sagittal_angles
 from snatch.studies.height import facing
@@ -79,23 +80,23 @@ def calib(c: dict, mask: np.ndarray) -> dict:
     k = c["k"]
     hip, knee, ank = k[:, J["hip"]], k[:, J["knee"]], k[:, J["ankle"]]
     stand = mask & (c["ang"]["knee"] > 165) & (c["ang"]["hip"] > 165)
-    d_stand = sk.robust_length(hip, ank, stand)
+    d_stand = skel.robust_length(hip, ank, stand)
     return {
-        "fixed-standing": (sk.robust_length(hip, knee, stand), sk.robust_length(knee, ank, stand)),
-        "fixed-p90": (sk.robust_length(hip, knee, mask, "p90"),
-                      sk.robust_length(knee, ank, mask, "p90")),
-        "table": sk.length_table(hip[mask], knee[mask], ank[mask], d_stand),
+        "fixed-standing": (skel.robust_length(hip, knee, stand), skel.robust_length(knee, ank, stand)),
+        "fixed-p90": (skel.robust_length(hip, knee, mask, "p90"),
+                      skel.robust_length(knee, ank, mask, "p90")),
+        "table": skel.length_table(hip[mask], knee[mask], ank[mask], d_stand),
         "d_stand": d_stand,
     }
 
 
 def rebuild(c: dict, model, hip: np.ndarray, ank: np.ndarray, scale: float = 1.0,
             dl: float = 0.0) -> np.ndarray:
-    if isinstance(model, sk.LengthTable):
+    if isinstance(model, skel.LengthTable):
         lt, ls = model.scaled(scale).lengths(np.hypot(*(ank - hip).T))
     else:
         lt, ls = model[0] * scale, model[1] * scale
-    return sk.two_circle_knee(hip, ank, lt * (1 + dl), ls * (1 + dl), c["facing"])[0]
+    return skel.two_circle_knee(hip, ank, lt * (1 + dl), ls * (1 + dl), c["facing"])[0]
 
 
 def errors(c: dict, kn_hat: np.ndarray, sel: np.ndarray) -> dict:
@@ -190,7 +191,7 @@ def main() -> None:
         # conditioning: gain and clipped share per phase (table lengths)
         lt, ls = model.lengths(np.hypot(*(ank - hip).T))
         g = sk.knee_gain(hip, ank, lt, ls, c["facing"])
-        _, clipped = sk.two_circle_knee(hip, ank, lt, ls, c["facing"])
+        _, clipped = skel.two_circle_knee(hip, ank, lt, ls, c["facing"])
         for pi, ph in enumerate(PHASES):
             sel = lab == pi
             if sel.sum() >= 5:
@@ -224,12 +225,12 @@ def elbow_test(c1: dict, c2: dict, p1: list, p2: list) -> list[dict]:
             m[max(e["setup"] - int(0.5 * c1["fps"]), 0):e["peak"] + int(0.5 * c1["fps"])] = False
         k1 = c1["k"]
         d_ref = float(np.percentile(np.hypot(*(k1[m, S] - k1[m, W]).T), 95))
-        tab = sk.length_table(k1[m, S], k1[m, E], k1[m, W], d_ref)
+        tab = skel.length_table(k1[m, S], k1[m, E], k1[m, W], d_ref)
         _, _, out = sk.local_frame(k1[m, S], k1[m, W], k1[m, E], 1.0)
         side = 1.0 if np.median(out) >= 0 else -1.0
         k = c["k"]
         lu, lf = tab.lengths(np.hypot(*(k[:, W] - k[:, S]).T))
-        eh, clipped = sk.two_circle_knee(k[:, S], k[:, W], lu, lf, side)
+        eh, clipped = skel.two_circle_knee(k[:, S], k[:, W], lu, lf, side)
         g = sk.knee_gain(k[:, S], k[:, W], lu, lf, side)
         lab = sk.phase_labels(len(k), e, c["fps"])
         a_obs = joint_angle(k[:, S], k[:, E], k[:, W])
