@@ -73,12 +73,15 @@ def check_calibrate(out: Path, skeleton: Path) -> str:
     assert e["bins_measured"] >= 3, f"{e['bins_measured']} bins measured"
     assert th.min() + sh.min() < e["d_ref"] < th.max() + sh.max() + 10, \
         f"standing hip-ankle {e['d_ref']:.0f} px does not fit thigh + shank"
-    err = e["knee_err_px"]
-    assert err["median"] < 10, f"rebuilt knee median {err['median']} px off the visible knee"
+    h = e["hide_test"]
+    cm, deg = h["knee_err_cm"], h["angle_err_deg"]
+    assert h["rebuilt_frames"] >= 100, f"hide test rebuilt the knee in {h['rebuilt_frames']} frames"
+    assert cm["median"] < 2, f"hide test: rebuilt knee {cm['median']} cm median off the true knee"
     return (f"{side} side, d_ref {e['d_ref']:.0f} px, thigh {th.min():.0f}-{th.max():.0f} px, "
             f"shank {sh.min():.0f}-{sh.max():.0f} px, {e['bins_measured']}/{len(th)} bins measured "
-            f"(r {e['r_range'][0]}-{e['r_range'][1]}), knee rebuilt on {e['rebuilt_frames']}/{e['frames']} frames: "
-            f"median {err['median']} / p90 {err['p90']} / max {err['max']} px off the visible knee")
+            f"(r {e['r_range'][0]}-{e['r_range'][1]}); hide test: knee rebuilt in {h['rebuilt_frames']}/"
+            f"{h['hidden_frames']} hidden frames, {cm['median']} / p90 {cm['p90']} / max {cm['max']} cm, "
+            f"angle {deg['median']} / p90 {deg['p90']} deg off")
 
 
 CHECKS = {"S-1": check_probe, "S1": check_person, "S2": check_pose}
