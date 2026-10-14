@@ -89,7 +89,7 @@ def check_pose(out: Path) -> str:
     assert m is None or m.group(1) == face, f"facing {face}, the filename says {m.group(1) if m else ''}"
     ankle = float(np.median(p["scores"][:, 15:17].max(1)))
     knee = HALPE26[f"{ {'right': 'r', 'left': 'l'}[face]}_knee"]
-    worst(out, "2_pose", 1 - p["scores"][:, knee], "lowest near-knee score (knee hidden or misplaced)")
+    worst(out, "4_pose", 1 - p["scores"][:, knee], "lowest near-knee score (knee hidden or misplaced)")
     return f"{posed} frames posed, facing {face}, median best ankle score {ankle:.2f}"
 
 
@@ -141,14 +141,14 @@ def check_plate(out: Path) -> str:
     bad = np.full(n, np.nan)
     med = np.nanmedian(ppm[s:e])
     bad[s:e] = np.where(found[s:e], np.abs(ppm[s:e] / med - 1), 1.0)
-    worst(out, "3_plate", bad, "px_per_m farthest from its median (plate size off), 1.0 = plate not found in the moving span")
+    worst(out, "2_plate", bad, "px_per_m farthest from its median (plate size off), 1.0 = plate not found in the moving span")
     return (f"found {found.mean():.0%} ({mf:.0%} of the moving span {s}-{e}), ppm_spread {spread:.3f}, "
             f"hough_share {share:.2f}, {jumps} jumps, passed {bool(p['passed'])}")
 
 
-CHECKS = {"S-1": check_probe, "S1": check_person, "S2": check_pose, "S3": check_plate}
+CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate}
 # Files a stage still writes when it stops the run (checked on a --stop run; no content check).
-STOP_FILES = {"S3": ("plate_check.jpg", "overlays/3_plate.mp4")}
+STOP_FILES = {"S2": ("plate_check.jpg", "overlays/2_plate.mp4")}
 
 
 def main(out: Path, run: str, skeleton: Path | None = None, stop: str | None = None,

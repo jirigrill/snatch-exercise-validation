@@ -105,11 +105,11 @@ def test_s0_always_runs(tmp_path: Path) -> None:
     _skeleton(ctx)
     _run(ctx)
     assert _run(ctx)[2] == ["S0 done"]
-    later = Stage("S9", (), (), lambda c, t: None)
+    later = Stage("S99", (), (), lambda c, t: None)
     (tmp_path / "other").mkdir()
     lines: list[str] = []
-    assert run_stages([athlete.STAGE, later], _ctx(tmp_path / "other"), start="S9", log=lines.append) == 2
-    assert "S9 done" not in lines
+    assert run_stages([athlete.STAGE, later], _ctx(tmp_path / "other"), start="S99", log=lines.append) == 2
+    assert "S99 done" not in lines
 
 
 

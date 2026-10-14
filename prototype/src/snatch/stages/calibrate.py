@@ -1,12 +1,12 @@
 """C3: fit the athlete's leg skeleton on a bar-only clip (snatch.skeleton).
 
---calibrate runs S-1, S0, S1 and S2 on the bar-only clip (C1 and C2 of the
+--calibrate runs S-1, S0, S1 and S4 on the bar-only clip (C1 and C2 of the
 spec are the same stages), then this. It writes the near side's entry of
 athletes/<athlete>/skeleton.json (the measurements only), keeping the other
 side's, and a self-test of the table: calibration.json (its numbers) and
 calibration_overlay.mp4: green = RTMPose (smoothed, as fitted), magenta = the
 same pose with the near knee rebuilt from hip, ankle and the table wherever
-S4b could rebuild it (snatch.skeleton.fit: the leg bent enough; a bar-only
+S6 could rebuild it (snatch.skeleton.fit: the leg bent enough; a bar-only
 clip has no plate, so not only where a plate would hide the knee). Elsewhere
 magenta is RTMPose's knee, so it covers green. The knee is visible on a
 bar-only clip, so magenta should sit on green. Too few usable frames stops

@@ -14,7 +14,7 @@ script when given --overlay (`call_script`). Each layer is optional:
           above `flag_px`. Grey = a joint scored under FADE_SCORE.
 - plate:  plate outline (ellipse) and hub, plus a trail of the hub over the last
           TRAIL_S seconds of found frames. Orange; green when the plate dict has
-          passed=True (S3's sanity check), orange also when passed=False.
+          passed=True (S2's sanity check), orange also when passed=False.
 - boxes:  also draw the crop given to the pose model (yellow)
 """
 
@@ -40,7 +40,7 @@ POSE_COLORS = ((0, 255, 0), (255, 0, 255))  # two runs: green, magenta; left sid
 PERSON_COLOR = (255, 200, 0)  # BGR: light blue
 CROP_COLOR = (0, 255, 255)  # BGR: yellow
 PLATE_COLOR = (0, 140, 255)  # BGR: orange
-PLATE_OK_COLOR = (0, 220, 0)  # BGR: green, plate track that passed S3's check
+PLATE_OK_COLOR = (0, 220, 0)  # BGR: green, plate track that passed S2's check
 TRAIL_S = 0.5  # seconds of hub path drawn behind the hub
 GAP_COLOR = (0, 0, 255)  # BGR: red
 FADED_COLOR = (150, 150, 150)  # BGR: grey, a joint under FADE_SCORE

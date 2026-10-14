@@ -34,7 +34,7 @@ def parse(argv: list[str] | None = None) -> tuple[Context, argparse.Namespace]:
     pick.add_argument("--from", dest="start", choices=names, help="rerun this stage and every later one")
     ap.add_argument("--force", action="store_true", help="ignore the hashes")
     ap.add_argument("--load", type=float, help="kg on the bar incl. the bar, else from the filename")
-    ap.add_argument("--intended", choices=("squat", "power", "muscle"), help="intended snatch type for S7")
+    ap.add_argument("--intended", choices=("squat", "power", "muscle"), help="intended snatch type for S8")
     ap.add_argument("--radius", type=_radius, help="plate radius range in px, a:b")
     args = ap.parse_args(argv)
     if (args.clip is None) == (args.calibrate is None):

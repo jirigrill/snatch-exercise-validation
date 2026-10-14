@@ -2,7 +2,7 @@
 
 Side-on, the near plate hides the near knee around the transition
 (docs/results/36-skeleton-fill.md). On a bar-only clip the knee is visible,
-so the lengths can be measured there and the hidden knee rebuilt later (S4b)
+so the lengths can be measured there and the hidden knee rebuilt later (S6)
 from the hip and ankle.
 
 - Knee: the circle of thigh length around the hip meets the circle of shank
@@ -12,7 +12,7 @@ from the hip and ankle.
   drift with flexion and the projected thigh shortens in a deep squat, so a
   table of median lengths over bins of d / d_ref beats a fixed length (36 §3).
   d_ref is the standing hip-ankle distance, so a table carries to another clip
-  by rescaling (S4a).
+  by rescaling (S5).
 
 skeleton.json holds one entry per near side ("r", "l"); a calibration replaces
 its side and keeps the other. No wrist offset: the wrist under the plate cannot
@@ -165,11 +165,11 @@ def fit(keypoints: np.ndarray, scores: np.ndarray, t: np.ndarray, facing: str
     """Fit the near side's length table on a bar-only clip's raw pose.
 
     Returns (skeleton.json entry: the measurements only; self-test: the knee
-    rebuilt from hip, ankle and the table wherever S4b could rebuild it (circles
+    rebuilt from hip, ankle and the table wherever S6 could rebuild it (circles
     meet, gain <= MAX_GAIN: the leg bent enough), vs the visible knee there;
     smoothed keypoints; that rebuilt near knee (n, 2), NaN elsewhere). Whether
     a plate hides the knee is not known on a bar-only clip, so the self-test
-    also covers bent-leg frames S4b would leave alone. FitError when fewer than
+    also covers bent-leg frames S6 would leave alone. FitError when fewer than
     MIN_STANDING standing frames or MIN_BINS filled bins.
     """
     side = "r" if facing == "right" else "l"
@@ -192,7 +192,7 @@ def fit(keypoints: np.ndarray, scores: np.ndarray, t: np.ndarray, facing: str
     sign = 1.0 if facing == "right" else -1.0
     lt, ls = tab.lengths(np.hypot(*(ank - hip).T))
     test, clipped = two_circle_knee(hip, ank, lt, ls, sign)
-    # the frames S4b could rebuild: circles meet and the leg is bent enough (gain <= MAX_GAIN)
+    # the frames S6 could rebuild: circles meet and the leg is bent enough (gain <= MAX_GAIN)
     good = used & ~clipped & (knee_gain(hip, ank, lt, ls, sign) <= MAX_GAIN)
     rebuilt = np.full_like(knee, np.nan)
     rebuilt[good] = test[good]

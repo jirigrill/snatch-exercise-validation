@@ -1,6 +1,6 @@
-"""S2: pose the lifter in every frame (snatch.pose) and find which way they face.
+"""S4: pose the lifter in every frame (snatch.pose) and find which way they face.
 
-Whole clip for now (S5a later limits it to the attempt windows). raw_pose.npz
+Whole clip for now (S3 later limits it to the attempt windows). raw_pose.npz
 carries the frame times of S-1 as `t`. facing.json holds `facing`: "right" or
 "left", the way the toes point in the image, with the votes and leg scores it
 came from. The near side follows from it (pose.SIDE_OF), and the leg the model
@@ -22,7 +22,7 @@ from snatch.stage import CLIP, Context, Stage, StageStop, stage_hash
 from snatch.video import frames, probe
 
 FACING_EXIT = 8
-OVERLAY = "overlays/2_pose.mp4"
+OVERLAY = "overlays/4_pose.mp4"
 PARTIAL = "raw_pose_partial.npz"
 
 
@@ -48,7 +48,7 @@ def _resume(path: Path, digest: str) -> tuple[dict[str, np.ndarray] | None, int]
     if str(p["hash"]) != digest:
         path.unlink()
         return None, 0
-    print(f"S2 resuming from frame {int(p['done'])}", flush=True)
+    print(f"S4 resuming from frame {int(p['done'])}", flush=True)
     return {k: p[k] for k in p.files if k not in ("done", "hash")}, int(p["done"])
 
 
@@ -72,7 +72,7 @@ def run(ctx: Context, tmp: Path) -> None:
     t0 = time.time()
     raw = pose.run(frames(str(ctx.clip), info), info.n_frames, person["bbox"], resume=resume, done=done,
                    checkpoint=checkpoint,
-                   progress=lambda i: print(f"S2 pose frame {i}/{info.n_frames} {time.time() - t0:.0f}s",
+                   progress=lambda i: print(f"S4 pose frame {i}/{info.n_frames} {time.time() - t0:.0f}s",
                                             flush=True) if i % 800 == 0 else None)
     partial.unlink(missing_ok=True)
     facing = check_facing(raw["keypoints"], raw["scores"])
@@ -88,4 +88,4 @@ def run(ctx: Context, tmp: Path) -> None:
                    step=4, zoom=True, notes=notes)
 
 
-STAGE = Stage("S2", (CLIP, "clip.json", "frame_times.npy", "person.npz"), ("raw_pose.npz", "facing.json", OVERLAY), run)
+STAGE = Stage("S4", (CLIP, "clip.json", "frame_times.npy", "person.npz"), ("raw_pose.npz", "facing.json", OVERLAY), run)

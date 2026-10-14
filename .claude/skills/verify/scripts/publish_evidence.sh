@@ -12,7 +12,7 @@
 # origin/main are shown, plus every stage after the first of them (stage_files.py show): their
 # detail lines and images (the png/jpg outputs; of an mp4 its _sheet and _worst jpg, with the
 # frames of its .worst); the clip's and the calibration's (calibrate_<T5>/). All stages when
-# scripts/pipeline.py or uv.lock changed. SHOW_STAGES="S3 C3" adds stages by name (a changed
+# scripts/pipeline.py or uv.lock changed. SHOW_STAGES="S2 C3" adds stages by name (a changed
 # sheet or check), SHOW_STAGES=all shows all. Fails before pushing when the review misses the
 # file stem of a shown image or a frame of a shown .worst. The branch is deleted when the PR
 # closes (.github/workflows/delete-evidence.yml); the comment text stays, its images and links break.
@@ -48,7 +48,7 @@ list() { printf '%s\n' "$@" | paste -sd ',' - | sed 's/,/, /g'; }
 unchanged=$(for n in $allnames; do [[ " $shownames " == *" $n "* ]] || echo "$n"; done)
 calonly=$(for n in $(names all calibrate); do [[ " $(names all analyze) " == *" $n "* ]] || echo "$n"; done)
 calshow=
-for n in $calonly S-1 S1 S2; do [[ $sc == *" $n "* ]] && calshow=1; done
+for n in $calonly S-1 S1 S4; do [[ $sc == *" $n "* ]] && calshow=1; done
 shown_images() {  # shown_images <list> <dir>: the shown stages' images that exist in <dir>, relative to it
   awk -v l="$1" '$1=="shown" && $2==l {for (i = 4; i <= NF; i++) print $i}' <<<"$show" | while read -r o; do
     case $o in

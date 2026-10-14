@@ -6,9 +6,9 @@ The measurement pipeline for the validation (see `../docs/STATUS.md` for what it
 
 `scripts/pipeline.py` runs the v2 stages (`src/snatch/stages/`, spec `../docs/pipeline-v2.html`). Each stage writes to `out/<clip>/`.
 
-## Pipeline v1 (deleted with `run_all.sh` in the S8 PR)
+## Pipeline v1 (deleted with `run_all.sh` in the S9 PR)
 
-`scripts/run_all.sh` runs steps 0–4 for every clip in `../vids/` and fills only what is missing. Each step writes to `out/<clip>/`. The scripts are the source for the v2 stages still to come (S3, S5a, S6a).
+`scripts/run_all.sh` runs steps 0–4 for every clip in `../vids/` and fills only what is missing. Each step writes to `out/<clip>/`. The scripts are the source for the v2 stages still to come (S2, S3, S7).
 
 | Step | Script | Reads | Writes |
 |---|---|---|---|
@@ -26,9 +26,9 @@ Kept only as the source of a v2 stage still to come; delete each one in the PR t
 
 | Stage | Scripts |
 |---|---|
-| S3 (oblique near plate, used by `run_all.sh`) | `d1_near_plate.py` |
-| S5a (attempt windows vs whole-clip pose) | `compare_rep_pose.py` |
-| S4a, S4b (scale, knee and wrist fill-in) | `skeleton_loaded.py`, `skeleton_validate.py`, `skeleton_paste.py`, `skeleton_sheets.py`, `skeleton_wrist.py` |
+| S2 (oblique near plate, used by `run_all.sh`) | `d1_near_plate.py` |
+| S3 (attempt windows vs whole-clip pose) | `compare_rep_pose.py` |
+| S5, S6 (scale, knee and wrist fill-in) | `skeleton_loaded.py`, `skeleton_validate.py`, `skeleton_paste.py`, `skeleton_sheets.py`, `skeleton_wrist.py` |
 
 Run them from `prototype/`: `uv run python scripts/studies/<script>.py`. Each docstring gives usage, inputs and outputs.
 
@@ -44,7 +44,7 @@ Run them from `prototype/`: `uv run python scripts/studies/<script>.py`. Each do
 | `skeleton`, `athlete_store` | Skeleton length table (C3), athlete profiles |
 | `overlay` | Drawing on frames |
 
-`src/snatch/studies/` holds the modules only the kept studies use: `views` (hidden-joint mask for S4b), `height` (body height), `skeleton` (knee and wrist fill-in for S4b).
+`src/snatch/studies/` holds the modules only the kept studies use: `views` (hidden-joint mask for S6), `height` (body height), `skeleton` (knee and wrist fill-in for S6).
 
 ## `out/`
 

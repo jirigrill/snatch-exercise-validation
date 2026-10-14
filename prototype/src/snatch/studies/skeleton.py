@@ -1,7 +1,7 @@
 """Per-lifter 2D skeleton: fill in near-side joints the near plate hides.
 
 The length table, the two-circle knee and knee_gain moved to snatch.skeleton (C3); the
-rest moves when S4b fills hidden joints.
+rest moves when S6 fills hidden joints.
 
 Side-on (0 deg) the near plate covers the near knee around the transition
 and the near wrist during the pull (docs/results/33-d1-views.md). The
