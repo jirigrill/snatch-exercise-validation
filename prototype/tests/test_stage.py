@@ -32,6 +32,7 @@ def _quiet(_: str) -> None:
 
 
 def test_identical_hash_skips(ctx: Context) -> None:
+    """R2: same inputs, params and version: the stage is skipped."""
     calls: list[str] = []
     assert run_stages(_pipeline(calls), ctx, log=_quiet) == 0
     assert run_stages(_pipeline(calls), ctx, log=_quiet) == 0
@@ -41,6 +42,7 @@ def test_identical_hash_skips(ctx: Context) -> None:
 
 
 def test_changed_param_reruns(ctx: Context) -> None:
+    """R2: a changed param changes the hash: the stage reruns."""
     calls: list[str] = []
     run_stages(_pipeline(calls), ctx, log=_quiet)
     run_stages(_pipeline(calls), Context(ctx.clip, ctx.out, {"k": 2}), log=_quiet)
@@ -48,6 +50,7 @@ def test_changed_param_reruns(ctx: Context) -> None:
 
 
 def test_identical_rerun_output_leaves_downstream_skipped(ctx: Context) -> None:
+    """R2: a rerun with byte-identical output does not rerun downstream."""
     calls: list[str] = []
     run_stages(_pipeline(calls), ctx, log=_quiet)
     run_stages(_pipeline(calls), ctx, only="A", log=_quiet)
@@ -56,6 +59,7 @@ def test_identical_rerun_output_leaves_downstream_skipped(ctx: Context) -> None:
 
 
 def test_force_reruns_everything(ctx: Context) -> None:
+    """R2: --force ignores the hashes."""
     calls: list[str] = []
     run_stages(_pipeline(calls), ctx, log=_quiet)
     run_stages(_pipeline(calls), ctx, force=True, log=_quiet)
@@ -63,6 +67,7 @@ def test_force_reruns_everything(ctx: Context) -> None:
 
 
 def test_only_and_from(ctx: Context) -> None:
+    """R2: --only runs one stage, --from that stage and every later one."""
     calls: list[str] = []
     run_stages(_pipeline(calls), ctx, log=_quiet)
     run_stages(_pipeline(calls), ctx, only="B", log=_quiet)
@@ -71,6 +76,7 @@ def test_only_and_from(ctx: Context) -> None:
 
 
 def test_missing_input_names_producer_and_never_runs_it(ctx: Context) -> None:
+    """R1: a missing input stops (exit 9) naming the stage that makes it; producers never run for you."""
     calls: list[str] = []
     lines: list[str] = []
     code = run_stages(_pipeline(calls), ctx, only="B", log=lines.append)
@@ -83,6 +89,7 @@ def test_missing_input_names_producer_and_never_runs_it(ctx: Context) -> None:
 
 
 def test_deleted_output_is_stale_and_rebuilt(ctx: Context) -> None:
+    """R2: a deleted output (top level or nested) makes its stage stale; the rerun rebuilds it."""
     calls: list[str] = []
     lines: list[str] = []
     run_stages(_pipeline(calls), ctx, log=_quiet)
@@ -91,8 +98,18 @@ def test_deleted_output_is_stale_and_rebuilt(ctx: Context) -> None:
     assert "A stale, rerunning" in lines
     assert (ctx.out / "A.txt").exists()
 
+    nested: list[str] = []
+    lines = []
+    run_stages(_nested(nested), ctx, log=_quiet)
+    (ctx.out / "overlays" / "sheet.jpg").unlink()
+    run_stages(_nested(nested), ctx, log=lines.append)
+    assert "A stale, rerunning" in lines
+    assert nested == ["A", "A"] and (ctx.out / "overlays" / "sheet.jpg").exists()
+
+
 
 def test_exception_leaves_no_output_under_final_name(ctx: Context) -> None:
+    """R2: a crash mid-stage leaves no file that looks done (temp dir + rename)."""
     def crash(_: Context, tmp: Path) -> None:
         (tmp / "A.txt").write_text("half")
         raise RuntimeError("boom")
@@ -105,15 +122,20 @@ def test_exception_leaves_no_output_under_final_name(ctx: Context) -> None:
 
 
 def test_stop_writes_status_and_returns_code(ctx: Context) -> None:
+    """R1: a stop returns its exit code, records status + reason and leaves no output (nested too)."""
     def stop(_: Context, __: Path) -> None:
         raise StageStop(3, "bad_clip", "too short")
 
     assert run_stages([Stage("A", (CLIP,), ("A.txt",), stop)], ctx, log=_quiet) == 3
     status = json.loads((ctx.out / "pipeline_status.json").read_text())
     assert (status["status"], status["reason"]) == ("bad_clip", "too short")
+    assert run_stages(_nested([], stop=True), ctx, log=_quiet) == 3
+    assert not (ctx.out / "overlays" / "sheet.jpg").exists()
+
 
 
 def test_version_bump_reruns(ctx: Context) -> None:
+    """R2: a STAGE_VERSION bump reruns the stage."""
     calls: list[str] = []
     run_stages([Stage("A", (CLIP,), ("A.txt",), _writer("A", calls))], ctx, log=_quiet)
     run_stages([Stage("A", (CLIP,), ("A.txt",), _writer("A", calls), version=2)], ctx, log=_quiet)
@@ -121,6 +143,7 @@ def test_version_bump_reruns(ctx: Context) -> None:
 
 
 def test_unchosen_stage_with_changed_hash_is_recorded_stale(ctx: Context) -> None:
+    """R2: with --only, a stage not run but out of date is reported stale."""
     calls: list[str] = []
     run_stages(_pipeline(calls), ctx, log=_quiet)
     run_stages(_pipeline(calls), Context(ctx.clip, ctx.out, {"k": 2}), only="B", log=_quiet)
@@ -129,6 +152,7 @@ def test_unchosen_stage_with_changed_hash_is_recorded_stale(ctx: Context) -> Non
 
 
 def test_unchosen_fresh_stage_is_up_to_date_and_listed_in_order(ctx: Context) -> None:
+    """R2: with --only, untouched stages are reported up_to_date, in pipeline order."""
     calls: list[str] = []
     run_stages(_pipeline(calls), ctx, log=_quiet)
     run_stages(_pipeline(calls), ctx, only="B", log=_quiet)
@@ -148,22 +172,8 @@ def _nested(calls: list[str], stop: bool = False):
     return [Stage("A", (CLIP,), ("A.txt", "overlays/sheet.jpg"), run)]
 
 
-def test_stop_leaves_no_nested_output(ctx: Context) -> None:
-    assert run_stages(_nested([], stop=True), ctx, log=_quiet) == 3
-    assert not (ctx.out / "overlays" / "sheet.jpg").exists()
-
-
-def test_deleted_nested_output_is_stale(ctx: Context) -> None:
-    calls: list[str] = []
-    lines: list[str] = []
-    run_stages(_nested(calls), ctx, log=_quiet)
-    (ctx.out / "overlays" / "sheet.jpg").unlink()
-    run_stages(_nested(calls), ctx, log=lines.append)
-    assert "A stale, rerunning" in lines
-    assert calls == ["A", "A"] and (ctx.out / "overlays" / "sheet.jpg").exists()
-
-
 def test_skeleton_input_resolves_to_the_athlete_dir_and_is_hashed(tmp_path: Path) -> None:
+    """R2: skeleton.json is read from athletes/<id>/ and is part of the hash."""
     clip = tmp_path / "clip.MOV"
     clip.write_bytes(b"v")
     ctx = Context(clip, tmp_path / "out", {"athlete": "jiri"}, athletes=tmp_path / "ath")
@@ -180,6 +190,7 @@ def test_skeleton_input_resolves_to_the_athlete_dir_and_is_hashed(tmp_path: Path
 
 
 def test_always_stage_runs_every_time_without_meta(ctx: Context) -> None:
+    """R2: an always stage (S0, side) runs every time and keeps no meta."""
     calls: list[str] = []
     stages = [Stage("S0", (), (), lambda c, t: calls.append("S0"), always=True)]
     run_stages(stages, ctx, log=_quiet)
@@ -189,6 +200,7 @@ def test_always_stage_runs_every_time_without_meta(ctx: Context) -> None:
 
 
 def test_skeleton_output_goes_to_the_athlete_dir(tmp_path: Path) -> None:
+    """R2: C3's skeleton.json output lands in athletes/<id>/, not out/<clip>/."""
     clip = tmp_path / "clip.MOV"
     clip.write_bytes(b"v")
     ctx = Context(clip, tmp_path / "out", {"athlete": "jiri"}, athletes=tmp_path / "ath")

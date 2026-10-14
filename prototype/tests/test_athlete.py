@@ -8,20 +8,6 @@ from snatch.stage import Context, run_stages
 from snatch.stages import athlete, side
 
 
-def test_athlete_round_trip(tmp_path: Path) -> None:
-    assert not athlete_store.exists(tmp_path, "jiri", athlete_store.ATHLETE)
-    athlete_store.save(tmp_path, "jiri", athlete_store.ATHLETE, {"height_m": 1.8})
-    assert athlete_store.exists(tmp_path, "jiri", athlete_store.ATHLETE)
-    assert athlete_store.load(tmp_path, "jiri", athlete_store.ATHLETE) == {"height_m": 1.8}
-    assert athlete_store.load(tmp_path, "nobody", athlete_store.SKELETON) is None
-
-
-@pytest.mark.parametrize("h", [1.39, 2.21, 180.0])
-def test_height_out_of_range_is_rejected(h: float) -> None:
-    with pytest.raises(ValueError, match="1.40"):
-        athlete.check_height(h)
-
-
 def _ctx(tmp_path: Path, **params) -> Context:
     clip = tmp_path / "clip.MOV"
     clip.write_bytes(b"v")
@@ -45,6 +31,7 @@ def _profile(ctx: Context) -> dict:
 
 
 def test_height_writes_profile_and_continues(tmp_path: Path) -> None:
+    """R3: --height on a new athlete writes athlete.json and the run goes on (run_clip always passes it)."""
     ctx = _ctx(tmp_path, height=1.80)
     _skeleton(ctx)
     code, status, _ = _run(ctx)
@@ -55,6 +42,7 @@ def test_height_writes_profile_and_continues(tmp_path: Path) -> None:
 
 
 def test_later_height_overwrites(tmp_path: Path) -> None:
+    """R3: a later --height replaces the stored one (spec: no --update-height)."""
     ctx = _ctx(tmp_path, height=1.80)
     _skeleton(ctx)
     _run(ctx)
@@ -63,6 +51,7 @@ def test_later_height_overwrites(tmp_path: Path) -> None:
 
 
 def test_stored_height_is_enough(tmp_path: Path) -> None:
+    """R3: without --height the stored height is used (run_clip always passes it)."""
     ctx = _ctx(tmp_path, height=1.80)
     _skeleton(ctx)
     _run(ctx)
@@ -70,6 +59,7 @@ def test_stored_height_is_enough(tmp_path: Path) -> None:
 
 
 def test_no_height_exits_7(tmp_path: Path) -> None:
+    """R1: no height for the athlete: exit 7, asks for --height."""
     ctx = _ctx(tmp_path)
     _skeleton(ctx)
     code, status, lines = _run(ctx)
@@ -78,12 +68,14 @@ def test_no_height_exits_7(tmp_path: Path) -> None:
 
 
 def test_no_skeleton_exits_2_with_calibrate_command(tmp_path: Path) -> None:
+    """R1: no skeleton: exit 2 with the --calibrate command to run."""
     code, status, lines = _run(_ctx(tmp_path, height=1.80))
     assert (code, status["status"]) == (2, "needs_calibration")
     assert any("--calibrate <bar.MOV> --athlete jiri" in s for s in lines)
 
 
 def test_both_missing_is_one_message_exit_2(tmp_path: Path) -> None:
+    """R1: height and skeleton both missing: one message, exit 2."""
     code, status, lines = _run(_ctx(tmp_path))
     assert code == 2
     stops = [s for s in lines if "stopped" in s]
@@ -91,52 +83,55 @@ def test_both_missing_is_one_message_exit_2(tmp_path: Path) -> None:
     assert status["status"] == "needs_calibration"
 
 
-def test_calibrate_skips_the_skeleton_check(tmp_path: Path) -> None:
-    assert _run(_ctx(tmp_path, height=1.80, calibrate=True))[0] == 0
-
-
 def test_calibrate_without_height_exits_7(tmp_path: Path) -> None:
+    """R1: --calibrate still needs a height: exit 7."""
     code, status, lines = _run(_ctx(tmp_path, calibrate=True))
     assert (code, status["status"]) == (7, "needs_height")
     assert any("--height" in s for s in lines)
 
 
-def test_bad_height_exits_7(tmp_path: Path) -> None:
-    code, _, lines = _run(_ctx(tmp_path, height=180.0))
-    assert code == 7 and any("cm" in s for s in lines)
+@pytest.mark.parametrize("h", [1.39, 2.21, 180.0])
+def test_bad_height_exits_7(tmp_path: Path, h: float) -> None:
+    """R1: a height outside 1.40-2.20 m (e.g. given in cm) stops with exit 7."""
+    code, _, lines = _run(_ctx(tmp_path, height=h))
+    assert code == 7 and any("1.40" in s or "cm" in s for s in lines)
+
 
 
 def test_s0_always_runs(tmp_path: Path) -> None:
+    """R2: S0 runs on every run, also before a later --from stage, and its stop gates that stage."""
+    from snatch.stage import Stage
     ctx = _ctx(tmp_path, height=1.80)
     _skeleton(ctx)
     _run(ctx)
     assert _run(ctx)[2] == ["S0 done"]
+    later = Stage("S9", (), (), lambda c, t: None)
+    (tmp_path / "other").mkdir()
+    lines: list[str] = []
+    assert run_stages([athlete.STAGE, later], _ctx(tmp_path / "other"), start="S9", log=lines.append) == 2
+    assert "S9 done" not in lines
+
 
 
 @pytest.mark.parametrize("bad", ["../x", "", "a/b", "/abs"])
 def test_bad_athlete_id_is_rejected(tmp_path: Path, bad: str) -> None:
+    """R3: an athlete id that is not a safe folder name is rejected."""
     with pytest.raises(ValueError):
         athlete_store.path(tmp_path, bad, athlete_store.ATHLETE)
 
 
 @pytest.mark.parametrize("content", ["", "{}", '{"height_m": 9}'])
 def test_unusable_profile_counts_as_no_height(tmp_path: Path, content: str) -> None:
+    """R3: a broken athlete.json counts as no height (exit 7), not a crash."""
     ctx = _ctx(tmp_path)
     _skeleton(ctx)
     (ctx.athletes / "jiri" / "athlete.json").write_text(content)
     assert _run(ctx)[0] == 7
 
 
-def test_from_a_later_stage_still_runs_s0(tmp_path: Path) -> None:
-    from snatch.stage import Stage
-    later = Stage("S9", (), (), lambda c, t: None)
-    lines: list[str] = []
-    assert run_stages([athlete.STAGE, later], _ctx(tmp_path), start="S9", log=lines.append) == 2
-    assert "S9 done" not in lines
-
-
 @pytest.mark.parametrize("facing, code", [("right", 0), ("left", 2)])
 def test_side_check_needs_the_clips_near_side(tmp_path: Path, facing: str, code: int) -> None:
+    """R1: a skeleton for the other side only: exit 2 at side."""
     ctx = _ctx(tmp_path)
     athlete_store.save(ctx.athletes, "jiri", athlete_store.SKELETON, {"r": {}})
     ctx.out.mkdir()

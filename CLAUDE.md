@@ -1,21 +1,27 @@
 # snatch-exercise-validation
 
-Pipeline v2 spec: `docs/pipeline-v2.html`. Work queue: `.scratch/plan/README.md` (next unchecked item). Code: `prototype/` (run with `uv` from there).
+Pipeline v2 spec: `docs/pipeline-v2.html`. Work queue: `.scratch/plan/README.md` (next unchecked item). Code: `prototype/` (run with `uv` from there). GitHub: `jirigrill/snatch-exercise-validation` (the local folder name is misspelled `excercise`; use `gh` without `-R`).
 
 ## Workflow
-- One checklist item = one session = one PR off main. No subagents, worktrees or pstack skills.
+- One checklist item = one session = one PR off main. No subagents, worktrees or pstack skills unless the user's prompt allows them.
 - Stop and ask on spec ambiguity instead of guessing.
-- Finish: commit, push, open a PR (not draft) with the check results, publish the evidence to it, then stop. Never merge.
+- First pass: make it work on the test clips. No optimisation or generalisation the current item doesn't need; write later improvements into the plan instead.
+- PR body: explain in plain English what the change does and how to read everything it produces (each output file, image, colour, field and number), so someone who didn't follow the session can review it without asking.
+- Finish: commit, push, open a PR (not draft) with the check results, publish the evidence to it, then stop. Never merge unless asked.
 
 ## Checks after each commit to the branch/PR
 1. `uv run pytest -q` passes; `uv run pyright` error count ≤ 20.
-2. Run the `/verify` skill: `run_clip.sh` on T1 (pipeline v2). Look at every frame sheet (`overlays/*.jpg`) and write one line per sheet on what it shows (e.g. "1_person_sheet: box on the lifter in all 8 frames"); for a `*_worst.jpg`, name each of its frames and what is right or wrong there. Push, then `publish_evidence.sh <evidence root> "<those lines>"` (PR comment + branch `evidence/pr-<n>`, deleted when the PR closes; the local root goes at the next session start, `sweep_evidence.sh`).
+2. `/verify` on T1 (the skill says how: run, review every sheet incl. each worst frame, publish the evidence to the PR).
 3. Milestone items only: T1–T7 vs main, every diff explained. T7 = 0 reps (standup); T5 exit 6 (once S3 exists; add it to `expected_stop` in run_clip.sh).
 
-A FAIL (or a sheet that looks wrong) means fix and rerun, or stop and report it in the PR. Never finish with a failing check.
-A Stop hook (`.claude/hooks/require-evidence.sh`) blocks finishing on a PR branch until HEAD is pushed and the PR has ✅ evidence for it (or for an earlier commit with the same `prototype/` and verify scripts).
+A FAIL (or a sheet that looks wrong) means fix and rerun, or stop and report it in the PR. Never finish with a failing check; the Stop hook (`.claude/hooks/require-evidence.sh`) enforces the evidence.
 
 ## Tests
-- Clip runs are the main test. Do not write a unit test per stage.
-- Add a unit test only for: exit codes and edge cases no test clip covers, the S7 judge rule table, or a bug a clip found (regression).
-- When code moves or is deleted, move or delete its tests too.
+Clip runs are the main test. A unit test exists only for one of these reasons, named first in its docstring:
+- R1 an exit code or stop (spec "Stop exit codes")
+- R2 the stage-runner contract (hash, skip, stale, atomic outputs)
+- R3 an edge case no test clip covers (say which)
+- R4 the S7 judge rule table (one case per reason and type)
+- R5 a regression a clip found (cite the PR)
+
+Not: the normal path a clip already shows, helper math, inputs the recording protocol rules out, one test per function or stage. Fold variants of one behaviour into one (parametrized) test. When code moves or is deleted, move or delete its tests and apply this rule to them in that PR.
