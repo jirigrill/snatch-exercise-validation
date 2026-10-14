@@ -37,7 +37,7 @@ def run(ctx: Context, tmp: Path) -> None:
         entry, test, k, rebuilt = skeleton.fit(raw["keypoints"], raw["scores"], raw["t"], facing)
     except skeleton.FitError as e:
         raise StageStop(UNUSABLE_EXIT, "calibration_failed", f"cannot fit the {side} skeleton: {e}") from None
-    entry = {**entry, "clip": ctx.clip.name, "width": int(raw["width"]), "height": int(raw["height"]),
+    entry = {**entry, "clip": ctx.clip.name, "video_size": [int(raw["width"]), int(raw["height"])],
              "fitted": datetime.now(timezone.utc).isoformat(timespec="seconds")}
     sk = athlete_store.load(ctx.athletes, str(ctx.params["athlete"]), athlete_store.SKELETON) or {}
     (tmp / SKELETON).write_text(json.dumps({**sk, side: entry}, indent=2) + "\n")
