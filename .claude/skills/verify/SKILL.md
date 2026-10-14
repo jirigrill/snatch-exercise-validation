@@ -19,7 +19,7 @@ Ready = doctor passes. Teardown = none (each step exits).
 Checks uv, `.venv`, imports, both ONNX models, ffprobe, test clips T1–T7 in `vids/test/`, CoreML provider. Any `FAIL` -> fix before driving. `vids/` is gitignored and not in a fresh clone: no clips = nothing to drive except `pytest`.
 
 ## Drive
-Fast gate (3 s, no video): `cd prototype && uv run pytest -q` and `uv run pyright` (baseline on main: 56 errors, so compare counts before/after, don't expect 0).
+Fast gate (3 s, no video): `cd prototype && uv run pytest -q` and `uv run pyright` (baseline on main: 20 errors, so compare counts before/after, don't expect 0).
 
 End-to-end: pipeline v2 (`scripts/pipeline.py`, spec `docs/pipeline-v2.html`) on one clip (~30 s on T1, ~0 s on a cache hit):
 ```

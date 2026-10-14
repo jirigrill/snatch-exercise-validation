@@ -2,9 +2,13 @@
 
 The measurement pipeline for the validation (see `../docs/STATUS.md` for what it has to prove). Python 3.12, uv. Run everything from this directory as `uv run python scripts/<script>.py`. Library code is `src/snatch/`, tests are `tests/` (`uv run pytest -q`).
 
-## Pipeline (one clip)
+## Pipeline v2 (one clip)
 
-`scripts/run_all.sh` runs steps 0–4 for every clip in `../vids/` and fills only what is missing. Each step writes to `out/<clip>/`.
+`scripts/pipeline.py` runs the v2 stages (`src/snatch/stages/`, spec `../docs/pipeline-v2.html`). Each stage writes to `out/<clip>/`.
+
+## Pipeline v1 (deleted with `run_all.sh` in the S8 PR)
+
+`scripts/run_all.sh` runs steps 0–4 for every clip in `../vids/` and fills only what is missing. Each step writes to `out/<clip>/`. The scripts are the source for the v2 stages still to come (S3, S5a, S6a).
 
 | Step | Script | Reads | Writes |
 |---|---|---|---|
@@ -14,42 +18,33 @@ The measurement pipeline for the validation (see `../docs/STATUS.md` for what it
 | 3 | `analyze.py` | `raw_pose.npz`, `plate.npz` | `angles.csv`, `phases.json`, `phase_sheet.jpg`, `overlay.mp4` |
 | 4 | `compare_phases.py` | `raw_pose.npz`, `plate.npz` | `phases_v2.json` (the frozen phase definition) |
 
-## Tools (`scripts/`)
-
-| Script | What |
-|---|---|
-| `find_reps.py`, `rep_sheets.py` | Propose a rep list from the plate hub; one image strip per rep to check it |
-| `overlay_video.py` | Boxes, skeleton and plate outline drawn on a clip |
-| `show_npz.py` | Print what is inside an `.npz` |
-| `bench.py` | Time the detector and the pose model |
+`find_reps.py` proposes a rep list from the plate hub; `overlay_video.py` draws boxes, skeleton and plate outline on a clip (`--overlay`).
 
 ## Studies (`scripts/studies/`)
 
-One-off analyses. Each produced a result in `../docs/results/` and is kept so the result can be rerun.
+Kept only as the source of a v2 stage still to come; delete each one in the PR that moves its code.
 
-| Ticket | Scripts |
+| Stage | Scripts |
 |---|---|
-| #13 phase check | `review_phases.py`, `check_phases_literature.py` |
-| #14, #30 frame rate | `build_ladder.py`, `measure_hold.py`, `fps_estimate.py`, `add_timestamps.py` |
-| #23 D1 camera view | `d1_views.py`, `d1_near_plate.py`, `d1_sheets.py` |
-| #24 D2 arm bend | `arm_bend.py` |
-| #22 body height | `body_height.py`, `height_summary.py`, `segment_lengths.py` |
-| #22 knee and wrist fill-in | `skeleton_validate.py`, `skeleton_paste.py`, `skeleton_loaded.py`, `skeleton_wrist.py`, `skeleton_camera.py`, `skeleton_sheets.py` |
-| Does a shortcut change the results? | `compare_sparse.py`, `compare_rep_pose.py`, `compare_pose_runs.py` |
+| S3 (oblique near plate, used by `run_all.sh`) | `d1_near_plate.py` |
+| S5a (attempt windows vs whole-clip pose) | `compare_rep_pose.py` |
+| S4a, S4b (scale, knee and wrist fill-in) | `skeleton_loaded.py`, `skeleton_validate.py`, `skeleton_paste.py`, `skeleton_sheets.py`, `skeleton_wrist.py` |
 
-Run them like the others, from `prototype/`: `uv run python scripts/studies/<script>.py`. Each docstring gives usage, inputs and outputs.
+Run them from `prototype/`: `uv run python scripts/studies/<script>.py`. Each docstring gives usage, inputs and outputs.
 
 ## Library (`src/snatch/`)
 
 | Module | Owns |
 |---|---|
+| `stage`, `stages/` | The v2 stage runner and the stages |
 | `video`, `person`, `pose` | Reading frames, finding the lifter, running the pose model |
 | `plate` | Plate tracking |
 | `angles`, `signals`, `phases`, `reps` | Joint angles, smoothing, the phase definition (v2 frozen), rep finding |
 | `spread` | Across-rep spread |
+| `skeleton`, `athlete_store` | Skeleton length table (C3), athlete profiles |
 | `overlay` | Drawing on frames |
 
-`src/snatch/studies/` holds the modules only the studies use: `ladder` (frame-rate ladder), `markers` (bar markers and their verdict rule), `views` (D1), `armbend` (D2), `height` (body height), `skeleton` (knee and wrist fill-in). The pipeline never imports them.
+`src/snatch/studies/` holds the modules only the kept studies use: `views` (hidden-joint mask for S4b), `height` (body height), `skeleton` (knee and wrist fill-in for S4b).
 
 ## `out/`
 

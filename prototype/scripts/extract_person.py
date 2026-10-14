@@ -13,7 +13,7 @@ The YOLOX-x detector is ~95% of the pose pipeline's time (~0.4 s/frame on the CP
 so it runs once per clip and every --det-every-th frame only; the boxes between are
 interpolated (snatch.person). 24 (0.1 s at 240 fps) differs from a run on every
 frame by ~1.5 px median at the pose keypoints and about 1 deg at the joint angles
-(8 clips of 2026-10-01, docs/pipeline.html). --det-every 1 detects every frame.
+(8 clips of 2026-10-01). --det-every 1 detects every frame.
 """
 
 import platform

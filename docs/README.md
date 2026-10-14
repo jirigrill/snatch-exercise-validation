@@ -10,7 +10,6 @@ Start with [`STATUS.md`](STATUS.md).
 | `recording-protocol.md` | Camera set-up, spike session, gate 1 rule |
 | `clip-log.md` | Every clip with role and caveats; `clip-log-sheets/` has a contact sheet per 2026-10-01 clip |
 | `sensitivity-log.csv` | Per-lift log of the spike session |
-| `pipeline.html` | The pipeline's steps and outputs as one page |
 | `paywalled-papers.md` | Papers cited but not in `papers/` |
 | `papers/` | Papers read for the research notes |
 | `research/` | Market, feasibility and design research |
