@@ -1,29 +1,53 @@
 """Check one pipeline.py run in out/<clip> against snatch.stages.STAGES (run_clip.sh).
 
-usage: uv run python check_pipeline.py <out dir> first|rerun [--calibrate <skeleton.json>]
+usage: uv run python check_pipeline.py <out dir> first|rerun [--calibrate <skeleton.json>] [--stop <stage>]
 
 --calibrate: the run was pipeline.py --calibrate (snatch.stages.CALIBRATE),
 and C3 wrote the skeleton.json given.
+--stop: the clip stops at this stage by design (run_clip.sh's expected stops):
+the stages up to it in the usual states, it `failed`, the status not ok.
 
 Every run: status ok, the stages in pipeline order, each in the state the run
 expects, and every output of a stage that ran or was kept non-empty. Then each
 stage's content check below, if it has one. A new stage: add it to STAGES and,
 when there is something to check beyond its files existing, a function here.
+
+A content check also writes overlays/<overlay>.worst: the WORST frames that score
+worst on the stage's own measure (line 1, frame numbers) and what that is (line 2).
+run_clip.sh turns it into <overlay>_worst.jpg, so the review sees the frames where
+the stage is most likely wrong, not only evenly spaced ones.
 """
 
+import argparse
 import json
 import re
-import sys
 from pathlib import Path
 
 import numpy as np
 
+from snatch import skeleton as skel
+from snatch.angles import HALPE26
 from snatch.stage import SKELETON, Stage
 from snatch.stages import CALIBRATE, STAGES
+
+WORST = 4  # frames in <overlay>_worst.jpg
+WORST_GAP = 24  # at least this many frames apart (0.1 s at 240 fps), so not 4 neighbours
 
 
 def expected(stage: Stage, run: str) -> str:
     return "done" if stage.always or run == "first" else "skipped"
+
+
+def worst(out: Path, overlay: str, badness: np.ndarray, what: str) -> None:
+    """Write overlays/<overlay>.worst: the WORST highest-badness frames (NaN = never), WORST_GAP apart."""
+    picked: list[int] = []
+    for i in np.argsort(-np.nan_to_num(badness, nan=-np.inf)):
+        if len(picked) == WORST or not np.isfinite(badness[i]):
+            break
+        if all(abs(int(i) - p) >= WORST_GAP for p in picked):
+            picked.append(int(i))
+    if picked:
+        (out / "overlays" / f"{overlay}.worst").write_text(" ".join(map(str, sorted(picked))) + f"\n{what}\n")
 
 
 def check_probe(out: Path) -> str:
@@ -43,6 +67,10 @@ def check_person(out: Path) -> str:
     found = int(p["detected"].sum())
     assert found >= 0.9 * runs, f"lifter found on {found} of {runs} detector runs"
     assert not np.isnan(p["bbox"]).any(), "frames without a box"
+    missed = np.full(len(t), np.nan)
+    runs_at = np.arange(0, len(t), int(p["det_every"]))
+    missed[runs_at[~p["detected"][runs_at].astype(bool)]] = 1.0
+    worst(out, "1_person", missed, "detector runs that missed the lifter (red box)")
     return f"lifter on {found}/{runs} detector runs"
 
 
@@ -58,6 +86,8 @@ def check_pose(out: Path) -> str:
     m = re.search(r"_(left|right)_", str(p["clip"]))
     assert m is None or m.group(1) == face, f"facing {face}, the filename says {m.group(1) if m else ''}"
     ankle = float(np.median(p["scores"][:, 15:17].max(1)))
+    knee = HALPE26[f"{ {'right': 'r', 'left': 'l'}[face]}_knee"]
+    worst(out, "2_pose", 1 - p["scores"][:, knee], "lowest near-knee score (knee hidden or misplaced)")
     return f"{posed} frames posed, facing {face}, median best ankle score {ankle:.2f}"
 
 
@@ -78,6 +108,10 @@ def check_calibrate(out: Path, skeleton: Path) -> str:
     assert not {"knee_err_px", "rebuilt_frames"} & set(e), "self-test values in skeleton.json"
     err = c["knee_err_px"]
     assert err["median"] < 10, f"rebuilt knee median {err['median']} px off the visible knee"
+    raw = np.load(out / "raw_pose.npz")
+    _, _, k, rebuilt = skel.fit(raw["keypoints"], raw["scores"], raw["t"], face)
+    worst(out, "calibration_overlay", np.hypot(*(rebuilt - k[:, HALPE26[f"{side}_knee"]]).T),
+          "rebuilt knee farthest from RTMPose's (magenta off green)")
     return (f"{side} side, d_ref {e['d_ref']:.0f} px, thigh {th.min():.0f}-{th.max():.0f} px, "
             f"shank {sh.min():.0f}-{sh.max():.0f} px, {e['bins_measured']}/{len(th)} bins measured "
             f"(r {e['r_range'][0]}-{e['r_range'][1]}), knee rebuilt on {c['rebuilt_frames']}/{c['frames']} bent-leg frames: "
@@ -87,21 +121,25 @@ def check_calibrate(out: Path, skeleton: Path) -> str:
 CHECKS = {"S-1": check_probe, "S1": check_person, "S2": check_pose}
 
 
-def main(out: Path, run: str, skeleton: Path | None = None) -> int:
+def main(out: Path, run: str, skeleton: Path | None = None, stop: str | None = None) -> int:
     stages = CALIBRATE if skeleton else STAGES
+    if stop:
+        stages = stages[:[s.name for s in stages].index(stop) + 1]
     checks = CHECKS | ({"C3": lambda o: check_calibrate(o, skeleton)} if skeleton else {})
     status = json.loads((out / "pipeline_status.json").read_text())
     got = {name: s["state"] for name, s in status["stages"].items()}
-    want = {s.name: expected(s, run) for s in stages}
+    want = {s.name: expected(s, run) for s in stages} | ({stop: "failed"} if stop else {})
     errors = []
-    if status["status"] != "ok":
+    if stop and status["status"] == "ok":
+        errors.append(f"status ok, expected a stop at {stop}")
+    elif not stop and status["status"] != "ok":
         errors.append(f"status {status['status']}: {status.get('reason')}")
     if list(got) != list(want):
         errors.append(f"stage order {list(got)}, expected {list(want)}")
     elif got != want:
         errors.append(f"states {got}, expected {want}")
     print(f"{run}: {' '.join(f'{k}={v}' for k, v in got.items())}")
-    for stage in stages:
+    for stage in (s for s in stages if s.name != stop):
         paths = [skeleton if o == SKELETON else out / o for o in stage.outputs]
         missing = [str(p) for p in paths if p is None or not p.is_file() or p.stat().st_size == 0]
         if missing:
@@ -111,11 +149,18 @@ def main(out: Path, run: str, skeleton: Path | None = None) -> int:
                 print(f"  {stage.name}: {checks[stage.name](out)}")
             except AssertionError as e:
                 errors.append(f"{stage.name}: {e}")
+    if stop and not errors:
+        print(f"  {stop}: stopped as expected: {status.get('reason')}")
     for e in errors:
         print(f"  ERROR {e}")
     return 1 if errors else 0
 
 
 if __name__ == "__main__":
-    a = sys.argv[1:]
-    sys.exit(main(Path(a[0]), a[1], Path(a[3]) if a[2:3] == ["--calibrate"] else None))
+    ap = argparse.ArgumentParser()
+    ap.add_argument("out", type=Path)
+    ap.add_argument("run", choices=("first", "rerun"))
+    ap.add_argument("--calibrate", type=Path, metavar="SKELETON_JSON")
+    ap.add_argument("--stop", choices=[s.name for s in STAGES + CALIBRATE])
+    a = ap.parse_args()
+    raise SystemExit(main(a.out, a.run, a.calibrate, a.stop))

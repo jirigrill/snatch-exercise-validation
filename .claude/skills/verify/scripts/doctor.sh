@@ -12,6 +12,7 @@ chk "halpe26 pose model cached"    "ls ~/.cache/rtmlib/hub/checkpoints/*halpe26*
   echo "     download: cd prototype && uv run python -c 'from snatch import pose; pose.load_model()'"
 chk "detector model cached"        "ls ~/.cache/rtmlib/hub/checkpoints/yolox_x_*.onnx"
 chk "ffprobe installed"            "command -v ffprobe"
+chk "ffmpeg installed"             "command -v ffmpeg"
 chk "test clips T1-T7 present"     "[ \$(ls ../vids/test/T[1-7]_*_{240,60}fps.MOV | wc -l) -eq 7 ]" ||
   echo "     rebuild per .claude/skills/verify/features/test-clips.md"
 chk "CoreML provider available"    "uv run python -c 'import onnxruntime as o; assert \"CoreMLExecutionProvider\" in o.get_available_providers()'"
