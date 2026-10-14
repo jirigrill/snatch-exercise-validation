@@ -3,7 +3,8 @@
 Pipeline v2 spec: `docs/pipeline-v2.html`. Work queue: `.scratch/plan/README.md` (next unchecked item). Code: `prototype/` (run with `uv` from there). GitHub: `jirigrill/snatch-exercise-validation`.
 
 ## Workflow
-- One checklist item = one session = one PR off main. No subagents, worktrees or pstack skills unless the user's prompt allows them.
+- One checklist item = one session = one PR off main. No pstack skills unless the user's prompt allows them.
+- Main agent (Opus) plans, reviews and verifies; it doesn't write the code. Coding goes to subagents with `model: "sonnet"`, `effort: "medium"`, each given a self-contained brief (goal, files it owns, constraints, how to verify). Independent units run as parallel subagents launched in one message, with disjoint files; units that share files run sequentially or with `isolation: "worktree"`. The main agent collects the results, reviews the combined diff against the plan, and sends fixes back to new Sonnet subagents until clean. Trivial edits (a few lines, one file) skip delegation.
 - Stop and ask on spec ambiguity instead of guessing.
 - First pass: make it work on the test clips. No optimisation or generalisation the current item doesn't need; write later improvements into the plan instead.
 - PR body: explain in plain English what the change does and how to read everything it produces (each output file, image, colour, field and number), so someone who didn't follow the session can review it without asking. When text alone isn't enough (a new stage, a changed data flow, a new kind of output), add a `/show-me:show-me` page as a screenshot (verify skill, Evidence).
