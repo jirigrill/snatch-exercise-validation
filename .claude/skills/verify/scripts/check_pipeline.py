@@ -1,11 +1,13 @@
 """Check one pipeline.py run in out/<clip> against snatch.stages.STAGES (run_clip.sh).
 
-usage: uv run python check_pipeline.py <out dir> first|rerun [--calibrate <skeleton.json>] [--stop <stage>]
+usage: uv run python check_pipeline.py <out dir> first|rerun [--calibrate <skeleton.json>] [--stop <stage>] [--reused S,S]
 
 --calibrate: the run was pipeline.py --calibrate (snatch.stages.CALIBRATE),
 and C3 wrote the skeleton.json given.
 --stop: the clip stops at this stage by design (run_clip.sh's expected stops):
 the stages up to it in the usual states, it `failed`, the status not ok.
+--reused: on the first run these stages come from stage_cache.py (same key = same
+outputs), so they are `skipped`; their content checks run all the same.
 
 Every run: status ok, the stages in pipeline order, each in the state the run
 expects, and every output of a stage that ran or was kept non-empty. Then each
@@ -34,8 +36,8 @@ WORST = 4  # frames in <overlay>_worst.jpg
 WORST_GAP = 24  # at least this many frames apart (0.1 s at 240 fps), so not 4 neighbours
 
 
-def expected(stage: Stage, run: str) -> str:
-    return "done" if stage.always or run == "first" else "skipped"
+def expected(stage: Stage, run: str, reused: frozenset[str] = frozenset()) -> str:
+    return "done" if stage.always or (run == "first" and stage.name not in reused) else "skipped"
 
 
 def worst(out: Path, overlay: str, badness: np.ndarray, what: str) -> None:
@@ -121,14 +123,15 @@ def check_calibrate(out: Path, skeleton: Path) -> str:
 CHECKS = {"S-1": check_probe, "S1": check_person, "S2": check_pose}
 
 
-def main(out: Path, run: str, skeleton: Path | None = None, stop: str | None = None) -> int:
+def main(out: Path, run: str, skeleton: Path | None = None, stop: str | None = None,
+         reused: frozenset[str] = frozenset()) -> int:
     stages = CALIBRATE if skeleton else STAGES
     if stop:
         stages = stages[:[s.name for s in stages].index(stop) + 1]
     checks = CHECKS | ({"C3": lambda o: check_calibrate(o, skeleton)} if skeleton else {})
     status = json.loads((out / "pipeline_status.json").read_text())
     got = {name: s["state"] for name, s in status["stages"].items()}
-    want = {s.name: expected(s, run) for s in stages} | ({stop: "failed"} if stop else {})
+    want = {s.name: expected(s, run, reused) for s in stages} | ({stop: "failed"} if stop else {})
     errors = []
     if stop and status["status"] == "ok":
         errors.append(f"status ok, expected a stop at {stop}")
@@ -162,5 +165,6 @@ if __name__ == "__main__":
     ap.add_argument("run", choices=("first", "rerun"))
     ap.add_argument("--calibrate", type=Path, metavar="SKELETON_JSON")
     ap.add_argument("--stop", choices=[s.name for s in STAGES + CALIBRATE])
+    ap.add_argument("--reused", default="", help="comma-separated stages restored by stage_cache.py")
     a = ap.parse_args()
-    raise SystemExit(main(a.out, a.run, a.calibrate, a.stop))
+    raise SystemExit(main(a.out, a.run, a.calibrate, a.stop, frozenset(filter(None, a.reused.split(",")))))
