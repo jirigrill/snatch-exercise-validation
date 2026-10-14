@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from snatch import skeleton as skel
 from snatch.studies import skeleton as sk
 def _leg(knee_deg: float, lt: float = 150.0, ls: float = 155.0, facing: float = 1.0):
     """Hip at origin, shank vertical below the knee, knee in front (facing)."""
@@ -14,20 +15,20 @@ def _leg(knee_deg: float, lt: float = 150.0, ls: float = 155.0, facing: float = 
 @pytest.mark.parametrize("facing", [1.0, -1.0])
 def test_two_circle_recovers_forward_knee(deg, facing):
     hip, knee, ankle = _leg(deg, facing=facing)
-    k, clipped = sk.two_circle_knee(hip, ankle, 150.0, 155.0, facing)
+    k, clipped = skel.two_circle_knee(hip, ankle, 150.0, 155.0, facing)
     assert not clipped[0]
     assert k == pytest.approx(knee, abs=1e-6)
 
 
 def test_straight_leg_too_long_is_clipped_on_the_line():
     hip, ankle = np.zeros((1, 2)), np.array([[0.0, 320.0]])
-    k, clipped = sk.two_circle_knee(hip, ankle, 150.0, 155.0)
+    k, clipped = skel.two_circle_knee(hip, ankle, 150.0, 155.0)
     assert clipped[0]
     assert k[0, 0] == pytest.approx(0.0)
 
 
 def test_gain_grows_toward_straight_leg():
-    g = [sk.knee_gain(*_leg(d)[::2], 150.0, 155.0)[0] for d in (90, 140, 170)]
+    g = [skel.knee_gain(*_leg(d)[::2], 150.0, 155.0)[0] for d in (90, 140, 170)]
     assert g[0] == pytest.approx(1.0, abs=0.05)
     assert g[0] < g[1] < g[2]
     assert g[2] > 3
@@ -46,7 +47,7 @@ def test_length_table_and_scaling():
     hip = np.vstack([g[0] for g in legs])
     knee = np.vstack([g[1] for g in legs])
     ankle = np.vstack([g[2] for g in legs])
-    tab = sk.length_table(hip, knee, ankle, d_ref=305.0)
+    tab = skel.length_table(hip, knee, ankle, d_ref=305.0)
     lt, ls = tab.lengths(np.array([200.0, 290.0]))
     assert lt == pytest.approx([150, 150])
     assert ls == pytest.approx([155, 155])
@@ -58,8 +59,8 @@ def test_length_table_and_scaling():
 def test_robust_length_and_offset():
     a = np.zeros((5, 2))
     b = np.array([[0, 10], [0, 11], [0, 12], [0, 13], [0, 100.0]])
-    assert sk.robust_length(a, b) == 12
-    assert sk.robust_length(a, b, how="p50") == 12
+    assert skel.robust_length(a, b) == 12
+    assert skel.robust_length(a, b, how="p50") == 12
     o, sd = sk.fit_offset(b, a)
     assert o == pytest.approx([0, 12])
     assert sk.wrist_from_hub(a, o)[0] == pytest.approx([0, 12])

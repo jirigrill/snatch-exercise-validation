@@ -33,6 +33,7 @@ import numpy as np
 from scipy.signal import find_peaks
 
 from snatch import pose
+from snatch import skeleton as skel
 from snatch.studies import skeleton as sk
 
 from snatch.angles import joint_angle, sagittal_angles
@@ -152,12 +153,12 @@ def main() -> None:
                 tab = sv.calib(c1, np.ones(len(c1["k"]), bool))["table"]
             hip, ank = ks[:, J["hip"]], ks[:, J["ankle"]]
             lt, ls = tab.lengths(np.hypot(*(ank - hip).T))
-            kh = sk.two_circle_knee(hip, ank, lt, ls, c["facing"])[0]
+            kh = skel.two_circle_knee(hip, ank, lt, ls, c["facing"])[0]
             a_hat = joint_angle(hip, kh, ank)
             # hybrid: rebuilt only where the pasted run's knee is inside the plate and the leg is
             # well conditioned (gain <= 2), observed elsewhere, cross-faded (snatch.studies.skeleton.fill_hidden)
             seen_hidden = np.hypot(*(kp[:, J["knee"]] - hub).T) < R_PLATE
-            gain = sk.knee_gain(hip, ank, lt, ls, c["facing"])
+            gain = skel.knee_gain(hip, ank, lt, ls, c["facing"])
             kb = sk.fill_hidden(ks[:, J["knee"]], kh, seen_hidden & (gain <= 2.0))
             a_hyb = joint_angle(hip, kb, ank)
             seg = slice(e["setup"], e["peak"] + 1)

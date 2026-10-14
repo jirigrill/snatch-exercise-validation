@@ -7,8 +7,9 @@ file that looks done. `pipeline_status.json` holds each stage's state in
 pipeline order: done, skipped (hash unchanged) or failed; a stage that --only
 or --from did not pick is up_to_date or stale. An `always` stage (a check, no
 outputs) runs every time and keeps no meta.
-`SKELETON` names the athlete's skeleton.json as an input, so a stage that lists
-it reruns when the calibration changes.
+`SKELETON` names the athlete's skeleton.json: as an input, a stage that lists
+it reruns when the calibration changes; as an output (C3), it is written to
+the athlete profile, not out/<clip>.
 """
 
 import hashlib
@@ -106,7 +107,7 @@ def _run_one(stage: Stage, ctx: Context, digest: str) -> None:
     try:
         stage.run(ctx, tmp)
         for name in stage.outputs:
-            dest = ctx.out / name
+            dest = ctx.path(name)
             dest.parent.mkdir(parents=True, exist_ok=True)
             (tmp / name).replace(dest)
         _write_json(ctx.out / f"{stage.name}.meta.json", {"hash": digest, "version": stage.version})

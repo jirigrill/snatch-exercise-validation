@@ -1,5 +1,8 @@
 """Per-lifter 2D skeleton: fill in near-side joints the near plate hides.
 
+The length table, the two-circle knee and knee_gain moved to snatch.skeleton (C3); the
+rest moves when S4b fills hidden joints.
+
 Side-on (0 deg) the near plate covers the near knee around the transition
 and the near wrist during the pull (docs/results/33-d1-views.md). The
 lifter's segment lengths are measured (in px, at one camera position) where
@@ -25,126 +28,18 @@ the joints are visible, and the hidden joint is rebuilt from visible ones
 All points are image pixels, (n, 2), y down.
 """
 
-from dataclasses import dataclass
-
 import numpy as np
 
-
-def _unit_normal(hip: np.ndarray, ankle: np.ndarray, facing: float
-                 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """(d, u, n): hip-ankle distance, unit hip->ankle, unit normal pointing
-    to the lifter's front (image +x if facing = +1)."""
-    v = np.asarray(ankle, float) - hip
-    d = np.hypot(v[:, 0], v[:, 1])
-    u = v / d[:, None]
-    n = np.stack([-u[:, 1], u[:, 0]], 1)
-    s = np.where(n[:, 0] * facing >= 0, 1.0, -1.0)
-    return d, u, n * s[:, None]
-
-
-def two_circle_knee(hip: np.ndarray, ankle: np.ndarray, l_thigh, l_shank,
-                    facing: float = 1.0) -> tuple[np.ndarray, np.ndarray]:
-    """Knee from hip, ankle and the two segment lengths (scalars or (n,)).
-
-    Returns (knee (n, 2), clipped (n,) bool). clipped: the circles do not
-    meet (d > L_t + L_s, or d < |L_t - L_s|); the knee is then put on the
-    hip-ankle line at the point the circles come closest (h = 0).
-    """
-    hip = np.asarray(hip, float)
-    lt = np.broadcast_to(np.asarray(l_thigh, float), (len(hip),))
-    ls = np.broadcast_to(np.asarray(l_shank, float), (len(hip),))
-    d, u, n = _unit_normal(hip, ankle, facing)
-    a = (lt ** 2 - ls ** 2 + d ** 2) / (2 * d)
-    h2 = lt ** 2 - a ** 2
-    clipped = h2 < 0
-    h = np.sqrt(np.where(clipped, 0.0, h2))
-    a = np.where(clipped, np.clip(a, -lt, lt), a)
-    return hip + a[:, None] * u + h[:, None] * n, clipped
-
-
-def knee_gain(hip: np.ndarray, ankle: np.ndarray, l_thigh, l_shank,
-              facing: float = 1.0, eps: float = 0.5) -> np.ndarray:
-    """px of knee movement per px of thigh-length error (numerical).
-
-    1 at a right-angle knee, grows without bound toward a straight leg.
-    """
-    k0, _ = two_circle_knee(hip, ankle, l_thigh, l_shank, facing)
-    k1, _ = two_circle_knee(hip, ankle, np.asarray(l_thigh) + eps, l_shank, facing)
-    return np.hypot(*(k1 - k0).T) / eps
+from snatch.skeleton import unit_normal
 
 
 def local_frame(hip: np.ndarray, ankle: np.ndarray, knee: np.ndarray,
                 facing: float = 1.0) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """(d, along, out): knee in the hip-ankle frame (px along hip->ankle from
     the hip, px in front of the line)."""
-    d, u, n = _unit_normal(hip, ankle, facing)
+    d, u, n = unit_normal(hip, ankle, facing)
     r = np.asarray(knee, float) - hip
     return d, (r * u).sum(1), (r * n).sum(1)
-
-
-@dataclass(frozen=True)
-class LengthTable:
-    """Thigh and shank length (px) as a function of r = d / d_ref.
-
-    edges: bin edges of r; thigh, shank: median per bin (NaN bins filled
-    from neighbours). d_ref: the reference hip-ankle distance (standing),
-    so a table carries to another clip by rescaling d_ref and the lengths.
-    """
-    edges: np.ndarray
-    thigh: np.ndarray
-    shank: np.ndarray
-    d_ref: float
-
-    def lengths(self, d: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-        centres = (self.edges[:-1] + self.edges[1:]) / 2
-        r = np.asarray(d, float) / self.d_ref
-        return (np.interp(r, centres, self.thigh), np.interp(r, centres, self.shank))
-
-    def scaled(self, s: float) -> "LengthTable":
-        return LengthTable(self.edges, self.thigh * s, self.shank * s, self.d_ref * s)
-
-
-def _fill_nan(x: np.ndarray) -> np.ndarray:
-    ok = ~np.isnan(x)
-    i = np.arange(len(x))
-    return np.interp(i, i[ok], x[ok])
-
-
-def length_table(hip: np.ndarray, knee: np.ndarray, ankle: np.ndarray,
-                 d_ref: float, n_bins: int = 12, r_lo: float = 0.4,
-                 min_n: int = 20) -> LengthTable:
-    """Binned median thigh and shank over frames with visible joints."""
-    d = np.hypot(*(np.asarray(ankle, float) - hip).T)
-    th = np.hypot(*(np.asarray(knee, float) - hip).T)
-    sh = np.hypot(*(np.asarray(ankle, float) - knee).T)
-    edges = np.linspace(r_lo, 1.05, n_bins + 1)
-    r = d / d_ref
-    b = np.digitize(r, edges) - 1
-    t_med, s_med = np.full(n_bins, np.nan), np.full(n_bins, np.nan)
-    for k in range(n_bins):
-        m = b == k
-        if m.sum() >= min_n:
-            t_med[k], s_med[k] = np.median(th[m]), np.median(sh[m])
-    return LengthTable(edges, _fill_nan(t_med), _fill_nan(s_med), float(d_ref))
-
-
-def robust_length(a: np.ndarray, b: np.ndarray, mask: np.ndarray | None = None,
-                  how: str = "median") -> float:
-    """Segment length (px) between keypoints a and b over `mask` frames.
-
-    how: "median" (use with standing frames) or "pNN" (e.g. "p90": high
-    percentile over the lift; foreshortening only shortens, noise
-    lengthens, so a high percentile below the max).
-    """
-    v = np.hypot(*(np.asarray(a, float) - b).T)
-    if mask is not None:
-        v = v[mask]
-    v = v[~np.isnan(v)]
-    if how == "median":
-        return float(np.median(v))
-    if how.startswith("p"):
-        return float(np.percentile(v, float(how[1:])))
-    raise ValueError(how)
 
 
 def fit_offset(wrist: np.ndarray, hub: np.ndarray, mask: np.ndarray | None = None

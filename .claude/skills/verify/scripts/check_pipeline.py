@@ -1,6 +1,9 @@
 """Check one pipeline.py run in out/<clip> against snatch.stages.STAGES (run_clip.sh).
 
-usage: uv run python check_pipeline.py <out dir> first|rerun
+usage: uv run python check_pipeline.py <out dir> first|rerun [--calibrate <skeleton.json>]
+
+--calibrate: the run was pipeline.py --calibrate (snatch.stages.CALIBRATE),
+and C3 wrote the skeleton.json given.
 
 Every run: status ok, the stages in pipeline order, each in the state the run
 expects, and every output of a stage that ran or was kept non-empty. Then each
@@ -15,8 +18,8 @@ from pathlib import Path
 
 import numpy as np
 
-from snatch.stage import Stage
-from snatch.stages import STAGES
+from snatch.stage import SKELETON, Stage
+from snatch.stages import CALIBRATE, STAGES
 
 
 def expected(stage: Stage, run: str) -> str:
@@ -58,13 +61,38 @@ def check_pose(out: Path) -> str:
     return f"{posed} frames posed, facing {face}, median best ankle score {ankle:.2f}"
 
 
+def check_calibrate(out: Path, skeleton: Path) -> str:
+    face = json.loads((out / "facing.json").read_text())["facing"]
+    side = {"right": "r", "left": "l"}[face]
+    e = json.loads(skeleton.read_text()).get(side)
+    assert e is not None, f"{skeleton} has no {side} side (facing {face})"
+    assert e["clip"] == str(np.load(out / "raw_pose.npz")["clip"]), f"{side} side fitted on {e['clip']}"
+    th, sh = np.asarray(e["thigh"]), np.asarray(e["shank"])
+    assert len(th) == len(sh) == len(e["edges"]) - 1 and not np.isnan(th).any() and not np.isnan(sh).any(), \
+        "length table has gaps"
+    assert e["bins_measured"] >= 3, f"{e['bins_measured']} bins measured"
+    assert th.min() + sh.min() < e["d_ref"] < th.max() + sh.max() + 10, \
+        f"standing hip-ankle {e['d_ref']:.0f} px does not fit thigh + shank"
+    c = json.loads((out / "calibration.json").read_text())
+    assert c["side"] == side, f"calibration.json is for side {c['side']}"
+    assert not {"knee_err_px", "rebuilt_frames"} & set(e), "self-test values in skeleton.json"
+    err = c["knee_err_px"]
+    assert err["median"] < 10, f"rebuilt knee median {err['median']} px off the visible knee"
+    return (f"{side} side, d_ref {e['d_ref']:.0f} px, thigh {th.min():.0f}-{th.max():.0f} px, "
+            f"shank {sh.min():.0f}-{sh.max():.0f} px, {e['bins_measured']}/{len(th)} bins measured "
+            f"(r {e['r_range'][0]}-{e['r_range'][1]}), knee rebuilt on {c['rebuilt_frames']}/{c['frames']} bent-leg frames: "
+            f"median {err['median']} / p90 {err['p90']} / max {err['max']} px off the visible knee")
+
+
 CHECKS = {"S-1": check_probe, "S1": check_person, "S2": check_pose}
 
 
-def main(out: Path, run: str) -> int:
+def main(out: Path, run: str, skeleton: Path | None = None) -> int:
+    stages = CALIBRATE if skeleton else STAGES
+    checks = CHECKS | ({"C3": lambda o: check_calibrate(o, skeleton)} if skeleton else {})
     status = json.loads((out / "pipeline_status.json").read_text())
     got = {name: s["state"] for name, s in status["stages"].items()}
-    want = {s.name: expected(s, run) for s in STAGES}
+    want = {s.name: expected(s, run) for s in stages}
     errors = []
     if status["status"] != "ok":
         errors.append(f"status {status['status']}: {status.get('reason')}")
@@ -73,13 +101,14 @@ def main(out: Path, run: str) -> int:
     elif got != want:
         errors.append(f"states {got}, expected {want}")
     print(f"{run}: {' '.join(f'{k}={v}' for k, v in got.items())}")
-    for stage in STAGES:
-        missing = [o for o in stage.outputs if not (out / o).is_file() or (out / o).stat().st_size == 0]
+    for stage in stages:
+        paths = [skeleton if o == SKELETON else out / o for o in stage.outputs]
+        missing = [str(p) for p in paths if p is None or not p.is_file() or p.stat().st_size == 0]
         if missing:
             errors.append(f"{stage.name}: missing {missing}")
-        elif run == "first" and stage.name in CHECKS:
+        elif run == "first" and stage.name in checks:
             try:
-                print(f"  {stage.name}: {CHECKS[stage.name](out)}")
+                print(f"  {stage.name}: {checks[stage.name](out)}")
             except AssertionError as e:
                 errors.append(f"{stage.name}: {e}")
     for e in errors:
@@ -88,4 +117,5 @@ def main(out: Path, run: str) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(Path(sys.argv[1]), sys.argv[2]))
+    a = sys.argv[1:]
+    sys.exit(main(Path(a[0]), a[1], Path(a[3]) if a[2:3] == ["--calibrate"] else None))
