@@ -9,8 +9,8 @@ Pipeline v2 spec: `docs/pipeline-v2.html`. Work queue: `.scratch/plan/README.md`
 
 ## Checks after each commit to the branch/PR
 1. `uv run pytest -q` passes; `uv run pyright` error count ≤ 20.
-2. Run the `/verify` skill: `run_clip.sh` on T1 (pipeline v2). Look at every frame sheet (`overlays/*.jpg`) and write one line per sheet on what it shows (e.g. "1_person_sheet: box on the lifter in all 8 frames"). Push, then `publish_evidence.sh <evidence root> "<those lines>"` (PR comment + branch `evidence/pr-<n>`, deleted when the PR closes).
-3. Milestone items only: T1–T7 vs main, every diff explained. T7 = 0 reps (standup); T5 exit 6 (once S3 exists; add it to run_clip.sh as an expected stop).
+2. Run the `/verify` skill: `run_clip.sh` on T1 (pipeline v2). Look at every frame sheet (`overlays/*.jpg`) and write one line per sheet on what it shows (e.g. "1_person_sheet: box on the lifter in all 8 frames"); for a `*_worst.jpg`, name each of its frames and what is right or wrong there. Push, then `publish_evidence.sh <evidence root> "<those lines>"` (PR comment + branch `evidence/pr-<n>`, deleted when the PR closes; the local root goes at the next session start, `sweep_evidence.sh`).
+3. Milestone items only: T1–T7 vs main, every diff explained. T7 = 0 reps (standup); T5 exit 6 (once S3 exists; add it to `expected_stop` in run_clip.sh).
 
 A FAIL (or a sheet that looks wrong) means fix and rerun, or stop and report it in the PR. Never finish with a failing check.
 A Stop hook (`.claude/hooks/require-evidence.sh`) blocks finishing on a PR branch until HEAD is pushed and the PR has ✅ evidence for it (or for an earlier commit with the same `prototype/` and verify scripts).
