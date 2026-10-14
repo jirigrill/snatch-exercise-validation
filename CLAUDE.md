@@ -1,12 +1,12 @@
 # snatch-exercise-validation
 
-Pipeline v2 spec: `docs/pipeline-v2.html`. Work queue: `.scratch/plan/README.md` (next unchecked item). Code: `prototype/` (run with `uv` from there). GitHub: `jirigrill/snatch-exercise-validation` (the local folder name is misspelled `excercise`; use `gh` without `-R`).
+Pipeline v2 spec: `docs/pipeline-v2.html`. Work queue: `.scratch/plan/README.md` (next unchecked item). Code: `prototype/` (run with `uv` from there). GitHub: `jirigrill/snatch-exercise-validation`.
 
 ## Workflow
 - One checklist item = one session = one PR off main. No subagents, worktrees or pstack skills unless the user's prompt allows them.
 - Stop and ask on spec ambiguity instead of guessing.
 - First pass: make it work on the test clips. No optimisation or generalisation the current item doesn't need; write later improvements into the plan instead.
-- PR body: explain in plain English what the change does and how to read everything it produces (each output file, image, colour, field and number), so someone who didn't follow the session can review it without asking.
+- PR body: explain in plain English what the change does and how to read everything it produces (each output file, image, colour, field and number), so someone who didn't follow the session can review it without asking. When text alone isn't enough (a new stage, a changed data flow, a new kind of output), add a `/show-me:show-me` page as a screenshot (verify skill, Evidence).
 - Finish: commit, push, open a PR (not draft) with the check results, publish the evidence to it, then stop. Never merge unless asked.
 
 ## Checks after each commit to the branch/PR
