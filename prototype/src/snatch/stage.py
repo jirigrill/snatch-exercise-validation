@@ -153,7 +153,7 @@ def run_stages(
     pick = only or start
     first = names.index(pick) if pick else 0
     chosen = stages[first:first + 1] if only else stages[first:]
-    # checks (always stages) before the pick still gate it: --from S5a must not skip S0
+    # checks (always stages) before the pick still gate it: --from S3 must not skip S0
     chosen = [s for s in stages[:first] if s.always] + list(chosen)
     producers = {o: s.name for s in stages for o in s.outputs}
 

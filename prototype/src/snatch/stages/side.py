@@ -1,6 +1,6 @@
-"""Side check after S2: the athlete needs a skeleton for the clip's near side.
+"""Side check after S4: the athlete needs a skeleton for the clip's near side.
 
-The near side follows from facing.json (S2). S0 only checks that skeleton.json
+The near side follows from facing.json (S4). S0 only checks that skeleton.json
 exists; a clip filmed from the other side than the calibration stops here with
 exit 2. Not hashed and runs every time, like S0, so a recalibration does not
 rerun pose.

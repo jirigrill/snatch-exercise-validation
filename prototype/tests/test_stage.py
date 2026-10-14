@@ -178,14 +178,14 @@ def test_skeleton_input_resolves_to_the_athlete_dir_and_is_hashed(tmp_path: Path
     ctx = Context(clip, tmp_path / "out", {"athlete": "jiri"}, athletes=tmp_path / "ath")
     assert ctx.path(SKELETON) == tmp_path / "ath" / "jiri" / "skeleton.json"
     calls: list[str] = []
-    stages = [Stage("S4b", (CLIP, SKELETON), ("S4b.txt",), _writer("S4b", calls))]
+    stages = [Stage("S6", (CLIP, SKELETON), ("S6.txt",), _writer("S6", calls))]
     ctx.path(SKELETON).parent.mkdir(parents=True)
     ctx.path(SKELETON).write_text("1")
     run_stages(stages, ctx, log=_quiet)
     run_stages(stages, ctx, log=_quiet)
     ctx.path(SKELETON).write_text("2")
     run_stages(stages, ctx, log=_quiet)
-    assert calls == ["S4b", "S4b"]
+    assert calls == ["S6", "S6"]
 
 
 def test_always_stage_runs_every_time_without_meta(ctx: Context) -> None:
@@ -219,14 +219,14 @@ def test_stop_keeps_the_outputs_but_writes_no_meta(ctx: Context) -> None:
     calls: list[str] = []
 
     def stop(c: Context, tmp: Path) -> None:
-        calls.append("S3")
-        (tmp / "S3.txt").write_text("check image")  # S3b.txt is never written
+        calls.append("S2")
+        (tmp / "S2.txt").write_text("check image")  # S2b.txt is never written
         raise StageStop(6, "bar_only", "no plate")
     ctx.out.mkdir()
-    (ctx.out / "S3.meta.json").write_text('{"hash": "from an earlier run that passed"}')
-    stages = [Stage("S3", (CLIP,), ("S3.txt", "S3b.txt"), stop)]
+    (ctx.out / "S2.meta.json").write_text('{"hash": "from an earlier run that passed"}')
+    stages = [Stage("S2", (CLIP,), ("S2.txt", "S2b.txt"), stop)]
     assert run_stages(stages, ctx, force=True, log=_quiet) == 6
-    assert (ctx.out / "S3.txt").read_text() == "check image"
-    assert not (ctx.out / "S3b.txt").exists() and not (ctx.out / "S3.meta.json").exists()
+    assert (ctx.out / "S2.txt").read_text() == "check image"
+    assert not (ctx.out / "S2b.txt").exists() and not (ctx.out / "S2.meta.json").exists()
     assert run_stages(stages, ctx, log=_quiet) == 6
-    assert calls == ["S3", "S3"]
+    assert calls == ["S2", "S2"]

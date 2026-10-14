@@ -68,7 +68,7 @@ fail() { echo "FAIL: $1" | tee -a "$log"; exit 1; }
 expected_stop() {  # expected_stop <clip id>: "<exit> <stage>" when the clip stops by design
   case $1 in
     T4) echo "2 side" ;;  # faces left; T5 calibrates the right side only
-    T5) echo "6 S3" ;;  # bar-only clip given to analyze: no plate (hough_share < 0.5) -> exit 6
+    T5) echo "6 S2" ;;  # bar-only clip given to analyze: no plate (hough_share < 0.5) -> exit 6
   esac
 }
 rm -rf "$out"

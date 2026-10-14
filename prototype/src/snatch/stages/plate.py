@@ -1,4 +1,4 @@
-"""S3: track the near plate in every frame (snatch.plate), check the track, draw it.
+"""S2: track the near plate in every frame (snatch.plate), check the track, draw it.
 
 Outputs
 - plate.npz: the per-frame arrays of plate.detect (`found`, hub_x/hub_y = the bar axis in rotated frame px,
@@ -15,7 +15,7 @@ Outputs
 - plate_check.jpg: zoomed crops around the plate at ~18 frames (evenly spaced, highest and lowest hub, up
   to 2 not found). Green ring = outline fitted as a circle/ellipse, yellow = the Hough circle itself (fit
   failed), red dot = hub. Check that the ring sits on the rim.
-- overlays/3_plate.mp4: ring + hub dot + the hub path of the last 0.5 s. Green = the check passed, orange =
+- overlays/2_plate.mp4: ring + hub dot + the hub path of the last 0.5 s. Green = the check passed, orange =
   `passed` is False.
 
 Stops (outputs are still written, no meta, so the stage reruns)
@@ -39,7 +39,7 @@ from snatch.video import ClipInfo, frames, probe
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-OVERLAY = "overlays/3_plate.mp4"
+OVERLAY = "overlays/2_plate.mp4"
 DEFAULT_RADIUS = (65.0, 260.0)  # px: v3 clips (camera far) ~95, v1 clips ~170
 BAR_ONLY_EXIT = 6
 TRACK_FAILED_EXIT = 4
@@ -197,7 +197,7 @@ def run(ctx: Context, tmp: Path) -> None:
     path = str(ctx.clip)
     res = plate.detect(lambda: frames(path, info), t, r_min=float(lo), r_max=float(hi),
                        max_speed_px_s=plate.MAX_SPEED_PX_S * info.width / 1080, model="circle",
-                       progress=lambda s, i: print(f"S3 {s} {i}/{info.n_frames}", flush=True)
+                       progress=lambda s, i: print(f"S2 {s} {i}/{info.n_frames}", flush=True)
                        if i % 500 == 0 else None)
     passed, reasons, stop, stats = check(res, t, info.width, ctx.clip.name, (lo, hi))
     status = "ok" if not reasons else "check: " + "; ".join(reasons)
@@ -213,11 +213,11 @@ def run(ctx: Context, tmp: Path) -> None:
         (tmp / OVERLAY).parent.mkdir(parents=True, exist_ok=True)
         overlay.render(path, str(tmp / OVERLAY), plate=arrays, step=4, zoom=True,
                        notes=("ring, hub, 0.5 s trail", "green: ok", "orange: check"))
-    print(f"S3 {status}; hough_share {stats['hough_share']:.2f} moving_found {stats['moving_found']:.2f} "
+    print(f"S2 {status}; hough_share {stats['hough_share']:.2f} moving_found {stats['moving_found']:.2f} "
           f"ppm_spread {stats['ppm_spread']:.3f}", flush=True)
     if stop:
         raise stop
 
 
-STAGE = Stage("S3", (CLIP, "clip.json", "frame_times.npy"),
+STAGE = Stage("S2", (CLIP, "clip.json", "frame_times.npy"),
               ("plate.npz", "plate.csv", "bar_path.png", "plate_check.jpg", OVERLAY), run, params=("radius",))

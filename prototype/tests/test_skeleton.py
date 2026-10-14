@@ -20,7 +20,7 @@ def test_straight_leg_too_long_is_clipped_on_the_line():
 
 
 def test_gain_grows_toward_straight_leg():
-    """R3: the knee gain grows as the leg straightens (S4b keeps RTMPose above MAX_GAIN)."""
+    """R3: the knee gain grows as the leg straightens (S6 keeps RTMPose above MAX_GAIN)."""
     g = [skel.knee_gain(hip, ankle, 150.0, 155.0)[0]
          for hip, _, ankle in map(_leg, (90, 140, 170))]
     assert g[0] == pytest.approx(1.0, abs=0.05)
@@ -29,7 +29,7 @@ def test_gain_grows_toward_straight_leg():
 
 
 def test_fill_hidden_switches_smoothly():
-    """R3: S4b's fill switches between RTMPose and the rebuilt knee without a jump (moves with S4b)."""
+    """R3: S6's fill switches between RTMPose and the rebuilt knee without a jump (moves with S6)."""
     n = 100
     obs = np.zeros((n, 2))
     reb = np.ones((n, 2))
