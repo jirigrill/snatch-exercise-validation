@@ -12,7 +12,9 @@ script when given --overlay (`call_script`). Each layer is optional:
           second, the left side darker; only frames posed in both are shown, each
           labelled with the largest joint distance between the runs, red border
           above `flag_px`. Grey = a joint scored under FADE_SCORE.
-- plate:  plate outline (ellipse, orange) and hub
+- plate:  plate outline (ellipse) and hub, plus a trail of the hub over the last
+          TRAIL_S seconds of found frames. Orange; green when the plate dict has
+          passed=True (S3's sanity check), orange also when passed=False.
 - boxes:  also draw the crop given to the pose model (yellow)
 """
 
@@ -38,6 +40,8 @@ POSE_COLORS = ((0, 255, 0), (255, 0, 255))  # two runs: green, magenta; left sid
 PERSON_COLOR = (255, 200, 0)  # BGR: light blue
 CROP_COLOR = (0, 255, 255)  # BGR: yellow
 PLATE_COLOR = (0, 140, 255)  # BGR: orange
+PLATE_OK_COLOR = (0, 220, 0)  # BGR: green, plate track that passed S3's check
+TRAIL_S = 0.5  # seconds of hub path drawn behind the hub
 GAP_COLOR = (0, 0, 255)  # BGR: red
 FADED_COLOR = (150, 150, 150)  # BGR: grey, a joint under FADE_SCORE
 FADE_SCORE = 0.3
@@ -105,6 +109,14 @@ def _skeleton(img: np.ndarray, k: np.ndarray, colors: tuple[tuple[int, int, int]
             cv2.circle(img, tuple(map(int, p)), 4 if faded else 6, FADED_COLOR if faded else point_color[i], -1)
 
 
+def hub_trail(plate: Arrays, i: int) -> np.ndarray:
+    """(k, 2) int hub positions of the found frames in the TRAIL_S seconds up to frame i."""
+    found = np.asarray(plate["found"], bool)
+    t = np.asarray(plate["t"])
+    idx = np.flatnonzero(found[:i + 1] & (t[:i + 1] > t[i] - TRAIL_S))
+    return np.column_stack([plate["hub_x"][idx], plate["hub_y"][idx]]).astype(int)
+
+
 def pose_colors(n_runs: int) -> list[tuple[tuple[int, int, int], ...]]:
     """(left, right, centre) per run: red/green/white for one run, the run color (left darker) for two."""
     if n_runs == 1:
@@ -166,8 +178,11 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
             labels.append("person: detected" if seen else "person: missed" if gap else "person: interpolated")
         if plate is not None and bool(plate["found"][i]):
             c = (int(plate["hub_x"][i]), int(plate["hub_y"][i]))
+            color = PLATE_OK_COLOR if "passed" in plate and bool(plate["passed"]) else PLATE_COLOR
             cv2.ellipse(img, c, (int(plate["a"][i]), int(plate["b"][i])),
-                        float(plate["angle"][i]), 0, 360, PLATE_COLOR, 4)
+                        float(plate["angle"][i]), 0, 360, color, 4)
+            if "t" in plate:
+                cv2.polylines(img, [hub_trail(plate, i).reshape(-1, 1, 2)], False, color, 3)
             cv2.circle(img, c, 8, (0, 0, 255), -1)
         for p, colors in zip(poses, pose_colors(len(poses))):
             if boxes:

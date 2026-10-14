@@ -1,6 +1,11 @@
 """Reuse a stage's outputs on T1 when an exact key says a fresh run would give the same.
 
-usage: uv run python stage_cache.py restore|store <out dir> <athletes> <clip> <cache dir>   (from prototype/)
+usage: uv run python stage_cache.py restore|store [--calibrate] <out dir> <athletes> <clip> <cache dir>   (from prototype/)
+
+--calibrate: the run was `pipeline.py --calibrate <clip>` (snatch.stages.CALIBRATE), else an analyze run
+(STAGES). The key does not name the list, so a stage with the same key is shared by both lists when
+<cache dir> is the same (run_clip.sh: cache/stage/<clip stem>). A stage that writes SKELETON (the athlete
+store, outside <out dir>) is not cacheable: restore stops there, store skips it.
 
 The key of a hashed stage covers what a fresh run depends on: its name, version and
 params, the content of its input files (npz: every array but VOLATILE), its code and
@@ -27,7 +32,7 @@ from pathlib import Path
 import numpy as np
 
 from snatch.stage import CLIP, SKELETON, Context, Stage, stage_hash
-from snatch.stages import STAGES
+from snatch.stages import CALIBRATE, STAGES
 
 from stage_files import code_files  # pyright: ignore[reportMissingImports]  (run as a script: its dir is on sys.path)
 
@@ -71,17 +76,27 @@ def outputs(stage: Stage) -> list[str]:
     return [o for o in stage.outputs if o != SKELETON]
 
 
-def main(mode: str, out: Path, athletes: Path, clip: Path, cache: Path) -> int:
+def cacheable(stage: Stage) -> bool:
+    return SKELETON not in stage.outputs
+
+
+def main(mode: str, out: Path, athletes: Path, clip: Path, cache: Path, calibrate: bool = False) -> int:
     spec = importlib.util.spec_from_file_location("pipeline", "scripts/pipeline.py")
     assert spec and spec.loader
     pipeline = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(pipeline)
-    ctx, _ = pipeline.parse([str(clip), "--athlete", "verify", "--height", "1.73", "--out", str(out),
-                             "--athletes", str(athletes)])
+    ctx, _ = pipeline.parse([*(["--calibrate"] if calibrate else []), str(clip), "--athlete", "verify",
+                             "--height", "1.73", "--out", str(out), "--athletes", str(athletes)])
     env = env_key()
     reused = []
     status = json.loads((out / "pipeline_status.json").read_text())["stages"] if mode == "store" else {}
-    for stage in (s for s in STAGES if not s.always):
+    for stage in (s for s in (CALIBRATE if calibrate else STAGES) if not s.always):
+        if not cacheable(stage):
+            if mode == "restore":
+                break
+            continue
+        if mode == "store" and status.get(stage.name, {}).get("state") not in ("done", "skipped"):
+            continue  # not run (a stop before it) or stopped here: no outputs
         k = key(stage, ctx, env)
         entry = cache / stage.name / str(k)
         if mode == "restore":
@@ -118,5 +133,5 @@ def main(mode: str, out: Path, athletes: Path, clip: Path, cache: Path) -> int:
 
 
 if __name__ == "__main__":
-    a = sys.argv[1:]
-    sys.exit(main(a[0], Path(a[1]), Path(a[2]), Path(a[3]), Path(a[4])))
+    a = [x for x in sys.argv[1:] if x != "--calibrate"]
+    sys.exit(main(a[0], Path(a[1]), Path(a[2]), Path(a[3]), Path(a[4]), "--calibrate" in sys.argv[1:]))

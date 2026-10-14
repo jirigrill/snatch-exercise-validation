@@ -18,6 +18,10 @@
 # code and imports, input contents, params, pipeline.py, uv.lock, models, macOS) has a
 # cached output is restored, in pipeline order up to the first miss; pipeline.py reports
 # those `skipped`, check_pipeline.py --reused expects that and still checks their content.
+# The calibrate run (CALIBRATE list) is reused and stored the same way, in stage/<T5 stem>/
+# (also after a whole-calibration cache hit); a stage's key does not name the list, so the
+# stages both lists share are computed once, and an analyze run of T5 reuses them. A stage
+# writing the athlete skeleton (C3) is not cacheable: restore stops there, store skips it.
 # After a passing run each stage is stored; a fresh run (VERIFY_NO_CACHE=1) of a stage
 # whose key is cached must give the same content, else FAIL (the key misses something).
 # A passing result is cached in .scratch/verify/cache/<clip>/<key>/. The key covers the
@@ -64,6 +68,7 @@ fail() { echo "FAIL: $1" | tee -a "$log"; exit 1; }
 expected_stop() {  # expected_stop <clip id>: "<exit> <stage>" when the clip stops by design
   case $1 in
     T4) echo "2 side" ;;  # faces left; T5 calibrates the right side only
+    T5) echo "6 S3" ;;  # bar-only clip given to analyze: no plate (hough_share < 0.5) -> exit 6
   esac
 }
 rm -rf "$out"
@@ -100,7 +105,7 @@ pipeline() {  # pipeline <run label> <check run> <out> [pipeline.py options]: cl
     [[ $check == first ]] && rm -rf "$o" && { [[ $1 != --calibrate ]] || rm -rf "$athletes/verify"; } && reused=
   done
   [[ $rc == "$want_rc" ]] || { tail -20 "$log"; fail "$run: pipeline.py exit $rc (expected $want_rc), see $log"; }
-  [[ $check == first && -n $reused && $1 != --calibrate ]] && opts+=(--reused "$reused")
+  [[ $check == first && -n $reused ]] && opts+=(--reused "$reused")
   uv run python "$here/check_pipeline.py" "$o" "$check" "${opts[@]}" | sed "s/^$check:/$run:/" | tee -a "$log"
   [[ ${PIPESTATUS[0]} == 0 ]] || fail "$run: check, see $log"
 }
@@ -122,17 +127,26 @@ worst() {  # worst <mp4>: the clip frames in <name>.worst (check_pipeline.py), 4
 calkey=$( { stat -f '%z %m' "$bar"; uv run python "$here/stage_files.py" calibrate | xargs cat
             cat scripts/pipeline.py uv.lock "$here"/*.sh "$here"/*.py; } | shasum | cut -c1-16)
 calcache=$root/.scratch/verify/cache/calibrate/$calkey
+barstages=$root/.scratch/verify/cache/stage/$cb
 if [[ $(cat "$calout/.key" 2>/dev/null) != "$calkey" ]]; then
   rm -rf "$calout" "$athletes/verify"
   if [[ -z $VERIFY_NO_CACHE && -f $calcache/.done ]]; then
     cp -R "$calcache/calout" "$calout" && mkdir -p "$athletes" && cp -R "$calcache/athletes/verify" "$athletes/"
     grep -E '^(calibrate|retry|  )' "$calcache/log" | sed '1s/^/(cached) /' | tee -a "$log"
   else
+    REUSED=
+    if [[ -z $VERIFY_NO_CACHE ]]; then
+      REUSED=$(uv run python "$here/stage_cache.py" restore --calibrate "$calout" "$athletes" "$bar" "$barstages") ||
+        fail "stage cache restore (calibrate), see above"
+      [[ -z $REUSED ]] || echo "reused (stage cache, calibrate): $REUSED" | tee -a "$log"
+    fi
     pipeline calibrate first "$calout" --calibrate "$bar"
     rm -rf "$calcache.tmp" && mkdir -p "$calcache.tmp/athletes" && cp -R "$calout" "$calcache.tmp/calout" &&
       cp -R "$athletes/verify" "$calcache.tmp/athletes/" && grep -A20 '^calibrate: ' "$log" | grep -v '^==' >"$calcache.tmp/log" &&
       touch "$calcache.tmp/.done" && rm -rf "$calcache" && mv "$calcache.tmp" "$calcache"
   fi
+  uv run python "$here/stage_cache.py" store --calibrate "$calout" "$athletes" "$bar" "$barstages" | tee -a "$log"
+  [[ ${PIPESTATUS[0]} == 0 ]] || fail "stage cache store (calibrate), see $log"
   echo "$calkey" >"$calout/.key"
 fi
 pipeline "calibrate rerun" rerun "$calout" --calibrate "$bar"

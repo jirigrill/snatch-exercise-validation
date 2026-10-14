@@ -75,11 +75,12 @@ needs_ffmpeg = pytest.mark.skipif(not shutil.which("ffmpeg"), reason="needs ffmp
 
 
 @needs_ffmpeg
-def test_bad_clip_leaves_no_sheet(tmp_path: Path) -> None:
-    """R1: a stopped probe writes no clip sheet."""
+def test_bad_clip_keeps_the_sheet_but_no_meta(tmp_path: Path) -> None:
+    """R1: a stopped probe still has its clip sheet (PSTOP: written when decodable), no clip.json or meta."""
     ctx = Context(_clip(tmp_path / "a_240fps.mp4", 1), tmp_path / "out")
     assert run_stages([STAGE], ctx, log=lambda _: None) == 3
-    assert not (ctx.out / "overlays" / "0_clip_sheet.jpg").exists()
+    assert (ctx.out / "overlays" / "0_clip_sheet.jpg").exists()
+    assert not (ctx.out / "S-1.meta.json").exists() and not (ctx.out / "clip.json").exists()
 
 
 @needs_ffmpeg
