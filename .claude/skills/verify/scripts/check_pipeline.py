@@ -73,11 +73,14 @@ def check_calibrate(out: Path, skeleton: Path) -> str:
     assert e["bins_measured"] >= 3, f"{e['bins_measured']} bins measured"
     assert th.min() + sh.min() < e["d_ref"] < th.max() + sh.max() + 10, \
         f"standing hip-ankle {e['d_ref']:.0f} px does not fit thigh + shank"
-    err = e["knee_err_px"]
+    c = json.loads((out / "calibration.json").read_text())
+    assert c["side"] == side, f"calibration.json is for side {c['side']}"
+    assert not {"knee_err_px", "rebuilt_frames"} & set(e), "self-test values in skeleton.json"
+    err = c["knee_err_px"]
     assert err["median"] < 10, f"rebuilt knee median {err['median']} px off the visible knee"
     return (f"{side} side, d_ref {e['d_ref']:.0f} px, thigh {th.min():.0f}-{th.max():.0f} px, "
             f"shank {sh.min():.0f}-{sh.max():.0f} px, {e['bins_measured']}/{len(th)} bins measured "
-            f"(r {e['r_range'][0]}-{e['r_range'][1]}), knee rebuilt on {e['rebuilt_frames']}/{e['frames']} frames: "
+            f"(r {e['r_range'][0]}-{e['r_range'][1]}), knee rebuilt on {c['rebuilt_frames']}/{c['frames']} bent-leg frames: "
             f"median {err['median']} / p90 {err['p90']} / max {err['max']} px off the visible knee")
 
 

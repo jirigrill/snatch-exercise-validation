@@ -2,13 +2,15 @@
 
 --calibrate runs S-1, S0, S1 and S2 on the bar-only clip (C1 and C2 of the
 spec are the same stages), then this. It writes the near side's entry of
-athletes/<athlete>/skeleton.json, keeping the other side's, and
-calibration_overlay.mp4, a self-test of the table: green = RTMPose (smoothed,
-as fitted), magenta = the same pose with the near knee rebuilt from hip, ankle
-and the table, in the frames where S4b would rebuild it (snatch.skeleton.fit:
-the leg bent enough). Elsewhere magenta is RTMPose's knee, so it covers green.
-The knee is visible on a bar-only clip, so magenta should sit on green. Too few
-usable frames stops with exit 3 (clip unusable).
+athletes/<athlete>/skeleton.json (the measurements only), keeping the other
+side's, and a self-test of the table: calibration.json (its numbers) and
+calibration_overlay.mp4: green = RTMPose (smoothed, as fitted), magenta = the
+same pose with the near knee rebuilt from hip, ankle and the table wherever
+S4b could rebuild it (snatch.skeleton.fit: the leg bent enough; a bar-only
+clip has no plate, so not only where a plate would hide the knee). Elsewhere
+magenta is RTMPose's knee, so it covers green. The knee is visible on a
+bar-only clip, so magenta should sit on green. Too few usable frames stops
+with exit 3 (clip unusable).
 """
 
 import json
@@ -32,13 +34,14 @@ def run(ctx: Context, tmp: Path) -> None:
     facing = json.loads(ctx.path("facing.json").read_text())["facing"]
     side = SIDE_OF[facing]
     try:
-        entry, k, rebuilt = skeleton.fit(raw["keypoints"], raw["scores"], raw["t"], facing)
+        entry, test, k, rebuilt = skeleton.fit(raw["keypoints"], raw["scores"], raw["t"], facing)
     except skeleton.FitError as e:
         raise StageStop(UNUSABLE_EXIT, "calibration_failed", f"cannot fit the {side} skeleton: {e}") from None
     entry = {**entry, "clip": ctx.clip.name, "width": int(raw["width"]), "height": int(raw["height"]),
              "fitted": datetime.now(timezone.utc).isoformat(timespec="seconds")}
     sk = athlete_store.load(ctx.athletes, str(ctx.params["athlete"]), athlete_store.SKELETON) or {}
     (tmp / SKELETON).write_text(json.dumps({**sk, side: entry}, indent=2) + "\n")
+    (tmp / "calibration.json").write_text(json.dumps({"side": side, **test}, indent=2) + "\n")
 
     fitted = {"keypoints": k, "scores": raw["scores"]}
     with_knee = k.copy()
@@ -49,4 +52,4 @@ def run(ctx: Context, tmp: Path) -> None:
                    step=4, zoom=True, flag_px=FLAG_PX, notes=("green: RTMPose", "magenta: rebuilt", f"{side} knee, bent leg"))
 
 
-STAGE = Stage("C3", (CLIP, "raw_pose.npz", "facing.json"), (SKELETON, OVERLAY), run)
+STAGE = Stage("C3", (CLIP, "raw_pose.npz", "facing.json"), (SKELETON, "calibration.json", OVERLAY), run)

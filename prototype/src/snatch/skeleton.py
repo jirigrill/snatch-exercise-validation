@@ -161,12 +161,15 @@ class FitError(ValueError):
 
 
 def fit(keypoints: np.ndarray, scores: np.ndarray, t: np.ndarray, facing: str
-        ) -> tuple[dict, np.ndarray, np.ndarray]:
+        ) -> tuple[dict, dict, np.ndarray, np.ndarray]:
     """Fit the near side's length table on a bar-only clip's raw pose.
 
-    Returns (skeleton.json entry, smoothed keypoints, rebuilt near knee (n, 2)
-    where S4b would rebuild it (circles meet, gain <= MAX_GAIN), NaN elsewhere;
-    knee_err_px compares it with the visible knee there). FitError when fewer than
+    Returns (skeleton.json entry: the measurements only; self-test: the knee
+    rebuilt from hip, ankle and the table wherever S4b could rebuild it (circles
+    meet, gain <= MAX_GAIN: the leg bent enough), vs the visible knee there;
+    smoothed keypoints; that rebuilt near knee (n, 2), NaN elsewhere). Whether
+    a plate hides the knee is not known on a bar-only clip, so the self-test
+    also covers bent-leg frames S4b would leave alone. FitError when fewer than
     MIN_STANDING standing frames or MIN_BINS filled bins.
     """
     side = "r" if facing == "right" else "l"
@@ -189,7 +192,7 @@ def fit(keypoints: np.ndarray, scores: np.ndarray, t: np.ndarray, facing: str
     sign = 1.0 if facing == "right" else -1.0
     lt, ls = tab.lengths(np.hypot(*(ank - hip).T))
     test, clipped = two_circle_knee(hip, ank, lt, ls, sign)
-    # the frames S4b would rebuild: circles meet and the leg is bent enough (gain <= MAX_GAIN)
+    # the frames S4b could rebuild: circles meet and the leg is bent enough (gain <= MAX_GAIN)
     good = used & ~clipped & (knee_gain(hip, ank, lt, ls, sign) <= MAX_GAIN)
     rebuilt = np.full_like(knee, np.nan)
     rebuilt[good] = test[good]
@@ -197,8 +200,9 @@ def fit(keypoints: np.ndarray, scores: np.ndarray, t: np.ndarray, facing: str
     r = np.hypot(*(ank[used] - hip[used]).T) / d_ref
     entry = {"facing": facing, **tab.to_json(), "bins_measured": filled,
              "r_range": [round(float(r.min()), 3), round(float(r.max()), 3)],
-             "frames": int(used.sum()), "standing_frames": int(stand.sum()), "rebuilt_frames": int(good.sum()),
-             "knee_err_px": {"median": round(float(np.median(err)), 2),
-                             "p90": round(float(np.percentile(err, 90)), 2),
-                             "max": round(float(err.max()), 2)}}
-    return entry, k, rebuilt
+             "frames": int(used.sum()), "standing_frames": int(stand.sum())}
+    test = {"frames": int(used.sum()), "rebuilt_frames": int(good.sum()),
+            "knee_err_px": {"median": round(float(np.median(err)), 2),
+                            "p90": round(float(np.percentile(err, 90)), 2),
+                            "max": round(float(err.max()), 2)}}
+    return entry, test, k, rebuilt
