@@ -19,7 +19,7 @@ Ready = doctor passes. Teardown = none (each step exits).
 Checks uv, `.venv`, imports, both ONNX models, ffprobe, ffmpeg, test clips T1–T7 in `vids/test/`, CoreML provider. Any `FAIL` -> fix before driving. `vids/` is gitignored and not in a fresh clone: no clips = nothing to drive except `pytest`.
 
 ## Drive
-Fast gate (3 s, no video): `cd prototype && uv run pytest -q` and `uv run pyright` (baseline on main: 20 errors, so compare counts before/after, don't expect 0).
+Fast gate (3 s, no video): `cd prototype && uv run pytest -q` and `uv run pyright` (baseline on main: 0 errors).
 
 End-to-end: pipeline v2 (`scripts/pipeline.py`, spec `docs/pipeline-v2.html`) on one clip:
 ```
@@ -54,7 +54,7 @@ Adding a stage: the stage goes into `snatch.stages.STAGES`; `run_clip.sh` drives
 Manual run: `uv run python scripts/pipeline.py <clip> --athlete <id> [--height <m>] [--calibrate <bar.MOV>] [--load <kg>] --out <evidence>/<clip> --athletes <evidence>/athletes [--only S | --from S] [--force]`. Always pass `--out` and `--athletes` under the evidence root. Prefer `run_clip.sh`: a manual run gets no checks, sheets or cache.
 
 ### Levels
-- **Per commit to a branch/PR:** `pytest -q` + `pyright` (count ≤ baseline) + `run_clip.sh` on T1, look at the frame sheets, then `publish_evidence.sh` to the PR.
+- **Per commit to a branch/PR:** `pytest -q` + `pyright` (0 errors) + `run_clip.sh` on T1, look at the frame sheets, then `publish_evidence.sh` to the PR.
 - **Milestone items only** (`.scratch/plan/README.md`): `VERIFY_NO_CACHE=1 run_clip.sh` (fresh, audits the stage cache) on T1–T7 (T5 bar-only, T6/T7 60 fps) into one evidence root vs main, every diff explained; publish that root.
 
 Test clips T1–T7 (`vids/test/`): what each covers and how to rebuild them in [features/test-clips.md](features/test-clips.md). Doctor fails when they are missing. 240 fps clips in `vids/` and `vids/spike/` take minutes to an hour (detector ~0.4 s per detected frame on CPU). Per-feature recipes: `features/README.md`.

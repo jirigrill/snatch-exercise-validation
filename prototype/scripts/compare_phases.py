@@ -58,7 +58,7 @@ for k, (a, b) in enumerate(zip(v1, v2)):
     for e in EVENTS:
         fa, fb = getattr(a, e), getattr(b, e)
         d = None if fa is None or fb is None else fb - fa
-        ms = None if d is None else 1000 * float(t[min(fb, n - 1)] - t[min(fa, n - 1)])
+        ms = None if fa is None or fb is None else 1000 * float(t[min(fb, n - 1)] - t[min(fa, n - 1)])
         lines.append(f"| {k + 1} | {e} | {cell(fa)} | {cell(fb)} | "
                      f"{'—' if d is None else f'{d:+d}'} | "
                      f"{'—' if ms is None else f'{ms:+.0f}'} |")

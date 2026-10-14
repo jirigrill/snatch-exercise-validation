@@ -58,6 +58,8 @@ def plate_disc() -> tuple[np.ndarray, np.ndarray]:
     for i, img in enumerate(frames(path, probe(path))):
         if i == PLATE_FRAME:
             break
+    else:
+        raise ValueError(f"{path} has no frame {PLATE_FRAME}")
     cx, cy = pl["hub_x"][i], pl["hub_y"][i]
     r = float(np.sqrt(pl["a"][i] * pl["b"][i]))
     h = int(np.ceil(r)) + 2
@@ -82,7 +84,7 @@ def paste(img: np.ndarray, centre: np.ndarray, tex: np.ndarray, m: np.ndarray) -
     return out.astype(np.uint8)
 
 
-def run_clip(c: dict, collar: np.ndarray, tex, m) -> tuple[dict, list]:
+def run_clip(c: dict, collar: np.ndarray, tex, m) -> tuple[dict, dict]:
     spans = [(e["setup"] - int(0.25 * c["fps"]), e["peak"] + int(0.1 * c["fps"]) + 1) for e in c["ev"]]
     path = f"../vids/spike/{c['clip']}.MOV"
     info = probe(path)
@@ -144,6 +146,9 @@ def main() -> None:
         inside_w = np.hypot(*(gt_wr - hub).T) < R_PLATE
         a_gt = c["ang"]["knee"]
         a_rtm = sagittal_angles(ks, "r")["knee"]
+        if not c["ev"]:
+            raise ValueError(f"no pulls in {c['clip']}")
+        kh = wh = np.empty((0, 2))  # unreachable placeholders: the loop below runs at least once
         for pi_e, e in enumerate(c["ev"]):
             if c["clip"] == C1:
                 mcal = np.ones(len(c1["k"]), bool)

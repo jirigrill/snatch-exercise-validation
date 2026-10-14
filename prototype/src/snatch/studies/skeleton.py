@@ -78,7 +78,7 @@ def pull_windows(bar_y: np.ndarray, knee_y: np.ndarray, hip_y: np.ndarray,
         below = np.flatnonzero(y[last:s] > knee_y[last:s])
         if not len(below):
             continue
-        anchor = last + int(below[-1])
+        anchor = int(last + below[-1])
         setup = liftoff_frame(y, anchor, fps, still_px_s, t)
         kn = setup + int(np.flatnonzero(y[setup:s + 1] < knee_y[setup:s + 1])[0])
         end = min(s + int(peak_s * fps), len(y))

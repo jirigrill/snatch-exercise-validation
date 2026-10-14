@@ -26,7 +26,7 @@ import numpy as np
 
 from snatch import overlay
 
-ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+ap = argparse.ArgumentParser(description=(__doc__ or "").split("\n")[0])
 ap.add_argument("clip")
 ap.add_argument("out")
 ap.add_argument("--person")
