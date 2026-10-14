@@ -6,7 +6,7 @@ per clip, on its own (scripts/extract_person.py), and the pose step reads the
 boxes it saved. At 240 fps the lifter moves a few pixels in a few frames, so
 the detector runs only every Nth frame and the boxes in between are
 interpolated (N = 24 differs from a run on every frame by ~1.5 px median at the
-joints, see docs/pipeline.html).
+joints).
 """
 
 from collections.abc import Callable, Iterable
@@ -38,13 +38,6 @@ def pick_lifter(boxes: np.ndarray, prev: np.ndarray | None) -> np.ndarray | None
             return boxes[int(np.argmax(overlaps))]
     areas = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
     return boxes[int(np.argmax(areas))]
-
-
-def sparse_detections(boxes: np.ndarray, every: int) -> np.ndarray:
-    """Keep every `every`-th detector box; NaN elsewhere (tracked frames)."""
-    out = np.full_like(boxes, np.nan)
-    out[::every] = boxes[::every]
-    return out
 
 
 def load_detector() -> YOLOX:

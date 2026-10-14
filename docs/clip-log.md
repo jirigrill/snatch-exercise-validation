@@ -32,7 +32,7 @@ One row per rep (per lift for the standing-hold clip). Originals are not cut: a 
 | `variant`, `outcome`, `fail_cause` | copied from the file name, **per clip**: correct them per rep |
 | `checked` | `no` until someone has looked at the rep; set to `yes` after checking the boundaries and the labels |
 
-Made by `prototype/scripts/find_reps.py` → `prototype/out/reps_proposed.csv`. The rows are proposals, not hand-checked; a checked rep list is deferred to the gate 1 set (#20), with a hub/pose plot per clip in `prototype/out/reps_check/`; `scripts/rep_sheets.py <rep list>` adds an image strip per rep there (pose start, liftoff, 4 frames in the lift, bar down, pose end) to check the boundaries by eye.
+Made by `prototype/scripts/find_reps.py` → `prototype/out/reps_proposed.csv`. The rows are proposals, not hand-checked; a checked rep list is deferred to the gate 1 set (#20), with a hub/pose plot per clip in `prototype/out/reps_check/`.
 
 Checks:
 - On the 7 clips of 2026-10-01 with a snatch, both the hub and the pose method find the known reps.
