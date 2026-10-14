@@ -122,7 +122,7 @@ def test_exception_leaves_no_output_under_final_name(ctx: Context) -> None:
 
 
 def test_stop_writes_status_and_returns_code(ctx: Context) -> None:
-    """R1: a stop returns its exit code, records status + reason and leaves no output (nested too)."""
+    """R1: a stop returns its exit code and records status + reason (nested too); no meta, so it reruns."""
     def stop(_: Context, __: Path) -> None:
         raise StageStop(3, "bad_clip", "too short")
 
@@ -130,8 +130,7 @@ def test_stop_writes_status_and_returns_code(ctx: Context) -> None:
     status = json.loads((ctx.out / "pipeline_status.json").read_text())
     assert (status["status"], status["reason"]) == ("bad_clip", "too short")
     assert run_stages(_nested([], stop=True), ctx, log=_quiet) == 3
-    assert not (ctx.out / "overlays" / "sheet.jpg").exists()
-
+    assert not (ctx.out / "A.meta.json").exists() and not (ctx.out / "A.txt").exists()  # nothing was written
 
 
 def test_version_bump_reruns(ctx: Context) -> None:
@@ -213,3 +212,21 @@ def test_skeleton_output_goes_to_the_athlete_dir(tmp_path: Path) -> None:
     run_stages(stages, ctx, log=_quiet)
     run_stages(stages, ctx, log=_quiet)
     assert calls == ["C3"] and ctx.path(SKELETON).exists() and not (ctx.out / SKELETON).exists()
+
+
+def test_stop_keeps_the_outputs_but_writes_no_meta(ctx: Context) -> None:
+    """R2: a StageStop moves the written outputs into place and drops the meta of an earlier run, so the stage reruns."""
+    calls: list[str] = []
+
+    def stop(c: Context, tmp: Path) -> None:
+        calls.append("S3")
+        (tmp / "S3.txt").write_text("check image")  # S3b.txt is never written
+        raise StageStop(6, "bar_only", "no plate")
+    ctx.out.mkdir()
+    (ctx.out / "S3.meta.json").write_text('{"hash": "from an earlier run that passed"}')
+    stages = [Stage("S3", (CLIP,), ("S3.txt", "S3b.txt"), stop)]
+    assert run_stages(stages, ctx, force=True, log=_quiet) == 6
+    assert (ctx.out / "S3.txt").read_text() == "check image"
+    assert not (ctx.out / "S3b.txt").exists() and not (ctx.out / "S3.meta.json").exists()
+    assert run_stages(stages, ctx, log=_quiet) == 6
+    assert calls == ["S3", "S3"]

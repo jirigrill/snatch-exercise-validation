@@ -31,9 +31,10 @@ if "--overlay-step" in args:
 make_overlay = "--overlay" in args
 if make_overlay:
     args.remove("--overlay")
-# --radius LO:HI  plate radius range in px (default 110:260, camera at ~4 m);
-# 2026-10-05 was filmed from further away: plate radius ~100 px
-radius = (110.0, 260.0)
+# --radius LO:HI  plate radius range in px (default 65:260). The 2026-10-07 v3 clips
+# (camera further away) have plates of ~95 px radius, the v1 clips ~170 px;
+# 110:260 locked onto background circles on v3.
+radius = (65.0, 260.0)
 if "--radius" in args:
     i = args.index("--radius")
     radius = tuple(float(x) for x in args[i + 1].split(":"))

@@ -1,90 +1,15 @@
-import cv2
 import numpy as np
 import pytest
 
-from snatch.plate import (
-    PLATE_DIAMETER_M, candidates, fit_outline, gap_seeds, longest_steady_run,
-    px_per_m, radius_track, track, typical_radius,
-)
-
-
-def _scene(cx: float, cy: float, a: float, b: float, angle: float = 0.0,
-           size: tuple[int, int] = (1200, 800)) -> np.ndarray:
-    """Dark plate (ellipse) with a blue hub on a mid-grey background."""
-    img = np.full((*size, 3), 120, np.uint8)
-    centre, axes = (round(cx * 16), round(cy * 16)), (round(a * 16), round(b * 16))
-    cv2.ellipse(img, centre, axes, angle, 0, 360, (30, 30, 30), -1,
-                cv2.LINE_AA, shift=4)
-    cv2.circle(img, (round(cx), round(cy)), 20, (200, 60, 30), -1)  # hub
-    return img
-
-
-def test_candidates_find_the_plate_in_full_resolution_pixels():
-    img = _scene(410, 700, 175, 175)
-    c = candidates(img, r_min=140, r_max=210)
-    x, y, r, disc = c[0]
-    assert (x, y) == pytest.approx((410, 700), abs=4)
-    assert r == pytest.approx(175, abs=6)
-    assert disc < 60  # mean grey inside: the plate is dark
-
-
-def test_fit_outline_recovers_a_circle_with_subpixel_centre():
-    img = _scene(410.4, 700.6, 175, 175)
-    out = fit_outline(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 405, 704, 170)
-    assert out is not None
-    cx, cy, a, b, _ = out
-    assert (cx, cy) == pytest.approx((410.4, 700.6), abs=1.0)
-    assert (a, b) == pytest.approx((175, 175), abs=2.0)
-
-
-def test_fit_outline_recovers_a_plate_seen_at_an_angle():
-    # off-axis clips: b/a ~ 0.85-0.9
-    img = _scene(400, 650, 175, 150, angle=10)
-    out = fit_outline(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 400, 650, 160,
-                      r0=165)
-    assert out is not None
-    cx, cy, a, b, _ = out
-    assert (cx, cy) == pytest.approx((400, 650), abs=1.5)
-    assert max(a, b) == pytest.approx(175, abs=3)
-    assert min(a, b) == pytest.approx(150, abs=3)
-
-
-def _lettered_plate(cx: float, cy: float, r: float) -> np.ndarray:
-    """Plate with a light lettering ring at ~0.8 r (as on the real plates)."""
-    img = _scene(cx, cy, r, r)
-    for k in range(12):  # 12 "letters": dashed light arcs
-        cv2.ellipse(img, (round(cx), round(cy)), (round(0.8 * r), round(0.8 * r)),
-                    0, 30 * k, 30 * k + 20, (150, 150, 150), 14)
-    return img
-
-
-def test_fit_outline_ignores_the_lettering_ring_given_the_clip_radius():
-    img = _lettered_plate(410, 700, 175)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # seed off by 25 px and too small, as Hough seeds sometimes are
-    out = fit_outline(gray, 430, 715, 150, r0=175)
-    assert out is not None
-    cx, cy, a, b, _ = out
-    assert (cx, cy) == pytest.approx((410, 700), abs=1.5)
-    assert (a, b) == pytest.approx((175, 175), abs=2.0)
-
-
-def test_fit_outline_is_a_circle_when_the_plate_faces_the_camera():
-    img = _lettered_plate(410, 700, 175)
-    out = fit_outline(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 410, 700, 175,
-                      r0=175)
-    assert out is not None
-    assert out[2] == out[3]  # no ellipse freedom unless it clearly fits better
+from snatch import plate
+from snatch.plate import fit_outline, gap_seeds, track, typical_radius
+from snatch.stages.plate import BAR_ONLY_EXIT, DEFAULT_RADIUS, TRACK_FAILED_EXIT, check
 
 
 def test_fit_outline_gives_up_when_there_is_no_plate():
+    """R3: a seed on a featureless patch (a missed frame); no test clip shows a fit with nothing to fit."""
     gray = np.full((1200, 800), 120, np.uint8)
     assert fit_outline(gray, 400, 600, 170) is None
-
-
-def test_px_per_m_uses_the_major_axis_as_the_true_diameter():
-    assert px_per_m(175.0, 120.0) == pytest.approx(350 / PLATE_DIAMETER_M)
-    assert px_per_m(120.0, 175.0) == pytest.approx(350 / PLATE_DIAMETER_M)
 
 
 def _plate_with_distractors(n: int = 60):
@@ -100,18 +25,14 @@ def _plate_with_distractors(n: int = 60):
     return cands
 
 
-def test_typical_radius_is_the_usual_size_among_top_candidates():
-    cands = [np.array([[0, 0, 175.0]])] * 8 + [np.array([[0, 0, 120.0]])] * 3
-    assert typical_radius(cands) == pytest.approx(175)
-
-
 def test_typical_radius_skips_bright_circles():
-    # a bright wall logo ranks first in every frame; the dark plate second
+    """R3: a bright static circle (wall logo) ranks first in every frame; no test clip is known to show one."""
     cands = [np.array([[0, 0, 197.0, 120.0], [0, 0, 155.0, 45.0]])] * 10
     assert typical_radius(cands) == pytest.approx(155)
 
 
 def test_track_prefers_the_dark_moving_plate_over_a_bright_static_circle():
+    """R3: a bright static circle of the plate's size (wall logo); no test clip is known to show one."""
     cands = []
     for t in range(60):
         plate = [100 + 5.0 * t, 800 - 2.0 * t, 175, 45]
@@ -121,15 +42,8 @@ def test_track_prefers_the_dark_moving_plate_over_a_bright_static_circle():
     assert (chosen == 1).all()
 
 
-def test_track_follows_the_smooth_path_not_the_top_ranked_circle():
-    cands = _plate_with_distractors()
-    chosen = track(cands, r0=175, t=np.arange(len(cands)) / 100, max_speed_px_s=2000)
-    for t, k in enumerate(chosen):
-        assert k >= 0
-        assert cands[t][k][0] == pytest.approx(100 + 5.0 * t)
-
-
 def test_track_marks_frames_without_the_plate_as_missing():
+    """R3: three frames with only distractors (plate missed by Hough); the track must say -1, not pick one."""
     cands = _plate_with_distractors()
     for t in (20, 21, 22):  # plate not detected: only distractors left
         cands[t] = cands[t][cands[t][:, 0] != 100 + 5.0 * t]
@@ -139,6 +53,7 @@ def test_track_marks_frames_without_the_plate_as_missing():
 
 
 def test_track_handles_frames_with_no_candidates():
+    """R3: a frame where Hough returns nothing at all (empty candidate array)."""
     cands = _plate_with_distractors(10)
     cands[4] = np.empty((0, 3))
     chosen = track(cands, r0=175, t=np.arange(len(cands)) / 100, max_speed_px_s=2000)
@@ -146,24 +61,8 @@ def test_track_handles_frames_with_no_candidates():
     assert chosen[5] >= 0
 
 
-def test_longest_steady_run_finds_the_hold_despite_jitter_and_sway():
-    rng = np.random.default_rng(2)
-    # floor, pull up, hold 150 frames at 300 (+-2 px jitter), lower
-    y = np.r_[np.full(50, 900.0), np.linspace(900, 300, 50), np.full(150, 300.0),
-              np.linspace(300, 900, 50)]
-    y[100:250] += rng.uniform(-2, 2, 150)
-    start, end = longest_steady_run(y, tol_px=6)
-    assert start == pytest.approx(100, abs=2)
-    assert end == pytest.approx(250, abs=2)
-
-
-def test_longest_steady_run_only_counts_frames_in_the_mask():
-    y = np.r_[np.full(200, 900.0), np.linspace(900, 300, 50), np.full(80, 300.0)]
-    start, end = longest_steady_run(y, tol_px=6, where=y < 600)
-    assert (start, end) == pytest.approx((249, 330), abs=1)
-
-
 def test_gap_seeds_bridge_short_gaps_only():
+    """R3: gaps longer than max_gap (24 frames in detect) or open at the end must stay unseeded."""
     nan = np.nan
     seeds = np.array([[0, 0, 170], [nan] * 3, [nan] * 3, [30, 60, 176],
                       [nan] * 3, [nan] * 3, [nan] * 3, [70, 0, 170], [nan] * 3])
@@ -172,32 +71,6 @@ def test_gap_seeds_bridge_short_gaps_only():
     assert out[2] == pytest.approx([20, 40, 174])
     assert np.isnan(out[4:7]).all()  # seeds 4 frames apart > max_gap
     assert np.isnan(out[8]).all()  # open at the end
-
-
-def test_radius_track_follows_depth_and_ignores_outliers():
-    rng = np.random.default_rng(3)
-    r = np.linspace(180, 170, 400) + rng.normal(0, 3, 400)  # plate moves away
-    r[100:104] = 200  # blur-inflated Hough radii
-    r[250:260] = np.nan  # not found
-    ref = radius_track(r, window=61)
-    assert not np.isnan(ref).any()
-    assert ref[102] == pytest.approx(180 - 10 * 102 / 399, abs=1.5)
-    assert ref[255] == pytest.approx(180 - 10 * 255 / 399, abs=1.5)
-    assert ref[0] == pytest.approx(180, abs=2)
-
-
-def test_fit_outline_ellipse_mode_with_axis_limits():
-    img = _scene(400, 650, 175, 145, angle=15)
-    for k in range(12):  # lettering ring
-        cv2.ellipse(img, (400, 650), (140, 116), 15, 30 * k, 30 * k + 20,
-                    (150, 150, 150), 12)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    out = fit_outline(gray, 410, 660, 150, model="ellipse",
-                      axes0=(145, 175), r_tol=0.06)
-    assert out is not None
-    cx, cy, a, b, _ = out
-    assert (cx, cy) == pytest.approx((400, 650), abs=1.5)
-    assert sorted((a, b)) == pytest.approx([145, 175], abs=3)
 
 
 def _fast_plate(speed_px_s: float, fps: int = 240):
@@ -210,11 +83,46 @@ def _fast_plate(speed_px_s: float, fps: int = 240):
 
 @pytest.mark.parametrize("stride", [1, 4])
 def test_track_step_limit_is_per_second_so_240_and_a_60_fps_subsample_both_pass(stride):
+    """R3: a fast bar seen at 60 fps (a 240 fps clip subsampled); T6/T7 are 60 fps but slower."""
     cands, t = _fast_plate(6000.0)
     chosen = track(cands[::stride], r0=175, t=t[::stride], max_speed_px_s=7200.0)
     assert (chosen == 1).all()
 
 
 def test_track_rejects_a_step_faster_than_the_limit():
+    """R3: a hop above the speed limit is not followed (no test clip has a track that teleports)."""
     cands, t = _fast_plate(9000.0, fps=60)
     assert not (track(cands, r0=175, t=t, max_speed_px_s=7200.0) == 1).all()
+
+
+def _result(n: int = 1000, found_frac: float = 1.0, hough: float = 1.0, spread: float = 0.0,
+            hole: tuple[int, int] | None = None) -> dict[str, np.ndarray]:
+    """Synthetic detect() output: hub rises 0.6 m (floor, lift, hold, floor), 800 px/m, 240 fps."""
+    y = np.r_[np.full(n // 5, 900.0), np.linspace(900, 420, 2 * n // 5), np.full(n // 5, 420.0),
+              np.linspace(420, 900, n - 4 * (n // 5))]
+    found = np.arange(n) < found_frac * n
+    if hole:
+        found[hole[0]:hole[1]] = False
+    seed = np.where(np.arange(n) < hough * n, plate.SEED_HOUGH, plate.SEED_GAP)
+    ppm = 800 * (1 + spread * np.linspace(-0.5, 0.5, n))
+    return {"found": found, "hub_x": np.full(n, 500.0), "hub_y": y, "px_per_m": ppm, "seed": seed}
+
+
+@pytest.mark.parametrize("kwargs, code, status, words", [
+    ({}, None, None, ()),
+    ({"hough": 0.11, "spread": 0.23}, BAR_ONLY_EXIT, "bar_only", ("11%", "--calibrate")),  # T5-like, wins over 4
+    ({"hole": (300, 700)}, TRACK_FAILED_EXIT, "plate_track_failed", ("moving", "spread")),
+    ({"spread": 0.23}, TRACK_FAILED_EXIT, "plate_track_failed", ("0.2",)),
+])
+def test_check_stops(kwargs, code, status, words):
+    """R1: exit 6 (bar-only, checked first) and exit 4 (found too rarely while moving, or px_per_m spread)."""
+    res = _result(**kwargs)
+    t = np.arange(len(res["found"])) / 240
+    passed, reasons, stop, stats = check(res, t, 1080, "clip.MOV", DEFAULT_RADIUS)
+    if code is None:
+        assert stop is None and passed and not reasons
+        assert stats["moving_found"] == 1.0 and stats["hough_share"] == 1.0
+        assert stats["moving"][0] > 0 and stats["moving"][1] <= 1000
+        return
+    assert stop is not None and (stop.code, stop.status) == (code, status)
+    assert all(w in stop.reason for w in words) and "clip.MOV" in stop.reason

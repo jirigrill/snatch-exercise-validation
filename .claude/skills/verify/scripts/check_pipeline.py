@@ -120,7 +120,35 @@ def check_calibrate(out: Path, skeleton: Path) -> str:
             f"median {err['median']} / p90 {err['p90']} / max {err['max']} px off the visible knee")
 
 
-CHECKS = {"S-1": check_probe, "S1": check_person, "S2": check_pose}
+def check_plate(out: Path) -> str:
+    p = np.load(out / "plate.npz")
+    t = np.load(out / "frame_times.npy")
+    n = len(t)
+    found, ppm = p["found"].astype(bool), p["px_per_m"]
+    assert found.shape == (n,) and ppm.shape == (n,), f"found {found.shape}, px_per_m {ppm.shape} for {n} frames"
+    assert np.array_equal(p["t"], t), "plate.npz t is not frame_times.npy"
+    rows = len((out / "plate.csv").read_text().strip().splitlines()) - 1
+    assert rows == n, f"plate.csv has {rows} data rows for {n} frames"
+    s, e = (int(x) for x in p["moving"])
+    assert 0 <= s < e <= n, f"moving span {s}-{e} outside 0-{n}"
+    mf = float(found[s:e].mean())
+    assert mf >= 0.9, f"plate found on {mf:.0%} of the moving span {s}-{e}"
+    spread, share = float(p["ppm_spread"]), float(p["hough_share"])
+    assert spread <= 0.10, f"px_per_m spread {spread:.3f} > 0.10"
+    assert share >= 0.5, f"hough_share {share:.2f} < 0.5"
+    jumps = len(p["jumps"])
+    assert bool(p["passed"]), f"sanity check not passed: {p['status']}"
+    bad = np.full(n, np.nan)
+    med = np.nanmedian(ppm[s:e])
+    bad[s:e] = np.where(found[s:e], np.abs(ppm[s:e] / med - 1), 1.0)
+    worst(out, "3_plate", bad, "px_per_m farthest from its median (plate size off), 1.0 = plate not found in the moving span")
+    return (f"found {found.mean():.0%} ({mf:.0%} of the moving span {s}-{e}), ppm_spread {spread:.3f}, "
+            f"hough_share {share:.2f}, {jumps} jumps, passed {bool(p['passed'])}")
+
+
+CHECKS = {"S-1": check_probe, "S1": check_person, "S2": check_pose, "S3": check_plate}
+# Files a stage still writes when it stops the run (checked on a --stop run; no content check).
+STOP_FILES = {"S3": ("plate_check.jpg", "overlays/3_plate.mp4")}
 
 
 def main(out: Path, run: str, skeleton: Path | None = None, stop: str | None = None,
@@ -152,6 +180,9 @@ def main(out: Path, run: str, skeleton: Path | None = None, stop: str | None = N
                 print(f"  {stage.name}: {checks[stage.name](out)}")
             except AssertionError as e:
                 errors.append(f"{stage.name}: {e}")
+    for o in STOP_FILES.get(stop or "", ()):
+        if not (out / o).is_file() or (out / o).stat().st_size == 0:
+            errors.append(f"{stop}: stopped but {o} is missing or empty")
     if stop and not errors:
         print(f"  {stop}: stopped as expected: {status.get('reason')}")
     for e in errors:

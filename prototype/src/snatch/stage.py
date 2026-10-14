@@ -3,7 +3,10 @@
 A stage hashes the bytes of its input files, its params and its version into
 `<stage>.meta.json`. It writes its outputs into a temp directory, and only a
 stage that returns has them renamed into place, so a crash never leaves a
-file that looks done. `pipeline_status.json` holds each stage's state in
+file that looks done. A stage that raises StageStop (a stop with an exit code)
+still has its outputs moved into place, so the overlay of the failed check can
+be looked at, but gets no meta: it reruns next time. Any other exception
+discards everything. `pipeline_status.json` holds each stage's state in
 pipeline order: done, skipped (hash unchanged) or failed; a stage that --only
 or --from did not pick is up_to_date or stale. An `always` stage (a check, no
 outputs) runs every time and keeps no meta.
@@ -104,12 +107,22 @@ def _run_one(stage: Stage, ctx: Context, digest: str) -> None:
     tmp = ctx.out / f".tmp-{stage.name}"
     shutil.rmtree(tmp, ignore_errors=True)
     tmp.mkdir(parents=True)
-    try:
-        stage.run(ctx, tmp)
+    def move_outputs(only_existing: bool) -> None:
         for name in stage.outputs:
+            if only_existing and not (tmp / name).exists():
+                continue
             dest = ctx.path(name)
             dest.parent.mkdir(parents=True, exist_ok=True)
             (tmp / name).replace(dest)
+
+    try:
+        try:
+            stage.run(ctx, tmp)
+        except StageStop:
+            (ctx.out / f"{stage.name}.meta.json").unlink(missing_ok=True)
+            move_outputs(only_existing=True)
+            raise
+        move_outputs(only_existing=False)
         _write_json(ctx.out / f"{stage.name}.meta.json", {"hash": digest, "version": stage.version})
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

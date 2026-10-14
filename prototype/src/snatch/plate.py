@@ -385,7 +385,7 @@ def gap_seeds(seeds: np.ndarray, max_gap: int = 24) -> np.ndarray:
 
 
 def detect(read_frames: Callable[[], Iterable[np.ndarray]], t: np.ndarray,
-           r_min: float = 110, r_max: float = 260,
+           r_min: float = 65, r_max: float = 260,
            max_speed_px_s: float = MAX_SPEED_PX_S,
            progress: Callable[[str, int], None] | None = None,
            model: str = "circle") -> dict[str, np.ndarray]:
