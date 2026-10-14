@@ -7,7 +7,8 @@
 # Commits the root as <root name>/ to the branch evidence/pr-<n> (its own history, never
 # merged), pushes it and comments on the PR: per clip ✅ / ❌ from the log's result line,
 # the commit under test, the check lines, the review, every jpg inline (the clip's and the
-# calibration's, calibrate_<T5>/) and links to the other files, all pinned to the evidence commit. The branch is deleted when the PR closes (.github/workflows/delete-evidence.yml); the comment text
+# calibration's, calibrate_<T5>/; images at the top of the root, e.g. a screenshot.sh explainer,
+# under "Explainer") and links to the other files, all pinned to the evidence commit. The branch is deleted when the PR closes (.github/workflows/delete-evidence.yml); the comment text
 # stays, its images and links break.
 set -e
 fail() { echo "FAIL: $1"; exit 1; }
@@ -53,6 +54,12 @@ url=https://github.com/$repo/blob/$commit/$name
   echo "**Review:**"
   echo
   echo "$review"
+  explainers=$(find "$ev" -maxdepth 1 -type f \( -name '*.png' -o -name '*.jpg' \) | sort)
+  if [[ -n $explainers ]]; then
+    echo
+    echo "### Explainer"
+    while read -r f; do echo "![$(basename "$f")]($url/$(basename "$f")?raw=true)"; done <<<"$explainers"
+  fi
   for log in "$ev"/*.log; do
     c=$(basename "${log%.log}")
     echo
