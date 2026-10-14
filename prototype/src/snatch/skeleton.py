@@ -15,8 +15,7 @@ from the hip and ankle.
   by rescaling (S4a).
 
 skeleton.json holds one entry per near side ("r", "l"); a calibration replaces
-its side and keeps the other. `hide_test` checks the table on the calibration
-clip: it hides the knee where a plate would cover it and rebuilds it. No wrist offset: the wrist under the plate cannot
+its side and keeps the other. No wrist offset: the wrist under the plate cannot
 be checked on a loaded clip, so it stays RTMPose's.
 All points are image pixels, (n, 2), y down.
 """
@@ -25,7 +24,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from snatch.angles import HALPE26, joint_angle, sagittal_angles
+from snatch.angles import HALPE26, sagittal_angles
 from snatch.signals import smooth_keypoints
 
 MIN_SCORE = 0.5  # near hip, knee and ankle all at least this: the frame is used
@@ -161,24 +160,21 @@ class FitError(ValueError):
     """The clip has too few usable frames to fit the skeleton."""
 
 
-def _side_joints(facing: str, *parts: str) -> list[int]:
-    side = "r" if facing == "right" else "l"
-    return [HALPE26[f"{side}_{p}"] for p in parts]
-
-
 def fit(keypoints: np.ndarray, scores: np.ndarray, t: np.ndarray, facing: str
-        ) -> tuple[dict, LengthTable, np.ndarray]:
+        ) -> tuple[dict, np.ndarray, np.ndarray]:
     """Fit the near side's length table on a bar-only clip's raw pose.
 
-    Returns (skeleton.json entry, the table, smoothed keypoints). FitError when
-    fewer than MIN_STANDING standing frames or MIN_BINS filled bins.
+    Returns (skeleton.json entry, smoothed keypoints, rebuilt near knee (n, 2)
+    where S4b would rebuild it (circles meet, gain <= MAX_GAIN), NaN elsewhere;
+    knee_err_px compares it with the visible knee there). FitError when fewer than
+    MIN_STANDING standing frames or MIN_BINS filled bins.
     """
     side = "r" if facing == "right" else "l"
-    j = _side_joints(facing, "hip", "knee", "ankle")
+    j = {p: HALPE26[f"{side}_{p}"] for p in ("hip", "knee", "ankle")}
     fps = float((len(t) - 1) / (t[-1] - t[0]))
     k = smooth_keypoints(np.asarray(keypoints, float), fps, t)
-    hip, knee, ank = (k[:, i] for i in j)
-    used = (np.asarray(scores)[:, j] >= MIN_SCORE).all(1) & ~np.isnan(keypoints).any((1, 2))
+    hip, knee, ank = k[:, j["hip"]], k[:, j["knee"]], k[:, j["ankle"]]
+    used = (np.asarray(scores)[:, list(j.values())] >= MIN_SCORE).all(1) & ~np.isnan(keypoints).any((1, 2))
     ang = sagittal_angles(k, side, facing)
     stand = used & (ang["knee"] > STAND_DEG) & (ang["hip"] > STAND_DEG)
     if stand.sum() < MIN_STANDING:
@@ -190,52 +186,19 @@ def fit(keypoints: np.ndarray, scores: np.ndarray, t: np.ndarray, facing: str
     if filled < MIN_BINS:
         raise FitError(f"{filled} length-table bins with enough frames, need {MIN_BINS}")
     tab = length_table(hip[used], knee[used], ank[used], d_ref)
+    sign = 1.0 if facing == "right" else -1.0
+    lt, ls = tab.lengths(np.hypot(*(ank - hip).T))
+    test, clipped = two_circle_knee(hip, ank, lt, ls, sign)
+    # the frames S4b would rebuild: circles meet and the leg is bent enough (gain <= MAX_GAIN)
+    good = used & ~clipped & (knee_gain(hip, ank, lt, ls, sign) <= MAX_GAIN)
+    rebuilt = np.full_like(knee, np.nan)
+    rebuilt[good] = test[good]
+    err = np.hypot(*(test[good] - knee[good]).T)
     r = np.hypot(*(ank[used] - hip[used]).T) / d_ref
     entry = {"facing": facing, **tab.to_json(), "bins_measured": filled,
              "r_range": [round(float(r.min()), 3), round(float(r.max()), 3)],
-             "frames": int(used.sum()), "standing_frames": int(stand.sum())}
-    return entry, tab, k
-
-
-# Hide test: a virtual plate on the bar-only clip, sized and placed as on the
-# loaded clips of the 2026-10-07 session (36 §2, §5): radius 96 px and hub =
-# wrist + (-7, +53) px (wrist - hub ~ (+2, -15) cm), both at standing
-# hip-ankle 312 px, so they scale with d_ref. x is toward the lifter's front.
-PLATE_R = 96 / 312
-HUB_FROM_WRIST = np.array([-7.0, 53.0]) / 312
-HIP_ANKLE_PER_HEIGHT = 0.491  # standing hip joint to ankle joint (Winter: 0.530 - 0.039 of height)
-
-
-def _stats(x: np.ndarray, nd: int = 2) -> dict:
-    return {"median": round(float(np.median(x)), nd), "p90": round(float(np.percentile(x, 90)), nd),
-            "max": round(float(x.max()), nd)}
-
-
-def hide_test(k: np.ndarray, tab: LengthTable, facing: str, height_m: float) -> tuple[dict, dict[str, np.ndarray]]:
-    """Hide the near knee where a plate would cover it and rebuild it from hip, ankle and the table.
-
-    Hidden: the knee inside the virtual plate. Rebuilt: hidden, the circles meet
-    and the leg is bent enough (gain <= MAX_GAIN), as S4b will; the other
-    hidden frames keep the knee (S4b keeps RTMPose's there). The error is the
-    rebuilt knee vs the visible one; cm from the athlete's height. Returns
-    (summary for skeleton.json, per-frame arrays: hub, hidden, rebuilt mask,
-    knee with the rebuild in it). FitError when no frame is rebuilt.
-    """
-    hip, knee, ank, wrist = (k[:, i] for i in _side_joints(facing, "hip", "knee", "ankle", "wrist"))
-    sign = 1.0 if facing == "right" else -1.0
-    hub = wrist + HUB_FROM_WRIST * tab.d_ref * [sign, 1.0]
-    hidden = np.hypot(*(knee - hub).T) < PLATE_R * tab.d_ref
-    lt, ls = tab.lengths(np.hypot(*(ank - hip).T))
-    test, clipped = two_circle_knee(hip, ank, lt, ls, sign)
-    use = hidden & ~clipped & (knee_gain(hip, ank, lt, ls, sign) <= MAX_GAIN)
-    if not use.any():
-        raise FitError(f"the knee is behind the virtual plate in {int(hidden.sum())} frames and rebuilt in none: "
-                       "no pull from the floor in the clip?")
-    filled = np.where(use[:, None], test, knee)
-    err_px = np.hypot(*(test[use] - knee[use]).T)
-    px_per_cm = tab.d_ref / (HIP_ANKLE_PER_HEIGHT * height_m * 100)
-    dang = np.abs(joint_angle(hip, filled, ank) - joint_angle(hip, knee, ank))[use]
-    summary = {"hidden_frames": int(hidden.sum()), "rebuilt_frames": int(use.sum()),
-               "knee_err_px": _stats(err_px), "knee_err_cm": _stats(err_px / px_per_cm),
-               "angle_err_deg": _stats(dang, 1)}
-    return summary, {"hub": hub, "hidden": hidden, "rebuilt": use, "knee": filled}
+             "frames": int(used.sum()), "standing_frames": int(stand.sum()), "rebuilt_frames": int(good.sum()),
+             "knee_err_px": {"median": round(float(np.median(err)), 2),
+                             "p90": round(float(np.percentile(err, 90)), 2),
+                             "max": round(float(err.max()), 2)}}
+    return entry, k, rebuilt
