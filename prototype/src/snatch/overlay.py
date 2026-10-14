@@ -160,7 +160,7 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
                                   info.width, info.height) if zoom
                       else (0, 0, info.width, info.height))
     size = (max(1, int((x1 - x0) * scale)), max(1, int((y1 - y0) * scale)))
-    writer = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, size)
+    writer = cv2.VideoWriter(out_path, cv2.VideoWriter.fourcc(*"mp4v"), fps, size)
     gap_mask = (gaps(person["detected"], int(person["det_every"]))
                 if person is not None and "det_every" in person else None)
     want, flagged, written = set(show.tolist()), 0, 0
@@ -188,13 +188,14 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
             if boxes:
                 _box(img, p["pose_bbox"][i], CROP_COLOR, 2)
             _skeleton(img, p["keypoints"][i], colors, p["scores"][i] if "scores" in p else None)
+        worst = None
         if dist is not None:
             worst = float(np.nanmax(dist[i]))
             labels.append(f"max diff {worst:.1f} px")
         img = cv2.resize(img[y0:y1, x0:x1], size, interpolation=cv2.INTER_AREA)
         for line, s in enumerate(labels):
             _text(img, s, line)
-        if dist is not None and worst > flag_px:
+        if worst is not None and worst > flag_px:
             flagged += 1
             cv2.rectangle(img, (0, 0), (img.shape[1] - 1, img.shape[0] - 1), (0, 0, 255), 8)
         writer.write(img)

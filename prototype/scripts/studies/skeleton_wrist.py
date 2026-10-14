@@ -88,6 +88,7 @@ def track(c: dict, ref_tpl: np.ndarray) -> tuple[np.ndarray, np.ndarray, dict]:
         if tpl is None:  # seed from the wrist, refine against the reference template
             cur, _ = match(g, ref_tpl, c["k"][i, J["wrist"]] + SEED_OFFSET, SEED_SEARCH)
             tpl = patch(g, cur)
+        assert cur is not None  # set with tpl
         cur, sc = match(g, tpl.astype(np.uint8), cur, SEARCH)
         tpl = 0.9 * tpl + 0.1 * patch(g, cur)
         pos[i], score[i] = cur, sc
@@ -104,6 +105,8 @@ def main() -> None:
         if i == 1450:
             g = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             break
+    else:
+        raise ValueError(f"{path} has no frame 1450")
     seed, _ = match(g, patch(g, c2["k"][1450, J["wrist"]] + SEED_OFFSET).astype(np.uint8),
                     c2["k"][1450, J["wrist"]] + SEED_OFFSET, 2)
     ref = patch(g, seed).astype(np.uint8)
