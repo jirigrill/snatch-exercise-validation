@@ -16,33 +16,41 @@ Ready = doctor passes. Teardown = none (each step exits).
 ```
 .claude/skills/verify/scripts/doctor.sh
 ```
-Checks uv, `.venv`, imports, both ONNX models, ffprobe, test clips T1–T7 in `vids/test/`, CoreML provider. Any `FAIL` -> fix before driving. `vids/` is gitignored and not in a fresh clone: no clips = nothing to drive except `pytest`.
+Checks uv, `.venv`, imports, both ONNX models, ffprobe, ffmpeg, test clips T1–T7 in `vids/test/`, CoreML provider. Any `FAIL` -> fix before driving. `vids/` is gitignored and not in a fresh clone: no clips = nothing to drive except `pytest`.
 
 ## Drive
 Fast gate (3 s, no video): `cd prototype && uv run pytest -q` and `uv run pyright` (baseline on main: 20 errors, so compare counts before/after, don't expect 0).
 
-End-to-end: pipeline v2 (`scripts/pipeline.py`, spec `docs/pipeline-v2.html`) on one clip (~30 s on T1, ~0 s on a cache hit):
+End-to-end: pipeline v2 (`scripts/pipeline.py`, spec `docs/pipeline-v2.html`) on one clip:
 ```
 .claude/skills/verify/scripts/run_clip.sh [clip.MOV] [evidence_root]
 ```
-Default clip `vids/test/T1_*.MOV`, default root `.scratch/verify/<UTC ts>/`. Writes `<root>/<clip>/` (pipeline outputs), `<root>/<clip>.log`, the athlete `verify` (height 1.73 m, skeleton.json calibrated on T5) in `<root>/athletes/` and the calibration run in `<root>/calibrate_<T5>/` (once per root, ~2.5 min). It runs `pipeline.py` four times and checks each run with `scripts/check_pipeline.py`:
+Default clip `vids/test/T1_*.MOV`. Default root `.scratch/verify/<branch>__<clip id>__<short sha>[-dirty]/` (`/` in the branch becomes `-`; `-dirty` = uncommitted changes under `prototype/` or the verify skill). For several clips pass one root yourself, e.g. `.scratch/verify/<branch>__T1-T7__<sha>`. Writes `<root>/<clip>/` (pipeline outputs), `<root>/<clip>.log`, the athlete `verify` (height 1.73 m, skeleton.json calibrated on T5) in `<root>/athletes/` and the calibration run in `<root>/calibrate_<T5>/`. It runs `pipeline.py` up to four times and checks each run with `scripts/check_pipeline.py`:
 
 | Run | Command | Expected states |
 |---|---|---|
-| calibrate | `--calibrate T5` (skipped when the root has it) | every stage of `snatch.stages.CALIBRATE` `done` |
+| calibrate | `--calibrate T5` (skipped when the root's calibration, or the cache, has the current key) | every stage of `snatch.stages.CALIBRATE` `done` |
 | calibrate rerun | the same again | hashed stages `skipped`, S0 `done` |
-| first | all stages | every stage `done` |
+| first | all stages | every stage `done` (an expected stop: up to it, it `failed`) |
 | rerun | the same again | hashed stages `skipped`, S0 and side `done` |
 
-Each check: exit 0, `pipeline_status.json` status `ok`, stages in the order of `snatch.stages.STAGES`, every stage output non-empty, and after the first run each stage's content check (`CHECKS` in `check_pipeline.py`: S-1 frame times vs clip.json; S1 box on every frame, `t` = frame_times.npy, lifter found on ≥ 90 % of detector runs; S2 every frame posed, facing = filename; C3 the near side in skeleton.json with a gap-free length table and no self-test values, and calibration.json: rebuilt knee median < 10 px off the visible one in the bent-leg frames). Last, `git status --porcelain prototype/out` must be empty. Prints `OK evidence: <dir>`, exit 0; anything else is `FAIL`, exit 1. `--only` / `--from` (`up_to_date` / `stale` states) are covered by `tests/test_stage.py`, not here.
+Each check: the pipeline exit (0, or the expected stop's code), `pipeline_status.json` status `ok` (not ok for an expected stop), stages in the order of `snatch.stages.STAGES`, every stage output non-empty, and after the first run each stage's content check (`check_pipeline.py`: S-1 frame times vs clip.json; S1 box on every frame, `t` = frame_times.npy, lifter found on ≥ 90 % of detector runs; S2 keypoints (n, 26, 2) on every frame, no partial file left, facing = filename when the name has `_left_`/`_right_`; C3 the near side in skeleton.json fitted on this clip, a gap-free length table, ≥ 3 bins, d_ref within thigh + shank, no self-test values, and calibration.json: rebuilt knee median < 10 px off the visible one in the bent-leg frames). Last, `git status --porcelain prototype/out` must be empty. Prints `OK evidence: <dir> (root <root>)`, exit 0; anything else is `FAIL`, exit 1, and the FAIL line names the real pipeline exit code.
 
-Cache: a passing result (outputs + log) is stored in `.scratch/verify/cache/<clip>/<key>/`. The key covers the clip and T5 (size + mtime), all of `src/snatch/**/*.py`, `scripts/pipeline.py`, `uv.lock`, `run_clip.sh` and `check_pipeline.py`. On a hit the script prints `cache <key>`, copies the stored outputs into the evidence dir and replays the check lines (~1 s). Only a passing run is stored. `VERIFY_NO_CACHE=1` forces a rerun; use it for timing claims.
+Timing (M4, measured on this branch): a fresh root with no cache 237 s (T5 calibration about 2.5 min of it, T1 about 1.5 min); with the calibration from the cache about 1.5 min; a full cache hit about 1 s.
 
-Stages today: S-1 probe, S0 athlete check, S1 person, S2 pose, side check (calibrate: C3 fit skeleton instead of side). Pipeline exits: 2 = no skeleton (or none for the clip's near side), 7 = no height, 3 = bad clip (incl. a calibration clip with too few usable frames), 8 = facing ambiguous, 9 = missing input. T4 faces left, so with the right-side T5 calibration it stops at side with exit 2.
+Caches (both in `.scratch/verify/cache/`, only passing runs are stored, `VERIFY_NO_CACHE=1` bypasses both; use it for timing claims):
+- `calibrate/<key>/`: the T5 calibration. The key covers T5 (size + mtime), only the code the calibration runs (`stage_files.py calibrate`: its stage modules and what they import), `scripts/pipeline.py`, `uv.lock` and the verify scripts. A commit that touches only a later stage (plate.py, a new stage) reuses it; a root whose calibration has another key recalibrates.
+- `<clip>/<key>/`: the whole result. The key covers the clip and T5 (size + mtime), all of `src/snatch/**/*.py`, `scripts/pipeline.py`, `uv.lock` and the verify scripts. On a hit the script prints `cache <key>`, copies the stored outputs into the evidence dir and replays the check lines.
 
-Adding a stage: the stage goes into `snatch.stages.STAGES`; `run_clip.sh` drives it with no edit. Add its content check to `CHECKS` in `check_pipeline.py` when there is more to check than its files existing. A stage that stops a clip by design (S3 exit 6 on a bar-only clip, S2 exit 8) needs an expected stop per clip in `run_clip.sh`; none exists yet.
+Stages today: S-1 probe, S0 athlete check, S1 person, S2 pose, side check (calibrate: C3 fit skeleton instead of side). Pipeline exits: 2 = no skeleton (or none for the clip's near side; also an argparse usage error), 7 = no height or one outside 1.40–2.20 m, 3 = bad clip (incl. a calibration clip with too few usable frames, status `calibration_failed`), 8 = facing ambiguous, 9 = missing input, 1 = a crash inside a stage (status `error`).
 
-Manual run: `uv run python scripts/pipeline.py <clip> --athlete <id> [--height <m>] --out <evidence>/<clip> --athletes <evidence>/athletes [--only S | --from S] [--force]`. Always pass `--out` and `--athletes` under the evidence root.
+Expected stops: `expected_stop` in `run_clip.sh` lists the clips that stop by design, as `<exit> <stage>`. Today: T4 `2 side` (faces left; T5 calibrates the right side only). Add one when a stage stops a test clip by design (S3 exit 6 on T5, S2 exit 8). check_pipeline.py `--stop <stage>` checks such a run.
+
+Detector crash: the detector sometimes crashes at interpreter exit (`recursive_mutex lock failed`, `.scratch/plan/README.md` notes). `run_clip.sh` reruns that pipeline call once (a first run from a clean dir) and logs `retry <run>: pipeline.py exit <code>, recursive_mutex crash at exit`. A second crash is a FAIL.
+
+Adding a stage: the stage goes into `snatch.stages.STAGES`; `run_clip.sh` drives it with no edit. Add its content check to `CHECKS` in `check_pipeline.py` when there is more to check than its files existing, and have the check call `worst()` with the stage's own badness per frame, so its overlay gets a worst-frames sheet.
+
+Manual run: `uv run python scripts/pipeline.py <clip> --athlete <id> [--height <m>] [--calibrate <bar.MOV>] [--load <kg>] --out <evidence>/<clip> --athletes <evidence>/athletes [--only S | --from S] [--force]`. Always pass `--out` and `--athletes` under the evidence root. Prefer `run_clip.sh`: a manual run gets no checks, sheets or cache.
 
 ### Levels
 - **Per commit to a branch/PR:** `pytest -q` + `pyright` (count ≤ baseline) + `run_clip.sh` on T1, look at the frame sheets, then `publish_evidence.sh` to the PR.
@@ -51,24 +59,28 @@ Manual run: `uv run python scripts/pipeline.py <clip> --athlete <id> [--height <
 Test clips T1–T7 (`vids/test/`): what each covers and how to rebuild them in [features/test-clips.md](features/test-clips.md). Doctor fails when they are missing. 240 fps clips in `vids/` and `vids/spike/` take minutes to an hour (detector ~0.4 s per detected frame on CPU). Per-feature recipes: `features/README.md`.
 
 ## Evidence
-Per proof keep, under `.scratch/verify/<ts>/` (gitignored, survives local cleanup) and published to the PR:
-- the run log (`<clip>.log`, the two check lines) and the `OK evidence:` line;
-- **look at** the images in `<clip>/overlays/` with Read (an mp4 can't be viewed; `run_clip.sh` writes `<name>_sheet.jpg`, 8 evenly spaced frames, for every overlay mp4): `0_clip_sheet.jpg` (the clip's frames), `1_person_sheet.jpg` (box on the lifter in every phase; thin = interpolated, red = across a missed detection), `2_pose_sheet.jpg` (skeleton on the lifter, near leg green on a right-facing clip), and in `calibrate_<T5>/overlays/` `calibration_overlay_sheet.jpg` (green RTMPose, magenta the same pose with the near knee rebuilt wherever the leg is bent enough for S4b to rebuild it (no plate on a bar-only clip, so also where S4b would keep RTMPose); magenta should cover green; red border = > 20 px apart). An existing file is not proof;
+Per proof keep, under the evidence root (gitignored) and published to the PR:
+- the run log (`<clip>.log`, the check lines) and the `OK evidence:` line;
+- **look at** every image in `<clip>/overlays/` and `calibrate_<T5>/overlays/` with Read (an mp4 can't be viewed):
+  - `0_clip_sheet.jpg` (written by S-1: 6 frames of the clip);
+  - `<name>_sheet.jpg` for every overlay mp4 (`run_clip.sh`: 8 evenly spaced frames): `1_person` (box on the lifter in every phase; thin = interpolated, red = across a missed detection), `2_pose` (skeleton on the lifter, near leg green on a right-facing clip), `calibration_overlay` (green RTMPose, magenta the same pose with the near knee rebuilt wherever the leg is bent enough for S4b to rebuild it; magenta should cover green; red border = > 20 px apart);
+  - `<name>_worst.jpg` (4 frames): the frames the stage scores worst on, from `<name>.worst` (line 2 says by what): `1_person` detector runs that missed the lifter (only when there are any), `2_pose` the lowest near-knee scores, `calibration_overlay` the rebuilt knee farthest from RTMPose's. Evenly spaced frames miss the frames where a stage is wrong (#56: the airborne f1695–1698 never showed up), so the review names every worst frame and says what is wrong or right there.
+  An existing file is not proof;
 - for a code change that changes a stage's outputs: same clip before/after (`git stash` or a worktree), diff the outputs; any diff must be explained.
 
 Publish to the PR (after the commit is pushed, so the log's `commit` line names it):
 ```
-.claude/skills/verify/scripts/publish_evidence.sh <evidence_root>
+.claude/skills/verify/scripts/publish_evidence.sh <evidence_root> "<review: one line per sheet, every worst frame named>"
 ```
-Commits the root to the branch `evidence/pr-<n>` (own history, never merged) and comments on the PR: the commit under test, the check lines, every jpg inline, links to the mp4, npz, json and log, all pinned to the evidence commit. The checkout and its index are not touched. `.github/workflows/delete-evidence.yml` deletes `evidence/pr-<n>` when the PR closes, so nothing is kept after the merge (the comment text stays; images and links break). Never merge or open a PR from `evidence/*`.
+`DRY_RUN=1` prints the comment and pushes nothing. Commits the root to the branch `evidence/pr-<n>` (own history, never merged) and comments on the PR: the commit under test, the check lines (calibration lines included), every jpg inline (the clip's and the calibration's), links to the mp4, npz, json and log, all pinned to the evidence commit. The checkout and its index are not touched. `.github/workflows/delete-evidence.yml` deletes `evidence/pr-<n>` when the PR closes (the comment text stays; images and links break). Never merge or open a PR from `evidence/*`.
 
 Standards: drive the real pipeline on real clips, not a function in a REPL; no stray writes into `prototype/out/`.
 
 ## Isolation
-Safe to run side by side: each run has its own evidence dir. Don't run two detector/pose runs at once on the same machine for timing claims (CoreML + CPU contention). Never write into `prototype/out/<clip>` for an existing clip: it holds committed results.
+One `run_clip.sh` at a time: it holds `.scratch/verify/.run_clip.lock`, and a second run fails at once naming the first (pid, clip, root). Two runs would share the caches and a root's calibration, and CoreML + CPU contention spoils timings. For several clips, loop them in one shell, one after another. A lock left by a killed run (dead pid) is taken over.
 
 ## Cleanup
-Nothing to kill. Remove only what you started: background jobs by PID (`kill <pid>` of what you launched, never `pkill python`). Do not delete `.scratch/verify/`; that is the proof.
+Nothing to kill. Remove only what you started: background jobs by PID (`kill <pid>` of what you launched, never `pkill python`). Don't delete evidence by hand: `sweep_evidence.sh` (run by the SessionStart hook in `.claude/settings.json`, safe to run by hand, `DRY_RUN=1` only prints) deletes a root under `.scratch/verify/` once its branch (from the log's `commit` line) is neither checked out nor has an open PR, so local evidence goes once the PR is merged or closed, and keeps the 3 newest entries per cache dir. Offline or without `gh` it deletes nothing.
 
 ## Maintenance
 Feature map: `features/README.md`. Update it with `/maintain-verification-skill`.

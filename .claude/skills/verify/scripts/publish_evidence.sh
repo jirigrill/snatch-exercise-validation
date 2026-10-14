@@ -1,12 +1,13 @@
 #!/bin/bash
 # Publish a run_clip.sh evidence root to the open PR of the current branch.
 # usage: .claude/skills/verify/scripts/publish_evidence.sh <evidence_root> "<review>"
-#   review: what the frame sheets show, one line per sheet (markdown), put under the result
+#   review: what the frame sheets show, one line per sheet (markdown), put under the result;
+#           for a <name>_worst.jpg, name each of its frames
 #   DRY_RUN=1 prints the comment and pushes nothing
 # Commits the root as <root name>/ to the branch evidence/pr-<n> (its own history, never
 # merged), pushes it and comments on the PR: per clip ✅ / ❌ from the log's result line,
-# the commit under test, the check lines, the review, every jpg inline and links to the
-# other files, all pinned to the evidence commit. The branch is deleted when the PR closes (.github/workflows/delete-evidence.yml); the comment text
+# the commit under test, the check lines, the review, every jpg inline (the clip's and the
+# calibration's, calibrate_<T5>/) and links to the other files, all pinned to the evidence commit. The branch is deleted when the PR closes (.github/workflows/delete-evidence.yml); the comment text
 # stays, its images and links break.
 set -e
 fail() { echo "FAIL: $1"; exit 1; }
@@ -58,7 +59,7 @@ url=https://github.com/$repo/blob/$commit/$name
     echo "### $(result "$log") \`$c\`"
     echo '```'
     head -1 "$log"
-    grep -E '^(cache |first|rerun|  )' "$log" || true
+    grep -E '^(cache |\(cached\) |calibrate|first|rerun|retry|  )' "$log" || true
     echo '```'
     find "$ev/$c" -type f -name '*.jpg' | sort | while read -r f; do
       echo "![${f#"$ev/$c/"}]($url/$c/${f#"$ev/$c/"}?raw=true)"
@@ -68,6 +69,15 @@ url=https://github.com/$repo/blob/$commit/$name
       echo "[\`${f#"$ev/$c/"}\`]($url/$c/${f#"$ev/$c/"})"
     done | paste -sd ' ' -
     echo "[\`$c.log\`]($url/$c.log)"
+  done
+  for d in "$ev"/calibrate_*/; do
+    [ -d "$d" ] || continue
+    d=$(basename "$d")
+    echo
+    echo "### calibration \`$d\`"
+    find "$ev/$d" -type f -name '*.jpg' | sort | while read -r f; do
+      echo "![${f#"$ev/$d/"}]($url/$d/${f#"$ev/$d/"}?raw=true)"
+    done
   done
   echo
   echo "Files: https://github.com/$repo/tree/$commit/$name (branch \`$branch\`, deleted when this PR closes)"
