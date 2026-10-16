@@ -116,11 +116,13 @@ sheet() {  # sheet <mp4>: 8 evenly spaced frames, 4 x 2, 360 px high
     -frames:v 1 "${1%.mp4}_sheet.jpg" || fail "frame sheet of $1"
 }
 worst() {  # worst <mp4>: the clip frames in <name>.worst (check_pipeline.py), 4 x 1, 360 px high
-  local w=${1%.mp4}.worst n nc sel= f
+  local w=${1%.mp4}.worst n nc sel= f idx
   [ -s "$w" ] || return 0
   n=$(frames "$1")
   nc=$(sed -n 's/.*"n_frames": *\([0-9]*\).*/\1/p' "$(dirname "$1")/../clip.json")
-  for f in $(head -1 "$w"); do sel+="${sel:++}eq(n\,$(( f * n / nc )))"; done
+  idx=$(sed -n 3p "$w")  # video frame of each clip frame; else proportional (every step-th frame)
+  if [ -n "$idx" ]; then for f in $idx; do sel+="${sel:++}eq(n\,$f)"; done
+  else for f in $(head -1 "$w"); do sel+="${sel:++}eq(n\,$(( f * n / nc )))"; done; fi
   ffmpeg -v error -y -i "$1" -vf "select='$sel',scale=-2:360,tile=4x1" -frames:v 1 "${1%.mp4}_worst.jpg" ||
     fail "worst-frames sheet of $1"
 }

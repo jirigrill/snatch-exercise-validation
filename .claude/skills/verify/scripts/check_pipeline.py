@@ -15,8 +15,8 @@ stage's content check below, if it has one. A new stage: add it to STAGES and,
 when there is something to check beyond its files existing, a function here.
 
 A content check also writes overlays/<overlay>.worst: the WORST frames that score
-worst on the stage's own measure (line 1, frame numbers) and what that is (line 2).
-run_clip.sh turns it into <overlay>_worst.jpg, so the review sees the frames where
+worst on the stage's own measure (line 1, frame numbers), what that is (line 2), and the video frame of each in the
+overlay mp4 (line 3: the overlay draws only some frames). run_clip.sh turns it into <overlay>_worst.jpg, so the review sees the frames where
 the stage is most likely wrong, not only evenly spaced ones.
 """
 
@@ -27,6 +27,7 @@ from pathlib import Path
 
 import numpy as np
 
+from snatch import overlay as ov
 from snatch import skeleton as skel
 from snatch.angles import HALPE26
 from snatch.reps import height_above_floor
@@ -41,8 +42,9 @@ def expected(stage: Stage, run: str, reused: frozenset[str] = frozenset()) -> st
     return "done" if stage.always or (run == "first" and stage.name not in reused) else "skipped"
 
 
-def worst(out: Path, overlay: str, badness: np.ndarray, what: str) -> None:
-    """Write overlays/<overlay>.worst: the WORST highest-badness frames (NaN = never), WORST_GAP apart."""
+def worst(out: Path, overlay: str, badness: np.ndarray, what: str, shown: np.ndarray) -> None:
+    """Write overlays/<overlay>.worst: the WORST highest-badness frames (NaN = never), WORST_GAP apart,
+    and (line 3) each one's index in the overlay mp4: its nearest frame in `shown` (the clip frames drawn)."""
     picked: list[int] = []
     for i in np.argsort(-np.nan_to_num(badness, nan=-np.inf)):
         if len(picked) == WORST or not np.isfinite(badness[i]):
@@ -50,7 +52,12 @@ def worst(out: Path, overlay: str, badness: np.ndarray, what: str) -> None:
         if all(abs(int(i) - p) >= WORST_GAP for p in picked):
             picked.append(int(i))
     if picked:
-        (out / "overlays" / f"{overlay}.worst").write_text(" ".join(map(str, sorted(picked))) + f"\n{what}\n")
+        picks = np.array(sorted(picked))
+        j = np.searchsorted(shown, picks)
+        lo, hi = np.clip(j - 1, 0, len(shown) - 1), np.clip(j, 0, len(shown) - 1)
+        j = np.where(np.abs(shown[lo] - picks) <= np.abs(shown[hi] - picks), lo, hi)
+        (out / "overlays" / f"{overlay}.worst").write_text(
+            " ".join(map(str, picks)) + f"\n{what}\n" + " ".join(map(str, j)) + "\n")
 
 
 def check_probe(out: Path) -> str:
@@ -73,7 +80,8 @@ def check_person(out: Path) -> str:
     missed = np.full(len(t), np.nan)
     runs_at = np.arange(0, len(t), int(p["det_every"]))
     missed[runs_at[~p["detected"][runs_at].astype(bool)]] = 1.0
-    worst(out, "1_person", missed, "detector runs that missed the lifter (red box)")
+    worst(out, "1_person", missed, "detector runs that missed the lifter (red box)",
+          ov.shown_frames(len(t), 0, None, 4, [], None))
     return f"lifter on {found}/{runs} detector runs"
 
 
@@ -103,7 +111,8 @@ def check_pose(out: Path) -> str:
     ankle = float(np.median(p["scores"][posed_mask][:, 15:17].max(1)))
     knee = HALPE26[f"{ {'right': 'r', 'left': 'l'}[face]}_knee"]
     bad = np.where(posed_mask, 1 - p["scores"][:, knee], np.nan)
-    worst(out, "4_pose", bad, "lowest near-knee score (knee hidden or misplaced)")
+    worst(out, "4_pose", bad, "lowest near-knee score (knee hidden or misplaced)",
+          ov.shown_frames(len(t), 0, None, 4, [p], None))
     return f"{posed} frames posed ({scope}), facing {face}, median best ankle score {ankle:.2f}"
 
 
@@ -120,7 +129,8 @@ def check_attempts(out: Path) -> str:
         assert x["peak_m"] >= knee - 1e-9, f"attempt {x['attempt']}: peak {x['peak_m']} m below knee height {knee} m"
         assert x["plate_found"] >= 0.9, f"attempt {x['attempt']}: plate found on {x['plate_found']:.0%}"
         bad[x["start"]], bad[x["end"] - 1] = abs(rise[x["start"]]), abs(rise[x["end"] - 1])
-    worst(out, "3_attempts", bad, "hub rise at an attempt's first and last frame (bar should be on the floor: ~0 m)")
+    worst(out, "3_attempts", bad, "hub rise at an attempt's first and last frame (bar should be on the floor: ~0 m)",
+          ov.shown_frames(n, 0, None, 4, [], p))
     spans = ", ".join(f"f{x['start']}-{x['end']} peak {x['peak_m']:.2f} m" for x in a["attempts"])
     return f"{len(a['attempts'])} attempts ({spans}), {len(a['not_a_pull'])} not_a_pull, knee {knee:.2f} m, plate radius {radius:.3f} m"
 
@@ -144,8 +154,12 @@ def check_calibrate(out: Path, skeleton: Path) -> str:
     assert err["median"] < 10, f"rebuilt knee median {err['median']} px off the visible knee"
     raw = np.load(out / "raw_pose.npz")
     _, _, k, rebuilt = skel.fit(raw["keypoints"], raw["scores"], raw["t"], face)
-    worst(out, "calibration_overlay", np.hypot(*(rebuilt - k[:, HALPE26[f"{side}_knee"]]).T),
-          "rebuilt knee farthest from RTMPose's (magenta off green)")
+    knee = HALPE26[f"{side}_knee"]
+    with_knee = k.copy()
+    with_knee[:, knee] = np.where(np.isnan(rebuilt), k[:, knee], rebuilt)
+    worst(out, "calibration_overlay", np.hypot(*(rebuilt - k[:, knee]).T),
+          "rebuilt knee farthest from RTMPose's (magenta off green)",
+          ov.shown_frames(len(k), 0, None, 4, [{"keypoints": k}, {"keypoints": with_knee}], None))
     return (f"{side} side, d_ref {e['d_ref']:.0f} px, thigh {th.min():.0f}-{th.max():.0f} px, "
             f"shank {sh.min():.0f}-{sh.max():.0f} px, {e['bins_measured']}/{len(th)} bins measured "
             f"(r {e['r_range'][0]}-{e['r_range'][1]}), knee rebuilt on {c['rebuilt_frames']}/{c['frames']} bent-leg frames: "
@@ -173,7 +187,8 @@ def check_plate(out: Path) -> str:
     bad = np.full(n, np.nan)
     med = np.nanmedian(ppm[s:e])
     bad[s:e] = np.where(found[s:e], np.abs(ppm[s:e] / med - 1), 1.0)
-    worst(out, "2_plate", bad, "px_per_m farthest from its median (plate size off), 1.0 = plate not found in the moving span")
+    worst(out, "2_plate", bad, "px_per_m farthest from its median (plate size off), 1.0 = plate not found in the moving span",
+          ov.shown_frames(n, 0, None, 4, [], p))
     return (f"found {found.mean():.0%} ({mf:.0%} of the moving span {s}-{e}), ppm_spread {spread:.3f}, "
             f"hough_share {share:.2f}, {jumps} jumps, passed {bool(p['passed'])}")
 
