@@ -41,7 +41,7 @@ def test_resume_state_takes_last_seen_box_and_last_frames_keypoints():
 
 
 def test_range_mask_rejects_ranges_outside_the_clip():
-    """R3: attempt windows outside the clip are rejected (S3 will pass them)."""
+    """R3: attempt windows outside the clip are rejected."""
     with pytest.raises(ValueError):
         range_mask(10, [(5, 11)])
 
@@ -58,7 +58,7 @@ def _images(n):
 
 
 def test_run_with_ranges_poses_only_inside_and_restarts_tracking(monkeypatch):
-    """R3: posing only attempt windows restarts tracking per window (S3; no clip drives ranges yet)."""
+    """R3: posing only attempt windows restarts tracking per window."""
     calls = []
     monkeypatch.setattr(pose, "load_model", lambda device: _fake_model(calls))
     boxes = np.tile([0.0, 0.0, 10.0, 10.0], (10, 1))

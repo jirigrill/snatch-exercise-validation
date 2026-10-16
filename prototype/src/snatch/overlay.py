@@ -16,11 +16,14 @@ script when given --overlay (`call_script`). Each layer is optional:
           TRAIL_S seconds of found frames. Orange; green when the plate dict has
           passed=True (S2's sanity check), orange also when passed=False.
 - boxes:  also draw the crop given to the pose model (yellow)
+- dim, frame_labels: S3's attempts: frames in `dim` are darkened, `frame_labels(i)` adds label lines
+- extra: frames drawn in addition to every `step`-th one (the worst/key frames of a stage's review),
+          when they pass the same range and posed/found filter
 """
 
 import subprocess
 import sys
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 import cv2
@@ -45,6 +48,7 @@ TRAIL_S = 0.5  # seconds of hub path drawn behind the hub
 GAP_COLOR = (0, 0, 255)  # BGR: red
 FADED_COLOR = (150, 150, 150)  # BGR: grey, a joint under FADE_SCORE
 FADE_SCORE = 0.3
+DIM_FACTOR = 0.35  # brightness of a dimmed frame
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "overlay_video.py"
 
 Arrays = Mapping[str, np.ndarray]
@@ -56,15 +60,20 @@ def call_script(clip: str, out_mp4: Path, *options: str) -> None:
 
 
 def shown_frames(n_frames: int, start: int, end: int | None, step: int,
-                 poses: Sequence[Arrays], plate: Arrays | None) -> np.ndarray:
-    """Frames to draw: in [start, end), posed in every run, plate found, every `step`-th."""
+                 poses: Sequence[Arrays], plate: Arrays | None,
+                 extra: Sequence[int] = ()) -> np.ndarray:
+    """Frames to draw: in [start, end), posed in every run, plate found, every `step`-th plus `extra`."""
     mask = np.zeros(n_frames, bool)
     mask[start:end] = True
     for p in poses:
         mask &= ~np.isnan(p["keypoints"]).all((1, 2))
     if plate is not None and not poses:
         mask &= np.asarray(plate["found"], bool)
-    return np.flatnonzero(mask)[::step]
+    keep = np.zeros(n_frames, bool)
+    keep[np.flatnonzero(mask)[::step]] = True
+    for i in extra:
+        keep[i] = mask[i]
+    return np.flatnonzero(keep)
 
 
 def zoom_window(points: np.ndarray, width: int, height: int, margin: int = 150
@@ -145,13 +154,17 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
            poses: Sequence[Arrays] = (), plate: Arrays | None = None, boxes: bool = False,
            start: int = 0, end: int | None = None, step: int = 1, fps: float = 30.0,
            scale: float = 0.5, zoom: bool = False, flag_px: float = 10.0,
-           notes: Sequence[str] = ()) -> dict[str, int]:
+           notes: Sequence[str] = (), dim: np.ndarray | None = None,
+           frame_labels: Callable[[int], Sequence[str]] | None = None,
+           extra: Sequence[int] = ()) -> dict[str, int]:
     """Write the overlay video; returns {"frames": written, "flagged": above flag_px}.
 
     notes: extra label lines on every frame (e.g. facing and the color legend).
+    dim: per-frame bool, True = darken the frame; frame_labels(i): extra label lines on frame i.
+    extra: frames always drawn besides every `step`-th (see shown_frames).
     """
     info = probe(clip)
-    show = shown_frames(info.n_frames, start, end, step, poses, plate)
+    show = shown_frames(info.n_frames, start, end, step, poses, plate, extra)
     if not len(show):
         raise ValueError("no frame to draw: nothing is posed / found in the range")
     dist = (np.linalg.norm(poses[0]["keypoints"] - poses[1]["keypoints"], axis=-1)
@@ -169,8 +182,8 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
             break
         if i not in want:
             continue
-        img = img.copy()
-        labels = [f"f{i}", *notes]
+        img = (img * DIM_FACTOR).astype(np.uint8) if dim is not None and dim[i] else img.copy()
+        labels = [f"f{i}", *notes, *(frame_labels(i) if frame_labels else ())]
         if person is not None:
             seen = bool(person["detected"][i]) if "detected" in person else True
             gap = gap_mask is not None and bool(gap_mask[i])

@@ -1,7 +1,14 @@
-"""S4: pose the lifter in every frame (snatch.pose) and find which way they face.
+"""S4: pose the lifter (snatch.pose) and find which way they face.
 
-Whole clip for now (S3 later limits it to the attempt windows). raw_pose.npz
-carries the frame times of S-1 as `t`. facing.json holds `facing`: "right" or
+Analyze poses only the attempt windows of S3 (attempts.json; padding included),
+--calibrate the whole clip. raw_pose.npz arrays stay indexed by clip frame (NaN
+keypoints outside the windows) and carry the frame times of S-1 as `t` and the
+posed `ranges` ([start, end) frames; the whole clip for --calibrate). The facing
+and near-side check reads only the padding frames of the windows (inside a
+window, outside [start, end) of its attempt: the 1 s before liftoff, the setup
+crouch, and the bar-down frames after it, often absent as the clip ends). It
+is not a standing window: facing reads it because the feet show below the plate
+there; --calibrate reads the whole clip. facing.json holds `facing`: "right" or
 "left", the way the toes point in the image, with the votes and leg scores it
 came from. The near side follows from it (pose.SIDE_OF), and the leg the model
 scores higher must be that side, else the clip is mirrored or the legs are
@@ -52,7 +59,22 @@ def _resume(path: Path, digest: str) -> tuple[dict[str, np.ndarray] | None, int]
     return {k: p[k] for k in p.files if k not in ("done", "hash")}, int(p["done"])
 
 
-def run(ctx: Context, tmp: Path) -> None:
+def windows(ctx: Context) -> tuple[list[tuple[int, int]], np.ndarray]:
+    """(posing windows, mask of the padding frames) from attempts.json."""
+    attempts = json.loads(ctx.path("attempts.json").read_text())["attempts"]
+    if not attempts:
+        raise ValueError("no attempts in attempts.json")
+    n = len(np.load(ctx.path("frame_times.npy")))
+    ranges = [(int(a["window"][0]), int(a["window"][1])) for a in attempts]
+    padding = np.zeros(n, bool)
+    for s, e in ranges:
+        padding[s:e] = True
+    for a in attempts:
+        padding[a["start"]:a["end"]] = False
+    return ranges, padding
+
+
+def _run(ctx: Context, tmp: Path, stage: Stage, from_attempts: bool) -> None:
     clip = json.loads(ctx.path("clip.json").read_text())
     t = np.load(ctx.path("frame_times.npy"))
     person = np.load(ctx.path("person.npz"))
@@ -60,7 +82,8 @@ def run(ctx: Context, tmp: Path) -> None:
     if len(person["bbox"]) != len(t) or info.n_frames != len(t):
         raise ValueError(f"{info.n_frames} frames decode, person.npz has {len(person['bbox'])}, "
                          f"frame_times.npy {len(t)}")
-    partial, digest = ctx.out / PARTIAL, stage_hash(STAGE, ctx)
+    ranges, padding = windows(ctx) if from_attempts else ([(0, info.n_frames)], None)
+    partial, digest = ctx.out / PARTIAL, stage_hash(stage, ctx)
     resume, done = _resume(partial, digest)
 
     def checkpoint(result: dict[str, np.ndarray], n: int) -> None:
@@ -71,15 +94,17 @@ def run(ctx: Context, tmp: Path) -> None:
 
     t0 = time.time()
     raw = pose.run(frames(str(ctx.clip), info), info.n_frames, person["bbox"], resume=resume, done=done,
-                   checkpoint=checkpoint,
+                   checkpoint=checkpoint, ranges=ranges,
                    progress=lambda i: print(f"S4 pose frame {i}/{info.n_frames} {time.time() - t0:.0f}s",
                                             flush=True) if i % 800 == 0 else None)
     partial.unlink(missing_ok=True)
-    facing = check_facing(raw["keypoints"], raw["scores"])
+    on = padding if padding is not None else slice(None)
+    facing = check_facing(raw["keypoints"][on], raw["scores"][on])
     meta = dict(fps=clip["fps"], t=t, width=info.width, height=info.height, rotation=info.rotation,
                 model=pose.MODEL_NAME, clip=ctx.clip.name, seconds=time.time() - t0,
                 machine=platform.platform(), det_every=person["det_every"])
-    arrays = raw | {"n_people": person["n_people"]} | {k: np.asarray(v) for k, v in meta.items()}
+    arrays = (raw | {"n_people": person["n_people"], "ranges": np.asarray(ranges, int)}
+              | {k: np.asarray(v) for k, v in meta.items()})
     np.savez_compressed(tmp / "raw_pose.npz", allow_pickle=False, **arrays)
     (tmp / "facing.json").write_text(json.dumps(facing, indent=2) + "\n")
     (tmp / OVERLAY).parent.mkdir(parents=True, exist_ok=True)
@@ -88,4 +113,15 @@ def run(ctx: Context, tmp: Path) -> None:
                    step=4, zoom=True, notes=notes)
 
 
-STAGE = Stage("S4", (CLIP, "clip.json", "frame_times.npy", "person.npz"), ("raw_pose.npz", "facing.json", OVERLAY), run)
+def run_analyze(ctx: Context, tmp: Path) -> None:
+    _run(ctx, tmp, STAGE, True)
+
+
+def run_calibrate(ctx: Context, tmp: Path) -> None:
+    _run(ctx, tmp, CALIBRATE_STAGE, False)
+
+
+INPUTS = (CLIP, "clip.json", "frame_times.npy", "person.npz")
+OUTPUTS = ("raw_pose.npz", "facing.json", OVERLAY)
+STAGE = Stage("S4", (*INPUTS, "attempts.json"), OUTPUTS, run_analyze)
+CALIBRATE_STAGE = Stage("S4", INPUTS, OUTPUTS, run_calibrate)  # --calibrate: no S3, the whole clip

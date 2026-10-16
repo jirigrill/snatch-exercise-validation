@@ -10,9 +10,9 @@ discards everything. `pipeline_status.json` holds each stage's state in
 pipeline order: done, skipped (hash unchanged) or failed; a stage that --only
 or --from did not pick is up_to_date or stale. An `always` stage (a check, no
 outputs) runs every time and keeps no meta.
-`SKELETON` names the athlete's skeleton.json: as an input, a stage that lists
-it reruns when the calibration changes; as an output (C3), it is written to
-the athlete profile, not out/<clip>.
+`SKELETON` and `ATHLETE` name the athlete's skeleton.json and athlete.json: as an
+input, a stage that lists one reruns when it changes; as an output (C3 writes
+SKELETON), it is written to the athlete profile, not out/<clip>.
 """
 
 import hashlib
@@ -27,6 +27,7 @@ from snatch import athlete_store
 
 CLIP = "<clip>"
 SKELETON = "<skeleton>"
+ATHLETE = "<athlete>"
 STATUS_FILE = "pipeline_status.json"
 MISSING_INPUT_EXIT = 9
 
@@ -43,6 +44,8 @@ class Context:
             return self.clip
         if name == SKELETON:
             return athlete_store.path(self.athletes, str(self.params["athlete"]), athlete_store.SKELETON)
+        if name == ATHLETE:
+            return athlete_store.path(self.athletes, str(self.params["athlete"]), athlete_store.ATHLETE)
         return self.out / name
 
 
