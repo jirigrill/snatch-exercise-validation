@@ -1,7 +1,7 @@
 [project]
 name = "snatch"
 version = "0.1.0"
-description = "Repeatability prototype for #11: pose -> sagittal angles -> across-rep spread"
+description = "Snatch validation prototype: pipeline v2 (video -> person -> plate -> attempts -> pose)"
 authors = [
     { name = "Jiri Grill", email = "jiri.grill@workday.com" }
 ]

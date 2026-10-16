@@ -20,8 +20,7 @@ from pathlib import Path
 import numpy as np
 
 from snatch import athlete_store, overlay, skeleton
-from snatch.angles import HALPE26
-from snatch.pose import SIDE_OF
+from snatch.pose import HALPE26, SIDE_OF
 from snatch.stage import CLIP, SKELETON, Context, Stage, StageStop
 
 UNUSABLE_EXIT = 3

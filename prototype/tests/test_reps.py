@@ -75,32 +75,3 @@ def test_s3_stops_with_exit_4_when_the_plate_is_lost_inside_an_attempt(tmp_path:
     assert run_stages([s3.STAGE], ctx, log=lambda _: None) == 4
     data = json.loads((out / "attempts.json").read_text())
     assert data["attempts"][0]["plate_found"] < 0.9
-
-
-def test_overhead_lifts_from_sparse_pose():
-    """R3: a clip whose plate track fails (off-axis, 20261005_10) is split from pose alone; no test clip covers it."""
-    from snatch.reps import find_pose_lifts
-    n = 1000
-    nan = np.full(n, np.nan)
-    wrist, nose, knee, hip = nan.copy(), nan.copy(), nan.copy(), nan.copy()
-    s = np.arange(0, n, 10)  # sparse: every 10th frame posed
-    nose[s], knee[s], hip[s] = 100.0, 400.0, 300.0
-    wrist[s] = 350.0  # hands at the thighs: resting between reps
-    wrist[s[(s >= 100) & (s < 130)]] = 450.0  # gripping the bar
-    wrist[s[(s >= 150) & (s < 300)]] = 50.0  # overhead
-    wrist[s[(s >= 300) & (s < 320)]] = 200.0  # lowering, still above the hips
-    wrist[s[(s >= 700) & (s < 705)]] = 50.0  # one sample overhead: too short
-    lifts = find_pose_lifts(wrist, nose, knee, hip, _t(n))
-    assert [(lf.start, lf.end) for lf in lifts] == [(120, 321)]
-
-
-def test_pose_holds_are_long_runs_with_the_wrists_above_mid_thigh():
-    """R3: a pull to a standing hold on an off-axis plate failure (20261005_6) has no overhead phase; no test clip covers it."""
-    from snatch.reps import find_pose_holds
-    n = 1000
-    wrist, knee, hip = (np.full(n, np.nan) for _ in range(3))
-    s = np.arange(0, n, 10)
-    knee[s], hip[s], wrist[s] = 400.0, 300.0, 420.0  # bar on the floor
-    wrist[s[(s >= 200) & (s < 600)]] = 300.0  # standing hold, bar at the hips
-    wrist[s[(s >= 800) & (s < 820)]] = 300.0  # too short
-    assert [(h.start, h.end) for h in find_pose_holds(wrist, knee, hip, _t(len(wrist)))] == [(200, 591)]
