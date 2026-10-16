@@ -29,6 +29,7 @@ import numpy as np
 
 from snatch import skeleton as skel
 from snatch.angles import HALPE26
+from snatch.reps import height_above_floor
 from snatch.stage import SKELETON, Stage
 from snatch.stages import CALIBRATE, STAGES
 
@@ -82,15 +83,46 @@ def check_pose(out: Path) -> str:
     assert p["keypoints"].shape == (len(t), 26, 2), f"keypoints {p['keypoints'].shape} for {len(t)} frames"
     assert np.array_equal(p["t"], t), "raw_pose.npz t is not frame_times.npy"
     assert not (out / "raw_pose_partial.npz").exists(), "raw_pose_partial.npz left behind"
-    posed = int((~np.isnan(p["keypoints"]).all((1, 2))).sum())
-    assert posed == len(t), f"posed {posed} of {len(t)} frames (whole clip)"
+    posed_mask = ~np.isnan(p["keypoints"]).all((1, 2))
+    posed = int(posed_mask.sum())
+    if (out / "attempts.json").exists():  # analyze: exactly the windows of S3
+        windows = [a["window"] for a in json.loads((out / "attempts.json").read_text())["attempts"]]
+        want = np.zeros(len(t), bool)
+        for s, e in windows:
+            want[s:e] = True
+        assert np.array_equal(posed_mask, want), (f"posed {posed} frames, the attempt windows hold "
+                                                  f"{int(want.sum())} (or other frames)")
+        assert np.array_equal(p["ranges"], windows), "raw_pose.npz ranges are not the attempt windows"
+        scope = "attempt windows"
+    else:  # calibrate: every frame
+        assert posed == len(t), f"posed {posed} of {len(t)} frames (whole clip)"
+        scope = "whole clip"
     face = json.loads((out / "facing.json").read_text())["facing"]
     m = re.search(r"_(left|right)_", str(p["clip"]))
     assert m is None or m.group(1) == face, f"facing {face}, the filename says {m.group(1) if m else ''}"
-    ankle = float(np.median(p["scores"][:, 15:17].max(1)))
+    ankle = float(np.median(p["scores"][posed_mask][:, 15:17].max(1)))
     knee = HALPE26[f"{ {'right': 'r', 'left': 'l'}[face]}_knee"]
-    worst(out, "4_pose", 1 - p["scores"][:, knee], "lowest near-knee score (knee hidden or misplaced)")
-    return f"{posed} frames posed, facing {face}, median best ankle score {ankle:.2f}"
+    bad = np.where(posed_mask, 1 - p["scores"][:, knee], np.nan)
+    worst(out, "4_pose", bad, "lowest near-knee score (knee hidden or misplaced)")
+    return f"{posed} frames posed ({scope}), facing {face}, median best ankle score {ankle:.2f}"
+
+
+def check_attempts(out: Path) -> str:
+    a = json.loads((out / "attempts.json").read_text())
+    n = len(np.load(out / "frame_times.npy"))
+    knee, radius = a["params"]["knee_height_m"], a["params"]["plate_radius_m"]
+    p = np.load(out / "plate.npz")
+    rise = height_above_floor(p["hub_y"], p["found"].astype(bool), p["px_per_m"], p["t"])
+    bad = np.full(n, np.nan)
+    for x in a["attempts"]:
+        s, e = x["window"]
+        assert 0 <= s <= x["start"] < x["end"] <= e <= n, f"attempt {x['attempt']}: window {s}-{e}, frames {x['start']}-{x['end']} outside 0-{n}"
+        assert x["peak_m"] >= knee - 1e-9, f"attempt {x['attempt']}: peak {x['peak_m']} m below knee height {knee} m"
+        assert x["plate_found"] >= 0.9, f"attempt {x['attempt']}: plate found on {x['plate_found']:.0%}"
+        bad[x["start"]], bad[x["end"] - 1] = abs(rise[x["start"]]), abs(rise[x["end"] - 1])
+    worst(out, "3_attempts", bad, "hub rise at an attempt's first and last frame (bar should be on the floor: ~0 m)")
+    spans = ", ".join(f"f{x['start']}-{x['end']} peak {x['peak_m']:.2f} m" for x in a["attempts"])
+    return f"{len(a['attempts'])} attempts ({spans}), {len(a['not_a_pull'])} not_a_pull, knee {knee:.2f} m, plate radius {radius:.3f} m"
 
 
 def check_calibrate(out: Path, skeleton: Path) -> str:
@@ -146,9 +178,10 @@ def check_plate(out: Path) -> str:
             f"hough_share {share:.2f}, {jumps} jumps, passed {bool(p['passed'])}")
 
 
-CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate}
+CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate, "S3": check_attempts}
 # Files a stage still writes when it stops the run (checked on a --stop run; no content check).
-STOP_FILES = {"S2": ("plate_check.jpg", "overlays/2_plate.mp4")}
+STOP_FILES = {"S2": ("plate_check.jpg", "overlays/2_plate.mp4"),
+              "S3": ("attempts.json", "overlays/3_attempts.mp4")}
 
 
 def main(out: Path, run: str, skeleton: Path | None = None, stop: str | None = None,

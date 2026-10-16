@@ -16,11 +16,12 @@ script when given --overlay (`call_script`). Each layer is optional:
           TRAIL_S seconds of found frames. Orange; green when the plate dict has
           passed=True (S2's sanity check), orange also when passed=False.
 - boxes:  also draw the crop given to the pose model (yellow)
+- dim, frame_labels: S3's attempts: frames in `dim` are darkened, `frame_labels(i)` adds label lines
 """
 
 import subprocess
 import sys
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 import cv2
@@ -45,6 +46,7 @@ TRAIL_S = 0.5  # seconds of hub path drawn behind the hub
 GAP_COLOR = (0, 0, 255)  # BGR: red
 FADED_COLOR = (150, 150, 150)  # BGR: grey, a joint under FADE_SCORE
 FADE_SCORE = 0.3
+DIM_FACTOR = 0.35  # brightness of a dimmed frame
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "overlay_video.py"
 
 Arrays = Mapping[str, np.ndarray]
@@ -145,10 +147,12 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
            poses: Sequence[Arrays] = (), plate: Arrays | None = None, boxes: bool = False,
            start: int = 0, end: int | None = None, step: int = 1, fps: float = 30.0,
            scale: float = 0.5, zoom: bool = False, flag_px: float = 10.0,
-           notes: Sequence[str] = ()) -> dict[str, int]:
+           notes: Sequence[str] = (), dim: np.ndarray | None = None,
+           frame_labels: Callable[[int], Sequence[str]] | None = None) -> dict[str, int]:
     """Write the overlay video; returns {"frames": written, "flagged": above flag_px}.
 
     notes: extra label lines on every frame (e.g. facing and the color legend).
+    dim: per-frame bool, True = darken the frame; frame_labels(i): extra label lines on frame i.
     """
     info = probe(clip)
     show = shown_frames(info.n_frames, start, end, step, poses, plate)
@@ -169,8 +173,8 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
             break
         if i not in want:
             continue
-        img = img.copy()
-        labels = [f"f{i}", *notes]
+        img = (img * DIM_FACTOR).astype(np.uint8) if dim is not None and dim[i] else img.copy()
+        labels = [f"f{i}", *notes, *(frame_labels(i) if frame_labels else ())]
         if person is not None:
             seen = bool(person["detected"][i]) if "detected" in person else True
             gap = gap_mask is not None and bool(gap_mask[i])

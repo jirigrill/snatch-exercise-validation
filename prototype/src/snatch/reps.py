@@ -14,6 +14,11 @@ ends, so pose can skip the rests between reps.
   lift (a bounce on a dropped miss).
 - start: last frame before the run with the hub within `rest_m` of the
   floor (liftoff); end: first frame after it back within `rest_m` (bar down).
+
+`find_attempts` (S3) is the v2 rule: every rise above `lift_m` is a candidate,
+candidates are merged only when the bar did not come to rest between them, and
+a candidate whose hub reaches the athlete's knee height above the real floor
+is an attempt (the rest are `not_a_pull`). `find_lifts` stays for the v1 tools.
 """
 
 from dataclasses import dataclass
@@ -67,6 +72,33 @@ def find_lifts(height_m: np.ndarray, t: np.ndarray, lift_m: float = 0.10,
         end = int(e + after[0] + 1) if after.size else len(height_m)
         lifts.append(Lift(start, end, peak))
     return lifts
+
+
+def find_attempts(rise_m: np.ndarray, knee_height_m: float, radius_m: float,
+                  lift_m: float = 0.10, rest_m: float = 0.03) -> tuple[list[Lift], list[Lift]]:
+    """(attempts, not_a_pull) from the hub's rise above its resting level (height_above_floor).
+
+    A candidate is a run of rise > lift_m; candidates with no frame at rest
+    (rise <= rest_m) between them are one. start/end as in find_lifts. The hub's
+    height above the real floor is rise + `radius_m` (the plate radius): an
+    attempt peaks at least at `knee_height_m`. `peak_m` is that height.
+    """
+    rest = rise_m <= rest_m
+    merged: list[list[int]] = []
+    for s, e in runs(rise_m > lift_m):
+        if merged and not rest[merged[-1][1]:s].any():
+            merged[-1][1] = e
+        else:
+            merged.append([s, e])
+    attempts, other = [], []
+    for s, e in merged:
+        before = np.flatnonzero(rest[:s])
+        after = np.flatnonzero(rest[e:])
+        start = int(before[-1]) if before.size else 0
+        end = int(e + after[0] + 1) if after.size else len(rise_m)
+        peak = float(rise_m[s:e].max()) + radius_m
+        (attempts if peak >= knee_height_m else other).append(Lift(start, end, peak))
+    return attempts, other
 
 
 def pose_range(lift: Lift, t: np.ndarray, n_frames: int, pad_before_s: float = 1.0,

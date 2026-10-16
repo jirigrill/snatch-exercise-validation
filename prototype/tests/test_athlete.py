@@ -50,6 +50,18 @@ def test_later_height_overwrites(tmp_path: Path) -> None:
     assert _profile(ctx)["height_m"] == 1.75
 
 
+def test_same_height_leaves_the_profile_file_alone(tmp_path: Path) -> None:
+    """R3: run_clip passes --height every run; an unchanged one must not rewrite athlete.json (S3 hashes it)."""
+    ctx = _ctx(tmp_path, height=1.80)
+    _skeleton(ctx)
+    _run(ctx)
+    path = ctx.athletes / "jiri" / "athlete.json"
+    path.write_text(path.read_text().replace('"updated": "', '"updated": "old-'))
+    before = path.read_bytes()
+    _run(ctx)
+    assert path.read_bytes() == before
+
+
 def test_stored_height_is_enough(tmp_path: Path) -> None:
     """R3: without --height the stored height is used (run_clip always passes it)."""
     ctx = _ctx(tmp_path, height=1.80)

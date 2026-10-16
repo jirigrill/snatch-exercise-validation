@@ -1,7 +1,9 @@
 """S0: check the athlete profile (height, skeleton) before any heavy stage.
 
 Not hashed: it reads and writes athletes/<athlete>/, not out/<clip>/, and runs
-every time. --height writes athlete.json (the latest value wins). A missing
+every time. --height writes athlete.json (the latest value wins; not rewritten
+when height and knee height are unchanged, so S3, which hashes it, stays up to
+date on a rerun). A missing
 height stops with exit 7, a missing skeleton with exit 2; both missing is one
 message with exit 2. --calibrate skips the skeleton check.
 """
@@ -42,9 +44,15 @@ def run(ctx: Context, _tmp: Path) -> None:
             h = check_height(float(height))
         except ValueError as e:
             raise StageStop(NO_HEIGHT_EXIT, "needs_height", str(e)) from None
-        athlete_store.save(ctx.athletes, athlete, athlete_store.ATHLETE, {
-            "athlete": athlete, "height_m": h, "knee_height_m": round(KNEE_PER_HEIGHT * h, 4),
-            "updated": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+        knee = round(KNEE_PER_HEIGHT * h, 4)
+        try:
+            stored = athlete_store.load(ctx.athletes, athlete, athlete_store.ATHLETE) or {}
+        except ValueError:  # a broken file is replaced
+            stored = {}
+        if (stored.get("height_m"), stored.get("knee_height_m")) != (h, knee):
+            athlete_store.save(ctx.athletes, athlete, athlete_store.ATHLETE, {
+                "athlete": athlete, "height_m": h, "knee_height_m": knee,
+                "updated": datetime.now(timezone.utc).isoformat(timespec="seconds")})
     no_height = not _stored_height_ok(ctx, athlete)
     no_skeleton = not ctx.params.get("calibrate") and not athlete_store.exists(
         ctx.athletes, athlete, athlete_store.SKELETON)
