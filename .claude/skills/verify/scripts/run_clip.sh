@@ -71,6 +71,12 @@ expected_stop() {  # expected_stop <clip id>: "<exit> <stage>" when the clip sto
     T5) echo "6 S2" ;;  # bar-only clip given to analyze: no plate (hough_share < 0.5) -> exit 6
   esac
 }
+expected_attempts() {  # expected_attempts <clip id>: how many attempts S3 must find (empty = not checked)
+  case $1 in
+    T1|T2|T3|T4|T6|T7) echo 1 ;;  # T7: standup, one failed attempt
+    T8) echo 2 ;;
+  esac
+}
 rm -rf "$out"
 echo "commit $(git rev-parse --short HEAD) $branch, dirty files: $dirty" >"$log"
 key=$( { stat -f '%z %m' "$clip" "$bar"; find src/snatch -type f -name '*.py' | sort | xargs cat
@@ -91,8 +97,9 @@ pipeline() {  # pipeline <run label> <check run> <out> [pipeline.py options]: cl
   if [[ $1 == --calibrate ]]; then
     opts=(--calibrate "$athletes/verify/skeleton.json")
   else
-    local s; s=$(expected_stop "$id")
+    local s a; s=$(expected_stop "$id"); a=$(expected_attempts "$id")
     [[ -z $s ]] || { want_rc=${s%% *}; opts=(--stop "${s#* }"); }
+    [[ -z $a || $check != first ]] || opts+=(--attempts "$a")
   fi
   for try in 1 2; do
     echo "== $run" >>"$log"
@@ -115,15 +122,16 @@ sheet() {  # sheet <mp4>: 8 evenly spaced frames, 4 x 2, 360 px high
   ffmpeg -v error -y -i "$1" -vf "select='not(mod(n\,$(( n / 8 > 0 ? n / 8 : 1 ))))',scale=-2:360,tile=4x2" \
     -frames:v 1 "${1%.mp4}_sheet.jpg" || fail "frame sheet of $1"
 }
-worst() {  # worst <mp4>: the clip frames in <name>.worst (check_pipeline.py), 4 x 1, 360 px high
-  local w=${1%.mp4}.worst n nc sel= f idx
+worst() {  # worst <mp4>: the clip frames in <name>.worst (check_pipeline.py), <count> x 1, 360 px high
+  local w=${1%.mp4}.worst n nc sel= f idx cnt
   [ -s "$w" ] || return 0
   n=$(frames "$1")
   nc=$(sed -n 's/.*"n_frames": *\([0-9]*\).*/\1/p' "$(dirname "$1")/../clip.json")
+  cnt=$(head -1 "$w" | wc -w | tr -d ' ')
   idx=$(sed -n 3p "$w")  # video frame of each clip frame; else proportional (every step-th frame)
   if [ -n "$idx" ]; then for f in $idx; do sel+="${sel:++}eq(n\,$f)"; done
   else for f in $(head -1 "$w"); do sel+="${sel:++}eq(n\,$(( f * n / nc )))"; done; fi
-  ffmpeg -v error -y -i "$1" -vf "select='$sel',scale=-2:360,tile=4x1" -frames:v 1 "${1%.mp4}_worst.jpg" ||
+  ffmpeg -v error -y -i "$1" -vf "select='$sel',scale=-2:360,tile=${cnt}x1" -frames:v 1 "${1%.mp4}_worst.jpg" ||
     fail "worst-frames sheet of $1"
 }
 calkey=$( { stat -f '%z %m' "$bar"; uv run python "$here/stage_files.py" calibrate | xargs cat

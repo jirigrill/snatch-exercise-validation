@@ -13,7 +13,7 @@ chk "halpe26 pose model cached"    "ls ~/.cache/rtmlib/hub/checkpoints/*halpe26*
 chk "detector model cached"        "ls ~/.cache/rtmlib/hub/checkpoints/yolox_x_*.onnx"
 chk "ffprobe installed"            "command -v ffprobe"
 chk "ffmpeg installed"             "command -v ffmpeg"
-chk "test clips T1-T7 present"     "[ \$(ls ../vids/test/T[1-7]_*_{240,60}fps.MOV | wc -l) -eq 7 ]" ||
+chk "test clips T1-T8 present"     "[ \$(ls ../vids/test/T[1-8]_*_{240,60}fps.MOV | wc -l) -eq 8 ]" ||
   echo "     rebuild per .claude/skills/verify/features/test-clips.md"
 chk "CoreML provider available"    "uv run python -c 'import onnxruntime as o; assert \"CoreMLExecutionProvider\" in o.get_available_providers()'"
 echo "branch: $(git -C "$root" rev-parse --abbrev-ref HEAD) $(git -C "$root" rev-parse --short HEAD), dirty files: $(git -C "$root" status --porcelain | wc -l | tr -d ' ')"

@@ -5,8 +5,10 @@ Analyze poses only the attempt windows of S3 (attempts.json; padding included),
 keypoints outside the windows) and carry the frame times of S-1 as `t` and the
 posed `ranges` ([start, end) frames; the whole clip for --calibrate). The facing
 and near-side check reads only the padding frames of the windows (inside a
-window, outside [start, end) of its attempt: the lifter stands there, no plate
-in front of the legs); --calibrate reads the whole clip. facing.json holds `facing`: "right" or
+window, outside [start, end) of its attempt: the 1 s before liftoff, the setup
+crouch, and the bar-down frames after it, often absent as the clip ends). It
+is not a standing window: facing reads it because the feet show below the plate
+there; --calibrate reads the whole clip. facing.json holds `facing`: "right" or
 "left", the way the toes point in the image, with the votes and leg scores it
 came from. The near side follows from it (pose.SIDE_OF), and the leg the model
 scores higher must be that side, else the clip is mirrored or the legs are

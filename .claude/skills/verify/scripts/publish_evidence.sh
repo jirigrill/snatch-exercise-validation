@@ -12,7 +12,11 @@
 # origin/main are shown, plus every stage after the first of them (stage_files.py show): their
 # detail lines and images (the png/jpg outputs; of an mp4 its _sheet and _worst jpg, with the
 # frames of its .worst); the clip's and the calibration's (calibrate_<T5>/). All stages when
-# scripts/pipeline.py or uv.lock changed. SHOW_STAGES="S2 C3" adds stages by name (a changed
+# scripts/pipeline.py or uv.lock changed. Shown stages split into focus (full) and context
+# (images in a collapsed <details>; still required in the review): focus = stages whose own
+# module changed plus, transitively, those reading their outputs (or importing their module);
+# context = the rest, shown only for changed shared code or an earlier changed stage. A
+# calibration with no focus stage is collapsed whole. SHOW_STAGES="S2 C3" adds stages by name (a changed
 # sheet or check), SHOW_STAGES=all shows all. Fails before pushing when the review misses the
 # file stem of a shown image or a frame of a shown .worst. The branch is deleted when the PR
 # closes (.github/workflows/delete-evidence.yml); the comment text stays, its images and links break.
@@ -49,8 +53,10 @@ unchanged=$(for n in $allnames; do [[ " $shownames " == *" $n "* ]] || echo "$n"
 calonly=$(for n in $(names all calibrate); do [[ " $(names all analyze) " == *" $n "* ]] || echo "$n"; done)
 calshow=
 for n in $calonly S-1 S1 S4; do [[ $sc == *" $n "* ]] && calshow=1; done
-shown_images() {  # shown_images <list> <dir>: the shown stages' images that exist in <dir>, relative to it
-  awk -v l="$1" '$1=="shown" && $2==l {for (i = 4; i <= NF; i++) print $i}' <<<"$show" | while read -r o; do
+shown_images() {  # shown_images <list> <dir> [focus|context]: the shown stages' images that exist in <dir>, relative to it
+  awk -v l="$1" -v k="$3" -v f="$(names focus "$1") " '$1=="shown" && $2==l {
+      isf = index(f, " " $3 " ") > 0
+      if (k == "" || (k == "focus") == isf) for (i = 4; i <= NF; i++) print $i}' <<<"$show" | while read -r o; do
     case $o in
       *.jpg|*.png) [ -f "$2/$o" ] && echo "$o" ;;
       *.mp4) for x in "${o%.mp4}_sheet.jpg" "${o%.mp4}_worst.jpg"; do [ -f "$2/$x" ] && echo "$x"; done ;;
@@ -58,17 +64,37 @@ shown_images() {  # shown_images <list> <dir>: the shown stages' images that exi
   done
   return 0
 }
+context_names() {  # context_names <list>: the shown stages of the list that are not focus
+  for n in $(names shown "$1"); do [[ " $(names focus "$1") " == *" $n "* ]] || printf '%s ' "$n"; done
+}
+context_reason() {  # why the context stages are shown: the changed shared files, else an earlier changed stage
+  local files; files=$(awk '$1=="shared" {for (i = 4; i <= NF; i++) print $i}' <<<"$show" | sort -u | paste -sd ',' - | sed 's/,/, /g')
+  if [[ -n $files ]]; then echo "shown because shared code changed ($files)"; else echo "shown because an earlier stage changed"; fi
+}
 worst_frames() {  # worst_frames <dir> <x_worst.jpg>: the frame numbers of its .worst
   head -1 "$1/${2%_worst.jpg}.worst"
 }
-render_images() {  # render_images <dir> <url dir> <list>
-  shown_images "$3" "$1" | while read -r x; do
+render_images() {  # render_images <dir> <url dir> <list> [focus|context]
+  shown_images "$3" "$1" "$4" | while read -r x; do
     echo "![$x]($2/$x?raw=true)"
     case $x in *_worst.jpg)
       w=${x%_worst.jpg}.worst
       echo "worst frames (from $(basename "$w")): $(for n in $(worst_frames "$1" "$x"); do printf 'f%s ' "$n"; done)— $(sed -n 2p "$1/$w")" ;;
     esac
   done
+}
+render_split() {  # render_split <dir> <url dir> <list> <title>: focus images, then the context ones collapsed
+  local focus ctx; focus=$(render_images "$1" "$2" "$3" focus); ctx=$(render_images "$1" "$2" "$3" context)
+  [[ -z $focus ]] || echo "$focus"
+  [[ -z $ctx ]] || collapsed "$4$(context_names "$3" | sed 's/ *$//; s/ /, /g'), $(context_reason)" "$ctx"
+}
+collapsed() {  # collapsed <summary> <markdown>
+  echo
+  echo "<details><summary>$1</summary>"
+  echo
+  echo "$2"
+  echo
+  echo "</details>"
 }
 # the review must cover every shown image and use the frame numbers of its .worst
 unmentioned() {
@@ -133,17 +159,22 @@ url=https://github.com/$repo/blob/$commit/$name
       /^retry/ { print }' "$log"
     echo '```'
     echo
-    render_images "$ev/$c" "$url/$c" analyze
+    render_split "$ev/$c" "$url/$c" analyze "Context: "
   done
   for d in "$ev"/calibrate_*/; do
     [ -d "$d" ] || continue
     d=$(basename "$d")
-    imgs=$(render_images "$ev/$d" "$url/$d" calibrate)
+    imgs=$(render_split "$ev/$d" "$url/$d" calibrate "Context: ")
     [[ -n $imgs ]] || continue
     echo
     echo "### calibration"
-    echo
-    echo "$imgs"
+    if [[ -n $(names focus calibrate) ]]; then
+      echo
+      echo "$imgs"
+    else
+      all=$(render_images "$ev/$d" "$url/$d" calibrate)
+      collapsed "Calibration (context: $(context_names calibrate | sed 's/ *$//; s/ /, /g'), $(context_reason))" "$all"
+    fi
   done
   echo
   echo "Files: https://github.com/$repo/tree/$commit/$name (branch \`$branch\`, deleted when this PR closes)"

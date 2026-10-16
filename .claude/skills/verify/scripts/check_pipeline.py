@@ -1,6 +1,6 @@
 """Check one pipeline.py run in out/<clip> against snatch.stages.STAGES (run_clip.sh).
 
-usage: uv run python check_pipeline.py <out dir> first|rerun [--calibrate <skeleton.json>] [--stop <stage>] [--reused S,S]
+usage: uv run python check_pipeline.py <out dir> first|rerun [--calibrate <skeleton.json>] [--stop <stage>] [--reused S,S] [--attempts N]
 
 --calibrate: the run was pipeline.py --calibrate (snatch.stages.CALIBRATE),
 and C3 wrote the skeleton.json given.
@@ -8,6 +8,7 @@ and C3 wrote the skeleton.json given.
 the stages up to it in the usual states, it `failed`, the status not ok.
 --reused: on the first run these stages come from stage_cache.py (same key = same
 outputs), so they are `skipped`; their content checks run all the same.
+--attempts: S3 must find exactly this many attempts (run_clip.sh's expected_attempts).
 
 Every run: status ok, the stages in pipeline order, each in the state the run
 expects, and every output of a stage that ran or was kept non-empty. Then each
@@ -15,14 +16,16 @@ stage's content check below, if it has one. A new stage: add it to STAGES and,
 when there is something to check beyond its files existing, a function here.
 
 A content check also writes overlays/<overlay>.worst: the WORST frames that score
-worst on the stage's own measure (line 1, frame numbers), what that is (line 2), and the video frame of each in the
-overlay mp4 (line 3: the overlay draws only some frames). run_clip.sh turns it into <overlay>_worst.jpg, so the review sees the frames where
+worst on the stage's own measure (line 1, frame numbers; S3: its key frames, all of them), what that is (line 2),
+and the video frame of each in the overlay mp4 (line 3: the overlay draws only some frames; the frames on line 1
+are always among them). run_clip.sh turns it into <overlay>_worst.jpg, so the review sees the frames where
 the stage is most likely wrong, not only evenly spaced ones.
 """
 
 import argparse
 import json
 import re
+from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
@@ -30,9 +33,10 @@ import numpy as np
 from snatch import overlay as ov
 from snatch import skeleton as skel
 from snatch.angles import HALPE26
-from snatch.reps import height_above_floor
+from snatch.reps import Lift, height_above_floor
 from snatch.stage import SKELETON, Stage
 from snatch.stages import CALIBRATE, STAGES
+from snatch.stages.attempts import key_frames
 
 WORST = 4  # frames in <overlay>_worst.jpg
 WORST_GAP = 24  # at least this many frames apart (0.1 s at 240 fps), so not 4 neighbours
@@ -43,19 +47,24 @@ def expected(stage: Stage, run: str, reused: frozenset[str] = frozenset()) -> st
 
 
 def worst(out: Path, overlay: str, badness: np.ndarray, what: str, shown: np.ndarray) -> None:
-    """Write overlays/<overlay>.worst: the WORST highest-badness frames (NaN = never), WORST_GAP apart,
-    and (line 3) each one's index in the overlay mp4: its nearest frame in `shown` (the clip frames drawn)."""
+    """Write overlays/<overlay>.worst: the WORST highest-badness frames among those in `shown` (the clip
+    frames the overlay draws; NaN = never), WORST_GAP apart, and (line 3) each one's index in the overlay mp4."""
+    badness = np.where(np.isin(np.arange(len(badness)), shown), badness, np.nan)
     picked: list[int] = []
     for i in np.argsort(-np.nan_to_num(badness, nan=-np.inf)):
         if len(picked) == WORST or not np.isfinite(badness[i]):
             break
         if all(abs(int(i) - p) >= WORST_GAP for p in picked):
             picked.append(int(i))
-    if picked:
-        picks = np.array(sorted(picked))
+    write_worst(out, overlay, picked, what, shown)
+
+
+def write_worst(out: Path, overlay: str, frames: Sequence[int], what: str, shown: np.ndarray) -> None:
+    """Write overlays/<overlay>.worst for explicit frames, all of which must be in `shown`."""
+    if frames:
+        picks = np.array(sorted(frames))
         j = np.searchsorted(shown, picks)
-        lo, hi = np.clip(j - 1, 0, len(shown) - 1), np.clip(j, 0, len(shown) - 1)
-        j = np.where(np.abs(shown[lo] - picks) <= np.abs(shown[hi] - picks), lo, hi)
+        assert np.array_equal(shown[np.clip(j, 0, len(shown) - 1)], picks), f"frames {picks} not all drawn"
         (out / "overlays" / f"{overlay}.worst").write_text(
             " ".join(map(str, picks)) + f"\n{what}\n" + " ".join(map(str, j)) + "\n")
 
@@ -116,21 +125,25 @@ def check_pose(out: Path) -> str:
     return f"{posed} frames posed ({scope}), facing {face}, median best ankle score {ankle:.2f}"
 
 
-def check_attempts(out: Path) -> str:
+def check_attempts(out: Path, want: int | None = None) -> str:
     a = json.loads((out / "attempts.json").read_text())
     n = len(np.load(out / "frame_times.npy"))
     knee, radius = a["params"]["knee_height_m"], a["params"]["plate_radius_m"]
     p = np.load(out / "plate.npz")
     rise = height_above_floor(p["hub_y"], p["found"].astype(bool), p["px_per_m"], p["t"])
-    bad = np.full(n, np.nan)
+    assert want is None or len(a["attempts"]) == want, f"{len(a['attempts'])} attempts, expected {want}"
     for x in a["attempts"]:
         s, e = x["window"]
         assert 0 <= s <= x["start"] < x["end"] <= e <= n, f"attempt {x['attempt']}: window {s}-{e}, frames {x['start']}-{x['end']} outside 0-{n}"
         assert x["peak_m"] >= knee - 1e-9, f"attempt {x['attempt']}: peak {x['peak_m']} m below knee height {knee} m"
         assert x["plate_found"] >= 0.9, f"attempt {x['attempt']}: plate found on {x['plate_found']:.0%}"
-        bad[x["start"]], bad[x["end"] - 1] = abs(rise[x["start"]]), abs(rise[x["end"] - 1])
-    worst(out, "3_attempts", bad, "hub rise at an attempt's first and last frame (bar should be on the floor: ~0 m)",
-          ov.shown_frames(n, 0, None, 4, [], p))
+    lifts = [Lift(x["start"], x["end"], x["peak_m"]) for x in a["attempts"]]
+    others = [Lift(x["start"], x["end"], x["peak_m"]) for x in a["not_a_pull"]]
+    keys = key_frames(rise, lifts, others)
+    write_worst(out, "3_attempts", keys,
+                f"attempt key frames: liftoff and back on the floor (hub ~{radius:.2f} m = plate radius: on the floor), "
+                f"peak (must clear the knee gate {knee:.2f} m), highest not_a_pull",
+                ov.shown_frames(n, 0, None, 4, [], p, extra=keys))
     spans = ", ".join(f"f{x['start']}-{x['end']} peak {x['peak_m']:.2f} m" for x in a["attempts"])
     return f"{len(a['attempts'])} attempts ({spans}), {len(a['not_a_pull'])} not_a_pull, knee {knee:.2f} m, plate radius {radius:.3f} m"
 
@@ -200,11 +213,11 @@ STOP_FILES = {"S2": ("plate_check.jpg", "overlays/2_plate.mp4"),
 
 
 def main(out: Path, run: str, skeleton: Path | None = None, stop: str | None = None,
-         reused: frozenset[str] = frozenset()) -> int:
+         reused: frozenset[str] = frozenset(), attempts: int | None = None) -> int:
     stages = CALIBRATE if skeleton else STAGES
     if stop:
         stages = stages[:[s.name for s in stages].index(stop) + 1]
-    checks = CHECKS | ({"C3": lambda o: check_calibrate(o, skeleton)} if skeleton else {})
+    checks = CHECKS | {"S3": lambda o: check_attempts(o, attempts)} | ({"C3": lambda o: check_calibrate(o, skeleton)} if skeleton else {})
     status = json.loads((out / "pipeline_status.json").read_text())
     got = {name: s["state"] for name, s in status["stages"].items()}
     want = {s.name: expected(s, run, reused) for s in stages} | ({stop: "failed"} if stop else {})
@@ -244,6 +257,8 @@ if __name__ == "__main__":
     ap.add_argument("run", choices=("first", "rerun"))
     ap.add_argument("--calibrate", type=Path, metavar="SKELETON_JSON")
     ap.add_argument("--stop", choices=[s.name for s in STAGES + CALIBRATE])
+    ap.add_argument("--attempts", type=int, help="expected number of S3 attempts")
     ap.add_argument("--reused", default="", help="comma-separated stages restored by stage_cache.py")
     a = ap.parse_args()
-    raise SystemExit(main(a.out, a.run, a.calibrate, a.stop, frozenset(filter(None, a.reused.split(",")))))
+    raise SystemExit(main(a.out, a.run, a.calibrate, a.stop,
+                     frozenset(filter(None, a.reused.split(","))), a.attempts))
