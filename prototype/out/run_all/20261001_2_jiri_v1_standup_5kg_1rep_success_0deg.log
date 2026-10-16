@@ -1,9 +1,0 @@
-=== person: uv run python scripts/extract_person.py ../vids/20261001_2_jiri_v1_standup_5kg_1rep_success_0deg.MOV out/20261001_2_jiri_v1_standup_5kg_1rep_success_0deg
-ClipInfo(width=1080, height=1920, fps=240.0, n_frames=2553, rotation=-90)
-load /Users/jiri.grill/.cache/rtmlib/hub/checkpoints/yolox_x_8xb8-300e_humanart-a39d44ed.onnx with onnxruntime backend
-detector frame 0/2553 1s
-detector frame 2400/2553 48s
-done 107 detections on 2553 frames in 51s
-=== analyze: uv run python scripts/analyze.py ../vids/20261001_2_jiri_v1_standup_5kg_1rep_success_0deg.MOV out/20261001_2_jiri_v1_standup_5kg_1rep_success_0deg
-[]
-wrote ['angles.csv', 'angles.png', 'bar_path.png', 'grabs', 'hold.json', 'overlay.mp4', 'person.npz', 'phases.json', 'phases_v1_v2.md', 'phases_v2.json', 'plate.csv', 'plate.npz', 'plate_check.jpg', 'raw_pose.npz']

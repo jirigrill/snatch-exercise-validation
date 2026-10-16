@@ -19,4 +19,4 @@ The measurement pipeline for the validation (see `../docs/STATUS.md` for what it
 
 ## `out/`
 
-Committed results, one folder per clip plus the cross-clip files (`fps_estimate.*`, `d1_views.md`, `skeleton/`, ...). Large per-frame arrays are tracked too. Don't write a new run over an existing clip's folder when you only want to test something. Use a scratch folder.
+Committed v1 results, one folder per clip (the cross-clip study outputs were deleted with v1 in #68; git history has them). Large per-frame arrays are tracked too. Don't write a new run over an existing clip's folder when you only want to test something. Use a scratch folder.
