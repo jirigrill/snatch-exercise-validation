@@ -4,7 +4,8 @@ Reads the posed frames inside the attempt windows (raw_pose.npz, attempts.json),
 outline (plate.npz: joints inside it are not used), the near side from facing.json and that side's length table from skeleton.json. Writes scale.json
 ({factor, method, n_frames, spread, frames, thigh_shank, thigh_shank_cal}; `frames` are
 [start, end) runs of clip frame indices) and overlays/5_scale.jpg: up to three of the frames
-used (first, middle, last) with the near hip-ankle line, the factor, method and frame count.
+used (first, middle, last) with the near leg hip-knee-ankle in green (standing: the measured
+hip-ankle line in yellow), the factor, method and frame count.
 No usable frames: method "none" (factor null, n_frames 0, frames []), exit 0; the overlay is one clip
 frame saying so. Proportions off by more than 10 %: exit 5 (`cannot_scale`); scale.json and the
 overlay are still written with what was measured.
@@ -46,15 +47,19 @@ def write_overlay(clip: str, path: Path, k: np.ndarray, side: str, res: sc.Scale
     used = res.frames
     picks = sorted({int(used[0]), int(used[len(used) // 2]), int(used[-1])})
     info = probe(clip)
-    hip, ank = k[:, HALPE26[f"{side}_hip"]], k[:, HALPE26[f"{side}_ankle"]]
+    hip, knee, ank = (k[:, HALPE26[f"{side}_{j}"]] for j in ("hip", "knee", "ankle"))
     tiles = []
     for i, img in enumerate(frames(clip, info, stop=picks[-1] + 1)):
         if i not in picks:
             continue
         img = img.copy()
-        cv2.line(img, tuple(map(int, hip[i])), tuple(map(int, ank[i])), (0, 220, 0), 5)
-        for p in (hip[i], ank[i]):
-            cv2.circle(img, tuple(map(int, p)), 10, (255, 0, 255), -1)
+        pts = [tuple(map(int, p[i])) for p in (hip, knee, ank)]
+        cv2.line(img, pts[0], pts[1], (0, 220, 0), 5)
+        cv2.line(img, pts[1], pts[2], (0, 220, 0), 5)
+        if res.method == "standing":  # what standing measures: the straight hip-ankle distance
+            cv2.line(img, pts[0], pts[2], (0, 220, 255), 2)
+        for p in pts:
+            cv2.circle(img, p, 10, (255, 0, 255), -1)
         x0, y0, x1, y1 = overlay.zoom_window(np.stack([hip[i], ank[i]]), info.width, info.height, margin=300)
         tile = img[y0:y1, x0:x1]
         cv2.putText(tile, f"frame {i}", (10, tile.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 6)
@@ -63,7 +68,8 @@ def write_overlay(clip: str, path: Path, k: np.ndarray, side: str, res: sc.Scale
         tiles.append(cv2.resize(tile, (w, STRIP_HEIGHT)))
     strip = np.hstack(tiles)
     overlay._text(strip, f"{res.method}, factor {res.factor:.3f}, {len(used)} frames", 0)
-    overlay._text(strip, "green line: near hip - ankle", 1)
+    overlay._text(strip, "green: near hip-knee-ankle" + (", yellow: hip-ankle measured" if res.method == "standing"
+                                                          else " (thigh + shank measured)"), 1)
     path.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(path), strip)
 
