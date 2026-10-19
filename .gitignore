@@ -1,5 +1,6 @@
 .claude/settings.local.json
 .DS_Store
-.scratch/
+.scratch/*
+!.scratch/plan/
 vids/
 __pycache__/
