@@ -71,13 +71,18 @@ def probe(path: str) -> ClipInfo:
     return ClipInfo(w, h, int(num) / int(den), len(packet_times(path)), rotation)
 
 
-def frames(path: str, info: ClipInfo | None = None) -> Iterator[np.ndarray]:
-    """Yield rotated BGR frames (H x W x 3, uint8)."""
+def frames(path: str, info: ClipInfo | None = None, stop: int | None = None) -> Iterator[np.ndarray]:
+    """Yield rotated BGR frames (H x W x 3, uint8), the first `stop` only when given.
+
+    A caller that stops early passes `stop`: ffmpeg then exits by itself instead of
+    being killed mid-write (its "Broken pipe" error).
+    """
     info = info or probe(path)
+    limit = ["-frames:v", str(stop)] if stop is not None else []
     proc = subprocess.Popen(
         # passthrough: one output frame per coded frame, never duplicated to a
         # constant rate (the 120 fps ladder files keep a 240 fps rate tag)
-        ["ffmpeg", "-v", "error", "-i", path, "-fps_mode", "passthrough",
+        ["ffmpeg", "-v", "error", "-i", path, "-fps_mode", "passthrough", *limit,
          "-f", "rawvideo", "-pix_fmt", "bgr24", "-"],
         stdout=subprocess.PIPE,
     )
