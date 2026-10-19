@@ -2,7 +2,7 @@
 
 The detector is ~95% of the pose pipeline's run time (330 ms/frame on the CPU;
 it fails on onnxruntime's CoreML provider) and rarely changes, so it runs once
-per clip, on its own (scripts/extract_person.py), and the pose step reads the
+per clip, on its own (S1), and the pose step (S4) reads the
 boxes it saved. At 240 fps the lifter moves a few pixels in a few frames, so
 the detector runs only every Nth frame and the boxes in between are
 interpolated (N = 24 differs from a run on every frame by ~1.5 px median at the

@@ -39,7 +39,7 @@
   <h1>Snatch pipeline v2 (spec for review)</h1>
   <p><code>uv run python scripts/pipeline.py &lt;clip.MOV&gt; --athlete &lt;id&gt;</code>. Click a box or a table row: the panel on the right gives the step's input, code, output and overlay. Colour = code status:
   <span class="tag t-have"></span>exists in <code>src/snatch/</code>
-  <span class="tag t-move"></span>exists in <code>studies/</code>, must move
+  <span class="tag t-move"></span>exists in git history (deleted with v1 in #68; last on main at 6469c5b), must be restored and moved
   <span class="tag t-new"></span>new code</p>
 </header>
 <main>
@@ -150,7 +150,7 @@ flowchart TB
     <div class="open"><b>4. Skeleton validity + clip scale.</b> One skeleton per athlete and side. S5 rescales it per clip from a standing window, else from visible-knee frames; it must be within 15% of the calibration, else stop. Recalibrate when the camera setup changes.</div>
     <div class="open"><b>5. Validation.</b> <code>labels.csv</code> (clip, attempt, result, intended_type) replaces filename labels. S8 counts as done at 100% agreement on the existing clips; new clips get added over time. Plate options: <code>--radius a:b</code> only (no <code>--view</code>, side views only), no filename parsing.</div>
     <div class="open"><b>6. Squat snatch (#26).</b> S7 computes the same v2 events for every type; S8 classifies. If the v2 events turn out wrong for squat catches, #26 adds type-specific event rules in S7.</div>
-    <div class="open"><b>7. run_all.sh.</b> Delete it once <code>pipeline.py</code> works, and update the verify skill, <code>prototype/README.md</code> and results/33 in the same PR.</div>
+    <div class="open"><b>7. run_all.sh.</b> Done in #68: deleted with the rest of v1 (scripts, studies, phases/spread/angles).</div>
   </div>
 </div>
 <aside><div class="card d" id="detail"></div></aside>
@@ -164,7 +164,7 @@ const D = {
     out:"<code>out/&lt;clip&gt;/</code>", ov:"none" },
   SP: { t:"S−1 · Probe + check clip", tag:"have",
     in:"clip", code:"snatch/video.py (probe, timestamps, mean_rate) exists; the checks + sheet are new, in pipeline.py. Never rewrites the video.",
-    how:"probe → fps, resolution, rotation, duration, codec\ntimestamps → real frame times (iPhone 240 fps is not exactly even)\nevery second-based threshold downstream converts through frame_times (searchsorted), never × fps: reps.py smooth/merge_s/pose_range pad, phases.py min_overhead_s, plate.py MAX_SPEED_PX_S (per second, not per frame) change signature to take t\nchecks (recording-protocol.md):\n  stop: unreadable, no frames, duration < 2 s\n  stop: frame times missing, not strictly increasing, or median rate off the fps tag by > 5%\n        → 'timestamps broken (re-encoded/exported?), use the original file'\n  warn: fps < 120, frame-time gaps, mean brightness < 40 or > 220\nother steps read clip.json instead of probing again\nevery timed step reads frame_times.npy (fps is for display only); every npz carries t\nNo colour/saturation edits: YOLOX/RTMPose expect normal images; plate.py does its own grayscale prep",
+    how:"probe → fps, resolution, rotation, duration, codec\ntimestamps → real frame times (iPhone 240 fps is not exactly even)\nevery second-based threshold downstream converts through frame_times (searchsorted), never × fps: reps.py smooth/pose_range pad, S7 min_overhead_s, plate.py MAX_SPEED_PX_S (per second, not per frame) change signature to take t\nchecks (recording-protocol.md):\n  stop: unreadable, no frames, duration < 2 s\n  stop: frame times missing, not strictly increasing, or median rate off the fps tag by > 5%\n        → 'timestamps broken (re-encoded/exported?), use the original file'\n  warn: fps < 120, frame-time gaps, mean brightness < 40 or > 220\nother steps read clip.json instead of probing again\nevery timed step reads frame_times.npy (fps is for display only); every npz carries t\nNo colour/saturation edits: YOLOX/RTMPose expect normal images; plate.py does its own grayscale prep",
     out:"<code>clip.json</code> {fps, n_frames, size, rotation, times_file, load_kg, load_source: flag|filename|none, warnings[]}, <code>frame_times.npy</code>",
     ov:"<code>0_clip_sheet.jpg</code>: 6 evenly spaced frames, metadata and warnings printed on top (catches wrong rotation, bad exposure)" },
   P2STOP: { t:"Stop: plate track unusable", tag:"new", in:"S2 check", code:"pipeline.py",
@@ -198,7 +198,7 @@ const D = {
     out:"<code>out/&lt;bar clip&gt;/raw_pose.npz</code>", ov:"<code>out/&lt;bar clip&gt;/overlays/4_pose.mp4</code>" },
   CAL: { t:"C3 · Fit skeleton", tag:"move",
     in:"bar clip <code>raw_pose.npz</code>, <code>--athlete</code>",
-    code:"Move from snatch/studies/skeleton.py to snatch/skeleton.py: length_table, LengthTable, robust_length, fit_offset, pull_windows. The collar tracker moves from scripts/studies/skeleton_wrist.py.",
+    code:"snatch/skeleton.py (length_table, LengthTable, robust_length, fit_offset, pull_windows), stages/calibrate.py. No wrist offset yet: the collar tracker (scripts/studies/skeleton_wrist.py) is in git history (deleted with v1 in #68; last on main at 6469c5b).",
     how:"bar-only clips always end here; they never reach S5\nfacing + near side detected as in S4\nsegment lengths (thigh, shank) as a table over d/d_standing\nwrist offset from the collar (perspective-linear)\nstanding hip–ankle length (reference for S5)\ncamera notes: date, side, facing",
     out:"<code>athletes/&lt;athlete&gt;/skeleton.json</code>, the bar clip's <code>raw_pose.npz</code>",
     ov:"<code>calibration_overlay.mp4</code>: skeleton with lengths in cm, the collar, and the fitted wrist next to the observed wrist" },
@@ -206,38 +206,38 @@ const D = {
     how:"athletes/<athlete>/athlete.json\n  { athlete, height_m, knee_height_m, updated,\n    body_mass_kg?, sex?, snatch_1rm_kg? (optional, each with its own updated date; read only by S9) }  (written by S0; survives recalibration)\nathletes/<athlete>/skeleton.json\n  { athlete, created, source_clip, sides: { r|l: { facing, length_table, wrist_offset, standing_hip_ankle_px } } }",
     out:"read by S0, S5 and S6", ov:"calibration_overlay.mp4 kept beside the json" },
   S1: { t:"S1 · Find the person", tag:"have",
-    in:"clip", code:"snatch/person.py (load_detector, detect, pick_lifter), snatch/video.py. Logic now in scripts/extract_person.py.",
+    in:"clip", code:"snatch/person.py (load_detector, detect, pick_lifter), snatch/video.py, stages/person.py.",
     how:"YOLOX every N frames → pick lifter (largest, IoU-followed) → interpolate boxes",
     out:"<code>person.npz</code> (boxes, times)", ov:"<code>1_person.mp4</code>: box per frame, gaps in red. snatch/overlay.render already does this." },
   S2: { t:"S2 · Bar / plate track", tag:"have",
-    in:"clip, <code>--radius</code>", code:"snatch/plate.py (detect, fit_outline, px_per_m). Logic now in scripts/track_plate.py.",
+    in:"clip, <code>--radius</code>", code:"snatch/plate.py (detect, fit_outline, px_per_m), stages/plate.py.",
     how:"plate candidates → track → outline fit (circle or ellipse) → hub x/y, px_per_m\nsanity check (steady run, radius track) → passed flag, per-frame found flag\nstop (exit 4) when found < 90% of frames inside attempt windows, or px_per_m varies > 10% across the clip\n(found coverage is re-checked after S3; before that, over frames where the plate moves)\nno plate anywhere → bar-only clip → exit 6",
     out:"<code>plate.npz</code> (hub, px_per_m, found, passed, t), <code>plate.csv</code>, <code>bar_path.png</code>, <code>plate_check.jpg</code>",
     ov:"<code>2_plate.mp4</code>: outline + hub + bar-path trail; orange when the sanity check fails. <b>New</b>: only a jpg exists today." },
   S3: { t:"S3 · Split into attempts", tag:"have",
-    in:"<code>plate.npz</code>, <code>clip.json</code>, <code>athlete.json</code>", code:"snatch/reps.py (height_above_floor, find_lifts, pose_range). Replace the 0.60 m peak minimum (min_peak_m) with a knee-height gate from athlete.json, so failed pulls are kept but tracker jitter is not. Logic now in scripts/find_reps.py.",
+    in:"<code>plate.npz</code>, <code>clip.json</code>, <code>athlete.json</code>", code:"snatch/reps.py (height_above_floor, find_attempts, pose_range), stages/attempts.py. A knee-height gate from athlete.json (not a fixed peak minimum), so failed pulls are kept but tracker jitter is not.",
     how:"bar height above the floor (hub, metres from px_per_m)\ncandidate = every rise > 10 cm\nattempt = candidate whose hub reaches knee_height_m above the floor (athlete.json); others logged as not_a_pull\nincludes pulls that never reach overhead\nlifts are merged only if the bar did not come to rest between them\none attempt window = [liftoff − 1 s, end + 1 s) (frame times; the 1 s before liftoff is the setup crouch)\nS2 poses only these windows + padding",
     out:"<code>attempts.json</code> (per attempt: start, end, peak_m, t)",
     ov:"<code>3_attempts.mp4</code>: 'Attempt k of n' banner, frames outside attempts dimmed. <b>New.</b>" },
   S4: { t:"S4 · Pose", tag:"have",
-    in:"clip, <code>person.npz</code>, <code>attempts.json</code>", code:"snatch/pose.py (load_model, run, resume). Logic now in scripts/extract_pose.py (already supports --reps ranges). Side/facing detection is new. Model switch: pose.py MODEL_NAME → RTMPose-x Halpe-26 variant; existing raw_pose.npz files need a rerun.",
-    how:"RTMPose-x Halpe-26 (same backbone, adds big toe, small toe, heel) in the box, only inside attempt windows + padding → 26 Halpe keypoints + scores per frame (resumable)\nfacing = majority sign of heel→toe x, both feet vote (whole clip until S3, then the window padding (setup crouch before liftoff, bar-down after; the feet show below the plate there)); no 2/3 majority → stop (exit 8), no override\nkeypoint indices change: angles.py COCO map → Halpe-26; facing is passed to sagittal_angles (signs today assume camera on the lifter's right)\nnear side follows from facing (right → r: the camera on the lifter's right sees the right leg); the leg with the higher mean keypoint score must agree, else stop (exit 8: mirrored clip or swapped legs)\nno override; facing goes to facing.json {facing, votes, leg_scores} (not clip.json: S1/S2/S3 hash clip.json); checked against skeleton.json (missing side → S0 stop)",
+    in:"clip, <code>person.npz</code>, <code>attempts.json</code>", code:"snatch/pose.py (load_model, run, resume, HALPE26), stages/pose.py. Side/facing detection is new. Model switch: pose.py MODEL_NAME → RTMPose-x Halpe-26 variant; existing raw_pose.npz files need a rerun.",
+    how:"RTMPose-x Halpe-26 (same backbone, adds big toe, small toe, heel) in the box, only inside attempt windows + padding → 26 Halpe keypoints + scores per frame (resumable)\nfacing = majority sign of heel→toe x, both feet vote (whole clip until S3, then the window padding (setup crouch before liftoff, bar-down after; the feet show below the plate there)); no 2/3 majority → stop (exit 8), no override\nkeypoint indices: Halpe-26 (pose.HALPE26)\nnear side follows from facing (right → r: the camera on the lifter's right sees the right leg); the leg with the higher mean keypoint score must agree, else stop (exit 8: mirrored clip or swapped legs)\nno override; facing goes to facing.json {facing, votes, leg_scores} (not clip.json: S1/S2/S3 hash clip.json); checked against skeleton.json (missing side → S0 stop)",
     out:"<code>raw_pose.npz</code> (keypoints, scores, t, ranges), <code>facing.json</code> {facing, votes, leg_scores}", ov:"<code>4_pose.mp4</code>: skeleton, low-score joints faded. overlay.render already does this." },
   S5: { t:"S5 · Clip scale", tag:"new",
     in:"<code>raw_pose.npz</code>, <code>attempts.json</code>, skeleton",
-    code:"new: snatch/scale.py. Rescale idea from scripts/studies/skeleton_loaded.py.",
+    code:"new: snatch/scale.py. Rescale idea from scripts/studies/skeleton_loaded.py (git history (deleted with v1 in #68; last on main at 6469c5b)).",
     how:"why: skeleton lengths are pixels from the calibration clip; a different camera distance changes them\n1. standing window: search every posed frame of the attempt windows (in practice the overhead hold: knees locked, hips still, legs in full view; the padding is a setup crouch) and take the longest window with ≥ 0.3 s with knee ≥ 170°,\n   hip + ankle visible, hip moving < 1% of body height → median hip–ankle / skeleton standing_hip_ankle_px\n2. else visible knee: ≥ 20 frames where the knee is seen (not hidden by the plate);\n   median of (thigh + shank) / skeleton lengths at the same d/d_standing\n3. else stop (exit 5)\nscale off the calibration by > 15% → stop (exit 5: other person or camera setup)",
     out:"<code>scale.json</code> {factor, method: standing|visible_knee, n_frames, spread}",
     ov:"<code>5_scale.jpg</code>: frames used, hip–ankle line, factor and method printed" },
   S6: { t:"S6 · Fill hidden knee + wrist", tag:"move",
     in:"<code>raw_pose.npz</code>, <code>plate.npz</code>, <code>scale.json</code>, skeleton",
-    code:"move from snatch/studies/skeleton.py: two_circle_knee, knee_gain, fill_hidden, wrist_from_hub. The hidden mask (ellipse_dist) comes from studies/views.py.",
+    code:"restore from git history (deleted with v1 in #68; last on main at 6469c5b) and move into snatch/: snatch/studies/skeleton.py (two_circle_knee, knee_gain, fill_hidden, wrist_from_hub; its test test_fill_hidden_switches_smoothly too), the hidden mask (ellipse_dist) from snatch/studies/views.py.",
     how:"lengths × scale.json factor; facing from facing.json\nhidden = near joint inside the plate outline\nknee = two_circle_knee(hip, ankle) where hidden (gain ≤ 2)\nwrist = hub + offset where hidden\nthe filled-mask travels on: angles.csv gets a filled column per joint, every S7 event gets filled=true|false",
     out:"<code>pose.npz</code> (hybrid keypoints + a filled-mask per joint, t)",
     ov:"<code>6_filled.mp4</code>: RTMPose joint (grey) and filled joint (purple), plate outline. <b>New.</b>" },
-  S7: { t:"S7 · Angles + events per attempt", tag:"have",
+  S7: { t:"S7 · Angles + events per attempt", tag:"new",
     in:"<code>pose.npz</code>, <code>plate.npz</code>, <code>attempts.json</code>",
-    code:"snatch/angles.py (sagittal_angles, mid_y), snatch/signals.py (smooth), snatch/phases.py (find_reps_v2), snatch/spread.py. Logic now in scripts/analyze.py + compare_phases.py, merged into one function. New wrapper events_for_attempt(window): runs v2 on the attempt slice, picks the longest overhead run, returns null events when there is none. This changes the v2 contract (today find_reps_v2 iterates overhead runs and drops reps without one). A regression test pins phases_v2.json for the 6 eye-accepted reps, plus a failed-pull fixture.",
+    code:"new: written from scratch (v1's angles.py, phases.py (find_reps_v2), spread.py, analyze.py, compare_phases.py are in git history (deleted with v1 in #68; last on main at 6469c5b), reference only). snatch/signals.py (smooth) stays; skeleton.sagittal_angles has hip and knee. events_for_attempt(window): runs v2 on the attempt slice, picks the longest overhead run, returns null events when there is none. Unlike v1's find_reps_v2, which iterated overhead runs and dropped reps without one. A regression test pins phases_v2.json for the 6 eye-accepted reps, plus a failed-pull fixture.",
     how:"loops over attempts.json, not over overhead runs\nper attempt: smooth keypoints → joint angles (near side from facing.json) incl. elbow\nframe times from frame_times.npy\nfrozen v2 events (hub): liftoff, full extension, bar peak, transition, catch, overhead run (≥ 0.25 s), lockout\nsame events for every snatch type; S8 classifies\nno overhead run → partial record, missing events = null\nevery event carries filled=true|false from the S6 mask",
     out:"<code>angles.csv</code> (+ filled columns), <code>angles.png</code>, <code>phases.json</code> (one record per attempt), <code>phase_sheet.jpg</code>, <code>grabs/</code>",
     ov:"<code>7_phases.mp4</code>: current phase name + angle values, a freeze-frame marker at each event. <b>New.</b>" },

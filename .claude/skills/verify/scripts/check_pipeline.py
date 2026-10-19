@@ -32,7 +32,7 @@ import numpy as np
 
 from snatch import overlay as ov
 from snatch import skeleton as skel
-from snatch.angles import HALPE26
+from snatch.pose import HALPE26
 from snatch.reps import Lift, height_above_floor
 from snatch.stage import SKELETON, Stage
 from snatch.stages import CALIBRATE, STAGES

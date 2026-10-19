@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 
 from snatch import skeleton as skel
-from snatch.studies import skeleton as sk
+
+
 def _leg(knee_deg: float, lt: float = 150.0, ls: float = 155.0, facing: float = 1.0):
     """Hip at origin, shank vertical below the knee, knee in front (facing)."""
     th = np.radians(180 - knee_deg)  # thigh tilt from vertical
@@ -26,17 +27,3 @@ def test_gain_grows_toward_straight_leg():
     assert g[0] == pytest.approx(1.0, abs=0.05)
     assert g[0] < g[1] < g[2]
     assert g[2] > 3
-
-
-def test_fill_hidden_switches_smoothly():
-    """R3: S6's fill switches between RTMPose and the rebuilt knee without a jump (moves with S6)."""
-    n = 100
-    obs = np.zeros((n, 2))
-    reb = np.ones((n, 2))
-    use = np.zeros(n, bool)
-    use[40:60] = True
-    out = sk.fill_hidden(obs, reb, use, fade=11)
-    assert out[0, 0] == 0 and out[50, 0] == pytest.approx(1)
-    assert np.abs(np.diff(out[:, 0])).max() <= 1 / 11 + 1e-9
-    reb[50] = np.nan
-    assert sk.fill_hidden(obs, reb, use, fade=11)[50, 0] == 0

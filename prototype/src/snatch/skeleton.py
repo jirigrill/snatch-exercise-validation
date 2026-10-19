@@ -24,14 +24,34 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from snatch.angles import HALPE26, sagittal_angles
+from snatch.pose import HALPE26
 from snatch.signals import smooth_keypoints
 
+# `sagittal_angles` (degrees): hip, knee = interior angle at the joint, 180 = fully
+# extended; hip = shoulder-hip-knee, knee = hip-knee-ankle.
 MIN_SCORE = 0.5  # near hip, knee and ankle all at least this: the frame is used
 STAND_DEG = 165.0  # knee and hip above this: standing
 MIN_STANDING = 20  # frames
 MIN_BINS = 3  # length-table bins with enough frames
 MAX_GAIN = 2.0  # rebuild the knee only this well conditioned (36 §1: the hybrid's rule)
+
+
+def joint_angle(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> np.ndarray:
+    """Interior angle at b between b->a and b->c, per row. NaN in, NaN out."""
+    u, v = np.asarray(a, float) - b, np.asarray(c, float) - b
+    cross = u[:, 0] * v[:, 1] - u[:, 1] * v[:, 0]
+    dot = (u * v).sum(axis=1)
+    return np.degrees(np.abs(np.arctan2(cross, dot)))
+
+
+def sagittal_angles(kps: np.ndarray, side: str = "r") -> dict[str, np.ndarray]:
+    """kps: (n_frames, 26, 2) -> {"hip", "knee"}: (n_frames,) degrees (conventions above)."""
+    p = {n: np.asarray(kps[:, HALPE26[f"{side}_{n}"]], float)
+         for n in ("shoulder", "hip", "knee", "ankle")}
+    return {
+        "hip": joint_angle(p["shoulder"], p["hip"], p["knee"]),
+        "knee": joint_angle(p["hip"], p["knee"], p["ankle"]),
+    }
 
 
 def unit_normal(hip: np.ndarray, ankle: np.ndarray, facing: float
@@ -178,7 +198,7 @@ def fit(keypoints: np.ndarray, scores: np.ndarray, t: np.ndarray, facing: str
     k = smooth_keypoints(np.asarray(keypoints, float), fps, t)
     hip, knee, ank = k[:, j["hip"]], k[:, j["knee"]], k[:, j["ankle"]]
     used = (np.asarray(scores)[:, list(j.values())] >= MIN_SCORE).all(1) & ~np.isnan(keypoints).any((1, 2))
-    ang = sagittal_angles(k, side, facing)
+    ang = sagittal_angles(k, side)
     stand = used & (ang["knee"] > STAND_DEG) & (ang["hip"] > STAND_DEG)
     if stand.sum() < MIN_STANDING:
         raise FitError(f"{int(stand.sum())} standing frames (knee and hip > {STAND_DEG:.0f} deg, "

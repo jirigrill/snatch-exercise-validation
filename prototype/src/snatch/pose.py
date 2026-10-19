@@ -1,9 +1,8 @@
 """Run RTMPose-x (body7 halpe26, 384x288) on the lifter's box in every frame, via rtmlib.
 
-The person boxes come from snatch.person (saved once per clip by
-scripts/extract_person.py). The pose model runs on CoreML. Output keypoints
-are Halpe-26 (COCO-17 first, then head, neck, hip, toes and heels), image
-pixels of the rotated (portrait) frame.
+The person boxes come from snatch.person (S1, saved once per clip). The pose
+model runs on CoreML. Output keypoints are Halpe-26 (COCO-17 first, then head,
+neck, hip, toes and heels), image pixels of the rotated (portrait) frame.
 """
 
 from collections.abc import Iterable
@@ -12,9 +11,16 @@ import numpy as np
 from rtmlib import RTMPose
 from rtmlib.tools.solution.body_with_feet import BodyWithFeet
 
-from snatch.angles import HALPE26
-
 MODEL_NAME = "rtmpose-x_simcc-body7_pt-body7-halpe26_700e-384x288"
+HALPE26 = {
+    "nose": 0, "l_eye": 1, "r_eye": 2, "l_ear": 3, "r_ear": 4,
+    "l_shoulder": 5, "r_shoulder": 6, "l_elbow": 7, "r_elbow": 8,
+    "l_wrist": 9, "r_wrist": 10, "l_hip": 11, "r_hip": 12,
+    "l_knee": 13, "r_knee": 14, "l_ankle": 15, "r_ankle": 16,
+    "head": 17, "neck": 18, "hip": 19,
+    "l_big_toe": 20, "r_big_toe": 21, "l_small_toe": 22, "r_small_toe": 23,
+    "l_heel": 24, "r_heel": 25,
+}
 N_KEYPOINTS = len(HALPE26)
 
 
