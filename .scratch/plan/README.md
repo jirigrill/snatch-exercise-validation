@@ -32,7 +32,7 @@ Workflow follow-ups (from #63: ~20 min of reruns the cache could have served, ~1
 
 Todo: run S1 ∥ S2 in parallel (optional, sequential for now; also in stages/__init__.py).
 
-Notes: detector exit crash (`recursive_mutex lock failed`) seen once; retry is OK, fix only if it recurs. Later: chase T2 catch timing in phase detection. `pv2/l-logic` may help S8.
+Notes: detector exit crash (`recursive_mutex lock failed`) seen once; retry is OK, fix only if it recurs. Later: chase T2 catch timing in phase detection. S4 on T1 f290 (4_pose_worst, PR #70): far (red) leg drawn from the hip far off to the feet; on main too, harmless while only the near leg is used, check before anything reads the far side. `pv2/l-logic` may help S8.
 
 ## Rules
 See `CLAUDE.md` in the repo root.

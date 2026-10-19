@@ -2,7 +2,8 @@
 # Claude Code Stop hook: an agent on a branch with an open PR may stop only when HEAD is
 # pushed and the PR has a ✅ /verify evidence comment (publish_evidence.sh) for HEAD, or
 # for an earlier commit with the same prototype/ and verify scripts (a docs-only commit
-# needs no new run). Else exit 2: the reason goes back to the agent and it keeps working.
+# needs no new run), or when the branch changes neither vs main (a docs-only PR needs no
+# run at all). Else exit 2: the reason goes back to the agent and it keeps working.
 # Blocks once per stop: on the retry (stop_hook_active) it lets the agent stop, so a check
 # that cannot pass never loops. Fails open when git or gh cannot answer (offline, no PR).
 input=$(cat)
@@ -15,6 +16,8 @@ pr=$(gh pr view --json number,state -q 'select(.state == "OPEN") | .number' 2>/d
 block() { echo "PR #$pr: $1 (CLAUDE.md, checks after each commit)" >&2; exit 2; }
 head=$(git rev-parse HEAD)
 [[ $(git rev-parse '@{u}' 2>/dev/null) == "$head" ]] || block "HEAD $(git rev-parse --short HEAD) is not pushed; push it, then run /verify and publish_evidence.sh"
+base=$(git merge-base origin/main "$head" 2>/dev/null) &&
+  git diff --quiet "$base" "$head" -- prototype .claude/skills/verify/scripts && exit 0
 proven=$(gh pr view "$pr" --json comments \
   -q '.comments[].body | select(startswith("## /verify evidence:") and (split("\n")[0] | contains("✅ OK")))' 2>/dev/null |
   sed -n 's/^commit \([0-9a-f]\{7,\}\) .*/\1/p' | sort -u) || exit 0
