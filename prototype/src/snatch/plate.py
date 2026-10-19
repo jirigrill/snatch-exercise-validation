@@ -23,6 +23,20 @@ MAX_SPEED_PX_S = 7200.0  # px/s at 1080 px frame width (~8.8 m/s at 820 px/m)
 Outline = tuple[float, float, float, float, float]  # cx, cy, a, b, angle (deg)
 
 
+def _ellipse_frame(dx, dy, ang):
+    th = np.deg2rad(np.asarray(ang, float))
+    u = np.cos(th) * dx + np.sin(th) * dy
+    v = -np.sin(th) * dx + np.cos(th) * dy
+    return u, v, th
+
+
+def ellipse_dist(px, py, cx, cy, a, b, ang):
+    """Normalised distance from the outline centre: < 1 inside, 1 on the rim."""
+    u, v, _ = _ellipse_frame(np.asarray(px, float) - cx,
+                             np.asarray(py, float) - cy, ang)
+    return np.hypot(u / a, v / b)
+
+
 def disc_mean(gray: np.ndarray, x: float, y: float, r: float,
               inner: float = 0.85) -> float:
     """Mean grey level inside inner * r of (x, y)."""
