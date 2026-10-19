@@ -27,11 +27,22 @@ No reuse from open PRs. Source code was in `src/snatch/studies/` and `scripts/st
 - The hide-a-visible-knee test (hide a seen knee, fill it, compare) is S6's done check, not S5's.
 
 ## S6 fill hidden joints
-- Move `two_circle_knee`, `knee_gain`, `fill_hidden`, `wrist_from_hub` from `studies/skeleton.py`, and `ellipse_dist` from `studies/views.py`.
+- Restore `fill_hidden` from `studies/skeleton.py` (`two_circle_knee`, `knee_gain`, `ellipse_dist` are already in `snatch/`; `wrist_from_hub` not: knee only, see decisions).
 - Inputs: raw_pose, plate, scale, skeleton. Out: `pose.npz` (hybrid + filled mask); overlay `6_filled.mp4`.
 - Done check (tests skeleton × S5 factor × fill together): on frames where the knee is seen, hide it, fill it, compare with the seen knee (px error, knee-angle error). Run on T1–T3, T6 and T8; T6 covers the other camera distance.
 - Stage hash includes skeleton.json + scale.json (hook from A).
 - scale.json `method: none` (T7): fill nothing, mark hidden joints hidden in the mask.
+
+### S6 decisions (2026-10-19)
+- Frame count first (S1–S5 on T1–T3, T6, T8, 2026-10-19): visible-knee frames at the transition are too few to gate on (T6: 2, T1: 13–37), and the deep catch (knee < 90°) is no proxy (rebuilt knee 4–10 cm too high there; never hidden, so never filled). Hidden knees sit at 95–150° (median 128°). With S5's one factor the rebuilt knee at 90–150° was 2–4 cm off on T1's session and 4–6 cm on T6: one factor scales the leg but can't fix its proportions (T6 thigh/shank 5 % off the skeleton's).
+- Fix: S5 also measures a thigh and a shank multiplier (on top of the factor) from the clip's visible-knee frames at 90–150°; fewer than 20 such frames → both 1 (`segment_source: factor_only`). Held-out test: T1 2.3→1.5 cm, T2 2.9→2.4, T3 3.1→2.5, T6 6.2→1.8, T8 2.3→1.7.
+- Pass gate (done check): visible knee at 90–150° outside the plate, inside S6's fill condition (circles meet, gain ≤ 2), two-fold hold-out by time (multipliers fitted on one half, knee rebuilt on the other). FAIL above 3 cm median per clip; target 2 cm and the knee-angle error reported per clip; under 40 frames: reported, not gated. px → cm: body 352.8 px/m (doc 35, T5's session) × factor. Same gate on T6 as on T1–T3, T8.
+- Hidden: near hip/knee/ankle inside the S2 plate ellipse with a 10 % margin (`ellipse_dist < 1.1`, named constant).
+- Knee only. `wrist_from_hub` is not restored in S6; wrist fill is a later plan item if S7/S8 need a wrist angle.
+- Re-bends: per attempt, start to bar peak, the hybrid knee may have no more ≥ 3° dips than RTMPose's knee (doc 36: RTMPose invents them behind the plate). Loaded clips have no truth behind the plate, so RTMPose is the comparison.
+- Airborne frames (T5 f1695–1698, shank +6 % on toes): report the reading only, no gate.
+- `6_filled.mp4` (spec colours): plate outline, RTMPose near leg grey, filled knee purple, hidden-not-filled joints a red ring, a legend on the frame.
+- Open: T2 (squat) and T3 (10 kg) stay at ~2.5 cm with the multipliers; chase later if S7/S8 disagreements point at the knee.
 
 ## Cleanup
 Restored functions go straight into `snatch/` (no `studies/` any more); restore test_fill_hidden_switches_smoothly (test_skeleton.py at 6469c5b) with S6.
@@ -41,4 +52,4 @@ Restored functions go straight into `snatch/` (no `studies/` any more); restore 
 - New: scale standing vs knee fallback, exit 5 (no frames; proportions off), a filled mask that is correct on a synthetic occlusion.
 
 ## Done when
-A bar-only clip → skeleton.json. A loaded clip → pose.npz whose filled knee matches the results in 36-skeleton-fill.
+A bar-only clip → skeleton.json. A loaded clip → pose.npz whose filled knee matches the results in 36-skeleton-fill (gate: S6 decisions above).

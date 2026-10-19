@@ -2,8 +2,9 @@
 
 Reads the posed frames inside the attempt windows (raw_pose.npz, attempts.json), the plate
 outline (plate.npz: joints inside it are not used), the near side from facing.json and that side's length table from skeleton.json. Writes scale.json
-({factor, method, n_frames, spread, frames, thigh_shank, thigh_shank_cal}; `frames` are
-[start, end) runs of clip frame indices) and overlays/5_scale.jpg: up to three of the frames
+({factor, method, n_frames, spread, frames, thigh_shank, thigh_shank_cal, thigh_factor,
+shank_factor, segment_frames, segment_source}; `frames` are [start, end) runs of clip frame indices;
+the thigh and shank factors multiply the factor, see `snatch.scale.segment_factors`) and overlays/5_scale.jpg: up to three of the frames
 used (first, middle, last) with the near leg hip-knee-ankle in green (standing: the measured
 hip-ankle line in yellow), the factor, method and frame count.
 No usable frames: method "none" (factor null, n_frames 0, frames []), exit 0; the overlay is one clip
@@ -90,8 +91,8 @@ def run(ctx: Context, tmp: Path) -> None:
         res: sc.Scale | None = sc.estimate(k, raw["scores"], t, windows, tab, side, cov)
     except sc.CannotScale as e:
         res, stop = e.partial, e
-    data = sc.to_json(res) if res else {"factor": None, "method": "none", "n_frames": 0, "spread": None,
-                                        "frames": [], "thigh_shank": None, "thigh_shank_cal": None}
+    seg = sc.segment_factors(k, raw["scores"], windows, tab, side, cov, res.factor) if res and res.factor else None
+    data = sc.to_json(res, seg) if res else dict(sc.NONE_JSON)
     (tmp / "scale.json").write_text(json.dumps(data, indent=2) + "\n")
     if res is None or res.method == "none":
         write_none_overlay(str(ctx.clip), tmp / OVERLAY, windows)

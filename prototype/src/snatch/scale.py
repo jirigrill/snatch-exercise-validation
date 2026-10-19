@@ -15,6 +15,9 @@ clip. A clip from another camera distance needs them times a factor. Two methods
    (thigh + shank) / the table's thigh + shank at the same r = d / (d_ref x factor);
    r depends on the factor, so the median is iterated from factor = 1.
 
+Both methods then fix the proportions for S6 (`segment_factors`): the thigh and shank multipliers
+on top of the factor, from the frames with the knee visible and bent SEG_MIN_DEG-SEG_MAX_DEG.
+
 Neither method has enough frames (e.g. a standup: the plate covers the hip): method "none",
 factor None, no stop. Proportions guard (a different person?): median thigh / shank on the
 frames used vs the scaled table's at the same r; off by more than MAX_PROPORTION stops
@@ -36,6 +39,8 @@ MIN_WINDOW_S = 0.3
 KNEE_SCORE = 0.6
 MIN_KNEE_FRAMES = 20
 MAX_PROPORTION = 0.10
+SEG_MIN_DEG = 90.0  # the knee bend range where the plate hides the knee: S6's segment factors are fitted here
+SEG_MAX_DEG = 150.0
 FIXED_POINT_ITERATIONS = 20
 
 
@@ -73,15 +78,16 @@ def smoothed(keypoints: np.ndarray, t: np.ndarray, windows: list[tuple[int, int]
     return out
 
 
-def covered(raw: np.ndarray, plate: Mapping[str, np.ndarray], side: str) -> np.ndarray:
-    """(n, 3) bool: the raw near hip, knee, ankle lie inside the plate outline on a frame where it was found."""
+def covered(raw: np.ndarray, plate: Mapping[str, np.ndarray], side: str, dist: float = 1.0) -> np.ndarray:
+    """(n, 3) bool: the raw near hip, knee, ankle lie inside the plate outline (scaled by `dist`:
+    1 = the rim) on a frame where it was found."""
     out = np.zeros((len(raw), 3), bool)
     found = np.asarray(plate["found"], bool)
     for c, j in enumerate(("hip", "knee", "ankle")):
         p = raw[:, HALPE26[f"{side}_{j}"]]
         with np.errstate(invalid="ignore"):
             d = ellipse_dist(p[:, 0], p[:, 1], plate["hub_x"], plate["hub_y"], plate["a"], plate["b"], plate["angle"])
-        out[:, c] = found & (d < 1)
+        out[:, c] = found & (d < dist)
     return out
 
 
@@ -166,16 +172,54 @@ def estimate(k: np.ndarray, scores: np.ndarray, t: np.ndarray, windows: list[tup
     return result
 
 
+def segment_factors(k: np.ndarray, scores: np.ndarray, windows: list[tuple[int, int]], tab: LengthTable,
+                    side: str, cov: np.ndarray, factor: float, frames: np.ndarray | None = None
+                    ) -> tuple[float, float, np.ndarray]:
+    """(thigh_f, shank_f, frames used): multipliers on the scaled table's thigh and shank.
+
+    Frames inside the windows with the near hip, knee, ankle scored >= KNEE_SCORE, none inside the plate
+    (`cov`) and the smoothed knee angle in [SEG_MIN_DEG, SEG_MAX_DEG); `frames` restricts them to a subset.
+    Each factor is the median of measured / the scaled table's length at that frame's d. Fewer than
+    MIN_KNEE_FRAMES: (1.0, 1.0, no frames), the factor alone."""
+    hip, knee, ank = _joints(k, side)
+    near = [HALPE26[f"{side}_{j}"] for j in ("hip", "knee", "ankle")]
+    inside = np.zeros(len(k), bool)
+    for s, e in windows:
+        inside[s:e] = True
+    if frames is not None:
+        keep = np.zeros(len(k), bool)
+        keep[frames] = True
+        inside &= keep
+    ang = sagittal_angles(k, side)["knee"]
+    with np.errstate(invalid="ignore"):
+        ok = inside & (scores[:, near] >= KNEE_SCORE).all(1) & ~cov.any(1) & (ang >= SEG_MIN_DEG) & (ang < SEG_MAX_DEG)
+    used = np.flatnonzero(ok & ~np.isnan(ang))
+    if len(used) < MIN_KNEE_FRAMES:
+        return 1.0, 1.0, np.zeros(0, int)
+    lt, ls = tab.scaled(factor).lengths(np.hypot(*(ank - hip).T)[used])
+    thigh = float(np.median(np.hypot(*(knee - hip).T)[used] / lt))
+    shank = float(np.median(np.hypot(*(ank - knee).T)[used] / ls))
+    return thigh, shank, used
+
+
 def spread(ratios: np.ndarray) -> float:
     """IQR / median of the per-frame ratios."""
     q1, q3 = np.percentile(ratios, [25, 75])
     return float((q3 - q1) / np.median(ratios))
 
 
-def to_json(s: Scale) -> dict:
+NONE_JSON = {"factor": None, "method": "none", "n_frames": 0, "spread": None, "frames": [],
+             "thigh_shank": None, "thigh_shank_cal": None, "thigh_factor": None, "shank_factor": None,
+             "segment_frames": 0, "segment_source": "none"}
+
+
+def to_json(s: Scale, seg: tuple[float, float, np.ndarray] | None = None) -> dict:
+    """scale.json fields; `seg` = `segment_factors`' result (none: factor alone)."""
     if s.factor is None or s.thigh_shank is None or s.thigh_shank_cal is None:
-        return {"factor": None, "method": "none", "n_frames": 0, "spread": None, "frames": [],
-                "thigh_shank": None, "thigh_shank_cal": None}
+        return dict(NONE_JSON)
+    thigh, shank, used = seg if seg else (1.0, 1.0, np.zeros(0, int))
     return {"factor": round(s.factor, 4), "method": s.method, "n_frames": len(s.frames),
             "spread": round(spread(s.ratios), 4), "frames": [list(r) for r in _runs(s.frames)],
-            "thigh_shank": round(s.thigh_shank, 4), "thigh_shank_cal": round(s.thigh_shank_cal, 4)}
+            "thigh_shank": round(s.thigh_shank, 4), "thigh_shank_cal": round(s.thigh_shank_cal, 4),
+            "thigh_factor": round(thigh, 4), "shank_factor": round(shank, 4), "segment_frames": len(used),
+            "segment_source": "visible_knee" if len(used) else "factor_only"}
