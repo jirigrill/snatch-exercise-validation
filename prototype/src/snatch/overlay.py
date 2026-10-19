@@ -166,9 +166,7 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
     gap_mask = (gaps(person["detected"], int(person["det_every"]))
                 if person is not None and "det_every" in person else None)
     want, flagged, written = set(show.tolist()), 0, 0
-    for i, img in enumerate(frames(clip, info)):
-        if i > show[-1]:
-            break
+    for i, img in enumerate(frames(clip, info, stop=int(show[-1]) + 1)):
         if i not in want:
             continue
         img = (img * DIM_FACTOR).astype(np.uint8) if dim is not None and dim[i] else img.copy()

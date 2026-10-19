@@ -93,7 +93,7 @@ def _run(ctx: Context, tmp: Path, stage: Stage, from_attempts: bool) -> None:
         part.replace(partial)
 
     t0 = time.time()
-    raw = pose.run(frames(str(ctx.clip), info), info.n_frames, person["bbox"], resume=resume, done=done,
+    raw = pose.run(frames(str(ctx.clip), info, stop=max(e for _, e in ranges)), info.n_frames, person["bbox"], resume=resume, done=done,
                    checkpoint=checkpoint, ranges=ranges,
                    progress=lambda i: print(f"S4 pose frame {i}/{info.n_frames} {time.time() - t0:.0f}s",
                                             flush=True) if i % 800 == 0 else None)
