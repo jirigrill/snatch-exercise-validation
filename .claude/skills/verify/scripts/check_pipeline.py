@@ -1,6 +1,6 @@
 """Check one pipeline.py run in out/<clip> against snatch.stages.STAGES (run_clip.sh).
 
-usage: uv run python check_pipeline.py <out dir> first|rerun [--calibrate <skeleton.json>] [--stop <stage>] [--reused S,S] [--attempts N]
+usage: uv run python check_pipeline.py <out dir> first|rerun [--calibrate <skeleton.json>] [--stop <stage>] [--reused S,S] [--attempts N] [--scale-method M]
 
 --calibrate: the run was pipeline.py --calibrate (snatch.stages.CALIBRATE),
 and C3 wrote the skeleton.json given.
@@ -9,6 +9,7 @@ the stages up to it in the usual states, it `failed`, the status not ok.
 --reused: on the first run these stages come from stage_cache.py (same key = same
 outputs), so they are `skipped`; their content checks run all the same.
 --attempts: S3 must find exactly this many attempts (run_clip.sh's expected_attempts).
+--scale-method: the method S5 must report (run_clip.sh's expected_scale): standing, visible_knee or none.
 
 Every run: status ok, the stages in pipeline order, each in the state the run
 expects, and every output of a stage that ran or was kept non-empty. Then each
@@ -32,7 +33,8 @@ import numpy as np
 
 from snatch import overlay as ov
 from snatch import skeleton as skel
-from snatch.pose import HALPE26
+from snatch.plate import ellipse_dist
+from snatch.pose import HALPE26, SIDE_OF
 from snatch.reps import Lift, height_above_floor
 from snatch.stage import SKELETON, Stage
 from snatch.stages import CALIBRATE, STAGES
@@ -206,18 +208,86 @@ def check_plate(out: Path) -> str:
             f"hough_share {share:.2f}, {jumps} jumps, passed {bool(p['passed'])}")
 
 
-CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate, "S3": check_attempts}
+def runs_to_frames(runs: list[list[int]]) -> np.ndarray:
+    return np.concatenate([np.arange(a, b) for a, b in runs]) if runs else np.zeros(0, int)
+
+
+def _session(name: str) -> str:
+    """The date token after the T id: `T2_20261007_...` -> `20261007`."""
+    parts = name.split("_")
+    return parts[1] if len(parts) > 1 else ""
+
+
+def check_scale(out: Path, scale_method: str | None = None) -> str:
+    sc = json.loads((out / "scale.json").read_text())
+    want = {"factor", "method", "n_frames", "spread", "frames", "thigh_shank", "thigh_shank_cal"}
+    assert set(sc) == want, f"scale.json fields {sorted(sc)}, expected {sorted(want)}"
+    assert sc["method"] in ("standing", "visible_knee", "none"), f"method {sc['method']}"
+    if scale_method:
+        assert sc["method"] == scale_method, f"method {sc['method']}, expected {scale_method}"
+    if sc["method"] == "none":
+        assert sc["factor"] is None and sc["n_frames"] == 0, f"method none but factor {sc['factor']}, n_frames {sc['n_frames']}"
+        return "method none (factor null, 0 frames): no usable frames, run goes on; proportions, plate and T1 checks skipped"
+    used = runs_to_frames(sc["frames"])
+    assert sc["factor"] > 0 and len(used) == sc["n_frames"] > 0, f"factor {sc['factor']}, n_frames {sc['n_frames']}"
+    rel = abs(sc["thigh_shank"] / sc["thigh_shank_cal"] - 1)
+    assert rel <= 0.10, f"thigh/shank {sc['thigh_shank']} vs the skeleton's {sc['thigh_shank_cal']}: {rel:.1%} off"
+    p = np.load(out / "plate.npz")
+    ppm = p["px_per_m"][used][p["found"].astype(bool)[used]]
+    assert len(ppm), "plate not found on any frame used"
+    ratio = sc["factor"] / float(np.median(ppm))
+    line = (f"{sc['method']}, factor {sc['factor']:.3f} on {sc['n_frames']} frames, spread {sc['spread']:.3f}, "
+            f"thigh/shank {sc['thigh_shank']:.3f} vs cal {sc['thigh_shank_cal']:.3f} ({rel:.1%}), "
+            f"factor / plate px/m {ratio:.4f}")
+    # recompute from the raw keypoints and the plate, as the stage does (snatch.scale.covered)
+    raw = np.load(out / "raw_pose.npz")
+    side = SIDE_OF[json.loads((out / "facing.json").read_text())["facing"]]
+    joints = ("hip", "knee", "ankle") if sc["method"] == "visible_knee" else ("hip", "ankle")
+    found = p["found"].astype(bool)
+    for j in joints:
+        pt = raw["keypoints"][:, HALPE26[f"{side}_{j}"]]
+        with np.errstate(invalid="ignore"):
+            d = ellipse_dist(pt[:, 0], pt[:, 1], p["hub_x"], p["hub_y"], p["a"], p["b"], p["angle"])
+        cov = found & (d < 1)
+        assert not cov[used].any(), f"near {j} inside the plate outline on {int(cov[used].sum())} frames used (first f{int(used[cov[used]][0])})"
+    line += f", near {'/'.join(joints)} off the plate on every frame used"
+    if sc["method"] == "standing":
+        knee = float(np.median(skel.sagittal_angles(raw["keypoints"], side)["knee"][used]))
+        assert knee >= skel.STAND_DEG, f"median raw near-knee angle {knee:.1f} deg on the frames used, below {skel.STAND_DEG:.0f}"
+        line += f", median raw knee {knee:.1f} deg"
+        for a in json.loads((out / "attempts.json").read_text())["attempts"]:
+            s, e = a["window"]
+            assert ((used >= s) & (used < e)).any(), f"attempt {a['attempt']}: no standing window in frames {s}-{e}"
+        line += ", a window in each attempt"
+    t1 = [d for d in out.parent.glob("T1_*") if (d / "scale.json").is_file()]
+    if t1 and not out.name.startswith("T1_"):
+        r1 = json.loads((t1[0] / "scale.json").read_text())
+        u1 = runs_to_frames(r1["frames"])
+        p1 = np.load(t1[0] / "plate.npz")
+        ref = r1["factor"] / float(np.median(p1["px_per_m"][u1][p1["found"].astype(bool)[u1]]))
+        dev = ratio / ref - 1
+        same = _session(out.name) == _session(t1[0].name)
+        if same:
+            assert abs(dev) <= 0.05, f"factor / plate px/m {ratio:.4f} is {dev:+.1%} from T1's {ref:.4f} (limit 5%)"
+            line += f", vs T1's {ref:.4f}: {dev:+.1%}"
+        else:
+            line += f", vs T1's {ref:.4f}: {dev:+.1%} (other session, reported only)"
+    # no worst-frames sheet: 5_scale is a jpg, worst() and run_clip.sh's sheets need an mp4 overlay
+    return line
+
+
+CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate, "S3": check_attempts, "S5": check_scale}
 # Files a stage still writes when it stops the run (checked on a --stop run; no content check).
 STOP_FILES = {"S2": ("plate_check.jpg", "overlays/2_plate.mp4"),
               "S3": ("attempts.json", "overlays/3_attempts.mp4")}
 
 
 def main(out: Path, run: str, skeleton: Path | None = None, stop: str | None = None,
-         reused: frozenset[str] = frozenset(), attempts: int | None = None) -> int:
+         reused: frozenset[str] = frozenset(), attempts: int | None = None, scale_method: str | None = None) -> int:
     stages = CALIBRATE if skeleton else STAGES
     if stop:
         stages = stages[:[s.name for s in stages].index(stop) + 1]
-    checks = CHECKS | {"S3": lambda o: check_attempts(o, attempts)} | ({"C3": lambda o: check_calibrate(o, skeleton)} if skeleton else {})
+    checks = CHECKS | {"S3": lambda o: check_attempts(o, attempts), "S5": lambda o: check_scale(o, scale_method)} | ({"C3": lambda o: check_calibrate(o, skeleton)} if skeleton else {})
     status = json.loads((out / "pipeline_status.json").read_text())
     got = {name: s["state"] for name, s in status["stages"].items()}
     want = {s.name: expected(s, run, reused) for s in stages} | ({stop: "failed"} if stop else {})
@@ -258,7 +328,8 @@ if __name__ == "__main__":
     ap.add_argument("--calibrate", type=Path, metavar="SKELETON_JSON")
     ap.add_argument("--stop", choices=[s.name for s in STAGES + CALIBRATE])
     ap.add_argument("--attempts", type=int, help="expected number of S3 attempts")
+    ap.add_argument("--scale-method", choices=("standing", "visible_knee", "none"), help="the method S5 must report")
     ap.add_argument("--reused", default="", help="comma-separated stages restored by stage_cache.py")
     a = ap.parse_args()
     raise SystemExit(main(a.out, a.run, a.calibrate, a.stop,
-                     frozenset(filter(None, a.reused.split(","))), a.attempts))
+                     frozenset(filter(None, a.reused.split(","))), a.attempts, a.scale_method))

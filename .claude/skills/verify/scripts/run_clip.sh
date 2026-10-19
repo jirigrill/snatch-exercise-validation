@@ -77,6 +77,13 @@ expected_attempts() {  # expected_attempts <clip id>: how many attempts S3 must 
     T8) echo 2 ;;
   esac
 }
+expected_scale() {  # expected_scale <clip id>: the method S5 must report (empty = not checked)
+  case $1 in
+    T1|T2|T6|T8) echo standing ;;
+    T3) echo visible_knee ;;  # failed lift: knee >= 165 deg for only 0.025 s
+    T7) echo none ;;  # standup: the plate covers the hip on every straight-leg frame
+  esac
+}
 rm -rf "$out"
 echo "commit $(git rev-parse --short HEAD) $branch, dirty files: $dirty" >"$log"
 key=$( { stat -f '%z %m' "$clip" "$bar"; find src/snatch -type f -name '*.py' | sort | xargs cat
@@ -97,9 +104,10 @@ pipeline() {  # pipeline <run label> <check run> <out> [pipeline.py options]: cl
   if [[ $1 == --calibrate ]]; then
     opts=(--calibrate "$athletes/verify/skeleton.json")
   else
-    local s a; s=$(expected_stop "$id"); a=$(expected_attempts "$id")
+    local s a sm; s=$(expected_stop "$id"); a=$(expected_attempts "$id"); sm=$(expected_scale "$id")
     [[ -z $s ]] || { want_rc=${s%% *}; opts=(--stop "${s#* }"); }
     [[ -z $a || $check != first ]] || opts+=(--attempts "$a")
+    [[ -z $sm || $check != first ]] || opts+=(--scale-method "$sm")
   fi
   for try in 1 2; do
     echo "== $run" >>"$log"
