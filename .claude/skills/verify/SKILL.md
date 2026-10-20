@@ -80,6 +80,8 @@ Proof spec. A new or changed stage ships `scripts/proofs/<stage>.py <evidence_ro
 - cached (`.scratch/verify/cache/proof-<stage>/<key>/`) so reruns take seconds.
 Escape: a `no proof: <reason>` line under the stage's `## <stage>` in review.md (rendered "**No proof:** <reason>"). Legitimate only when another stage's proof covers the change ("S5's new multipliers are tested by S6's proof") or it is a pure output-format change with nothing to judge.
 
+S6 proof: `proofs/s6.py` (paste test: a real plate pasted on a bar-only clip, RTMPose vs S6 against the true knee; plus the loaded clips' knee curves). From `prototype/`, after `run_clip.sh` on T1 T2 T3 T6 T7 T8 into one root: `uv run python ../.claude/skills/verify/scripts/proofs/s6.py <evidence_root>` writes `<root>/proof/S6/` (verdict.md + 3 images). Fresh about 5 min (clean-clip detector and pose are cached in `.scratch/verify/cache/proof-s6/`), cached 20 s.
+
 Flow per commit: `run_clip.sh <clip> <root>` (each clip) -> `base_run.sh <root>` -> `diff_outputs.py <root>` (optional) -> look at the changed stages' images, write `review.md` -> `publish_evidence.sh <root> review.md`.
 
 `review.md`: one section per changed stage, one bullet per shown image (plus `no proof: <reason>` when it has no proof), the clip id and image stem first, a plain-English verdict after the colon, every frame of a `_worst` image named:
