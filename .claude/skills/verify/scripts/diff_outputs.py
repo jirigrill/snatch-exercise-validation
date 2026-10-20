@@ -6,7 +6,8 @@ For every clip dir in <root>/ that also has one in <root>/base/ (the analyze cli
 calibrate_<T5>/), and every stage of snatch.stages.STAGES (CALIBRATE for calibrate_*), compares each
 output file (Stage.outputs; an mp4 also its _sheet.jpg, _worst.jpg and .worst; the athlete store's
 SKELETON as athletes/*/skeleton.json): npz arrays but stage_cache.VOLATILE and NaN-equal, json by
-top-level key (fields in JSON_VOLATILE ignored), anything else by bytes. State per stage and clip:
+top-level key (fields in JSON_VOLATILE ignored), jpg/png by decoded pixels (the JPEG bytes of
+an identical image can differ), anything else by bytes. State per stage and clip:
   new        no base file (the stage does not exist on main)
   changed    a file differs, was added or removed (files: name -> what)
   identical  every output equal
@@ -22,6 +23,7 @@ import json
 import sys
 from pathlib import Path
 
+import cv2
 import numpy as np
 
 from snatch.stage import SKELETON, Stage
@@ -76,6 +78,9 @@ def compare(a: Path, b: Path) -> str | None:
             return keys({k: "+" for k in x.keys() - y.keys()} | {k: "-" for k in y.keys() - x.keys()}
                         | {k: "~" for k in x.keys() & y.keys() if x[k] != y[k]})
         return "differs"
+    if a.suffix in (".jpg", ".png"):
+        x, y = cv2.imread(str(a)), cv2.imread(str(b))
+        return None if x is not None and y is not None and same(x, y) else "pixels differ"
     return None if a.read_bytes() == b.read_bytes() else "bytes differ"
 
 
