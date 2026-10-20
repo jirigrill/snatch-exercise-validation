@@ -14,8 +14,9 @@ review.md: `## <stage>` sections of bullets `- <clip id> <image stem>: <verdict>
 png/jpg outputs and, of an mp4, its _sheet and _worst jpg). Text before the first `##` is kept as notes.
 Fails (exit 1, before anything is pushed) when a shown image has no bullet, a bullet of a _worst image
 misses a frame of its .worst, a bullet names no shown image, a section is for a stage that is not shown,
-or the guide has no section for a shown stage. Over 4 clips a stage's clips after the first two are
-collapsed; over GitHub's 65536 characters more are, and the comment says so.
+or the guide has no section for a shown stage. All clips stay open; only over GitHub's 65536 characters
+are a stage's later clips collapsed, and the comment says so. A proof's own headings are demoted
+below the stage's (`## Question` -> `##### Question`).
 """
 
 import json
@@ -213,10 +214,11 @@ def main(root: Path, review_path: Path, url: str, files_line: str) -> str:
             out += ["", f"### {st.name} · {title}{cal} ({state})", "", body]
             proof = root / "proof" / label.replace(" ", "_")
             if (proof / "verdict.md").is_file():
-                out += ["", "#### Proof", "", (proof / "verdict.md").read_text().strip(), ""]
+                verdict = re.sub(r"^(#{1,6}) ", lambda m: "#" * min(6, len(m.group(1)) + 3) + " ",
+                                 (proof / "verdict.md").read_text().strip(), flags=re.M)
+                out += ["", "#### Proof", "", verdict, ""]
                 out += [f"![{p.name}]({url}/proof/{proof.name}/{p.name}?raw=true)" for p in sorted(proof.glob("*.png")) + sorted(proof.glob("*.jpg"))]
-            keep = len(per_clip) if len(per_clip) <= 4 else 2
-            keep = keep if open_clips is None else min(keep, open_clips)
+            keep = len(per_clip) if open_clips is None else open_clips
             for i, (c, d, imgs) in enumerate(per_clip):
                 b = block(kind, st, c, d, imgs)
                 out += [""] + (b if i < keep else ["<details><summary>%s · %s</summary>" % (st.name, c), "", *b, "", "</details>"])
@@ -228,7 +230,7 @@ def main(root: Path, review_path: Path, url: str, files_line: str) -> str:
         return "\n".join([*out, "", files_line, ""])
 
     text = render(None)
-    for k in (1, 0):
+    for k in (2, 1, 0):
         if len(text) > LIMIT:
             text = render(k)
     if len(text) > LIMIT:
