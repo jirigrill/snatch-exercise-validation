@@ -15,7 +15,7 @@ pr=$(gh pr view --json number,state -q 'select(.state == "OPEN") | .number' 2>/d
 [[ -n $pr ]] || exit 0
 block() { echo "PR #$pr: $1 (CLAUDE.md, checks after each commit)" >&2; exit 2; }
 head=$(git rev-parse HEAD)
-[[ $(git rev-parse '@{u}' 2>/dev/null) == "$head" ]] || block "HEAD $(git rev-parse --short HEAD) is not pushed; push it, then run /verify and publish_evidence.sh"
+[[ $(git rev-parse '@{u}' 2>/dev/null) == "$head" ]] || block "HEAD $(git rev-parse --short HEAD) is not pushed; push it, then run /verify and publish_evidence.sh <root> <review.md>"
 base=$(git merge-base origin/main "$head" 2>/dev/null) &&
   git diff --quiet "$base" "$head" -- prototype .claude/skills/verify/scripts && exit 0
 proven=$(gh pr view "$pr" --json comments \
@@ -25,4 +25,4 @@ for sha in $proven; do
   git cat-file -e "$sha^{commit}" 2>/dev/null &&
     git diff --quiet "$sha" "$head" -- prototype .claude/skills/verify/scripts && exit 0
 done
-block "no ✅ /verify evidence for HEAD $(git rev-parse --short HEAD); run run_clip.sh on T1, look at the frame sheets, then publish_evidence.sh <root> \"<review>\". If a check fails, fix it, or report it in the PR"
+block "no ✅ /verify evidence for HEAD $(git rev-parse --short HEAD); run run_clip.sh on T1, base_run.sh <root>, look at the images of the changed stages and write review.md, then publish_evidence.sh <root> review.md. If a check fails, fix it, or report it in the PR"
