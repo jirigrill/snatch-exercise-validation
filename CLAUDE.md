@@ -13,7 +13,7 @@ Pipeline v2 spec: `docs/pipeline-v2.html`. Work queue: `.scratch/plan/README.md`
 
 ## Checks after each commit to the branch/PR
 1. `uv run pytest -q` passes; `uv run pyright` 0 errors.
-2. `/verify` on T1 (the skill says how: run, review every sheet incl. each worst frame, publish the evidence to the PR).
+2. `/verify` on T1; when a stage's outputs change or a stage is new, on T1–T8 into one root (cached) and a proof per such stage (the skill says how: run, review every sheet incl. each worst frame, publish the evidence to the PR).
 3. Milestone items only: what is checked and how comes from the milestone's spec in `.scratch/plan/` (B: `B-milestone.md`: blind marking + eye review of the outputs, bug report, human check). Always one T1–T8 run with `VERIFY_NO_CACHE=1` (fresh; audits the stage cache), every later run cached; then in the PR: what would make this result wrong (one pass, as a forensic reviewer would), and the 3 most urgent open decisions with the case for and against each. T7 = 1 attempt, failed (standup: no_overhead once S8 exists); T8 = 2 attempts; T5 exit 6 (once S2 exists; add it to `expected_stop` in run_clip.sh).
 
 A FAIL (or a sheet that looks wrong) means fix and rerun, or stop and report it in the PR. Never finish with a failing check; the Stop hook (`.claude/hooks/require-evidence.sh`) enforces the evidence.
