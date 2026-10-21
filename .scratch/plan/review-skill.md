@@ -18,7 +18,7 @@ Problem: the agent that plans a change also reviews its diff (CLAUDE.md, Workflo
 | Reviewer | Opus | Clean: diff, plan item, spec section, CLAUDE.md |
 | Finding checker | Sonnet | Clean: the findings and the code they cite |
 
-- The main agent knows the plan and the briefs, so it can't be the independent reviewer. It does only a light check (each unit did its brief; pytest + pyright green) and the triage: sends Important findings to new Sonnet subagents and writes the answers. It never writes findings.
+- The main agent knows the plan and the briefs, so it can't be the independent reviewer. It does only a light check (each unit did its brief; the developers' pytest + pyright are green, not rerun or recorded here: see Overlap with /verify) and the triage: sends Important findings to new Sonnet subagents and writes the answers. It never writes findings.
 - The reviewer is Opus for every review, full and diff-only: Sonnet wrote the code, and the same model shares its blind spots.
 
 ## Flow
@@ -44,6 +44,7 @@ Problem: the agent that plans a change also reviews its diff (CLAUDE.md, Workflo
 ## Reviewer
 - Input: the diff, the plan item it claims to do (the PR's intent), the spec section for the stages the diff touches (not the whole `docs/pipeline-v2.html`) plus that stage's md, and CLAUDE.md. Not the briefs or the session history, so it isn't anchored on how the code was meant to work.
 - Questions: does the change do what the item says, does it fit the spec and the stage contract, what does it break. On a bug fix: is it the root cause, not a patch over the symptom.
+- Told what the checks already enforce (pytest, pyright, `check_pipeline.py`: exit codes, stage order, outputs non-empty, content thresholds), so it doesn't repeat them and looks for what they miss: silent wrong values, cache-key gaps, checks that pass trivially. A finding a check already catches is dropped.
 - Finding checker: re-reads the code for each finding and drops any without file:line evidence (a guess from a name doesn't count), plus style- or cleanup-only findings. Skipped when there are no findings. (Not /verify; it runs nothing.)
 
 ## What "wrong" means here (failure list)
@@ -70,8 +71,13 @@ Problem: the agent that plans a change also reviews its diff (CLAUDE.md, Workflo
 
 ## Stop hook (`require-evidence.sh`)
 - Also requires a `/review` comment for HEAD with every Important finding answered. It accepts the last `/review` comment if every commit after it is a trivial fix or docs/plan only (the rows without review above).
-- Also requires the pytest + pyright results to be recorded (exit 0 and 0 errors).
+- Also requires the pytest + pyright results (exit 0 and 0 errors), read from the /verify evidence comment.
 - Keep the stop-on-retry fallback (the session must never get stuck).
+
+## Overlap with /verify
+- pytest + pyright: run by /verify only (already per commit, `SKILL.md` Fast gate). /verify records the results in its evidence comment (a change to `publish_evidence.sh`/`render_comment.py`); the Stop hook reads them there. /review neither runs nor records them.
+- Spec vs code: `check_pipeline.py` checks it at runtime; the reviewer is told so (Reviewer) and doesn't repeat it.
+- Naming: /verify's `review.md` (the image review) and "the reviewer" in `features/stage-guide.md` (the human reading the comment) clash with /review. This item decides whether to rename them (e.g. `review.md` → `sheets.md`) and updates /verify if so.
 
 ## CLAUDE.md
 - Workflow: "Main agent (Opus) plans, reviews and verifies" → it plans, does the light check, triages review findings and verifies; the review itself is /review's clean-context reviewer. Name /review, then /verify, in that order.
