@@ -43,7 +43,7 @@ Problem: the agent that plans a change also reviews its diff (CLAUDE.md, Workflo
 
 ## Reviewer
 - Input: the diff, the plan item it claims to do (the PR's intent), the spec section for the stages the diff touches (not the whole `docs/pipeline-v2.html`) plus that stage's md, and CLAUDE.md. Not the briefs or the session history, so it isn't anchored on how the code was meant to work.
-- Questions: does the change do what the item says, does it fit the spec and the stage contract, what does it break. On a bug fix: is it the root cause, not a patch over the symptom.
+- Questions: does the change do what the item says, does it fit the spec and the stage contract, what does it break. On a bug fix: is it the root cause, not a patch over the symptom. Which CLAUDE.md, spec or plan lines does the diff make stale (e.g. the pyright baseline in `features/tests.md` said 20 errors long after main was at 0)?
 - Told what the checks already enforce (pytest, pyright, `check_pipeline.py`: exit codes, stage order, outputs non-empty, content thresholds), so it doesn't repeat them and looks for what they miss: silent wrong values, cache-key gaps, checks that pass trivially. A finding a check already catches is dropped.
 - Finding checker: re-reads the code for each finding and drops any without file:line evidence (a guess from a name doesn't count), plus style- or cleanup-only findings. Skipped when there are no findings. (Not /verify; it runs nothing.)
 
@@ -64,6 +64,7 @@ Problem: the agent that plans a change also reviews its diff (CLAUDE.md, Workflo
 ## Answers
 - Every finding gets an answer in that comment: fixed (commit) / wrong / intentional / didn't matter, with a reason. Keep the counts per category; that's the noise rate to look at later.
 - A finding that comes back across PRs becomes a rule (CLAUDE.md, a `check_pipeline.py` check, a pyright setting) instead of being flagged again.
+- A bug that review missed and /verify, the milestone or the human found later: ask what the reviewer lacked (context, a failure-list entry, a spec section), and add it to the skill's failure list or the reviewer's input.
 
 ## Depth by risk
 - Stage code: normal review.
@@ -85,9 +86,11 @@ Problem: the agent that plans a change also reviews its diff (CLAUDE.md, Workflo
 
 ## Done
 - The skill run on its own PR and on one past stage PR (#74), findings posted to each.
+- Noise check: the skill run on a known-clean merged PR (code changed, no bug found in it since; pick one when implementing) gives 0 Important findings.
 - The hook blocks a stop without the review comment and lets it through with one.
 
 ## Later (not this item)
 - Parallel hunters + voting, if one reviewer turns out noisy (many "wrong" / "didn't matter" answers) or misses bugs.
 - Eval set: PRs that caused regressions (R5 tests cite them), rerun whenever the skill or the model changes; keep a change only if the score goes up.
 - Track rounds-to-pass per PR.
+- One full-code review (not a diff) before Milestone D: most of the code was never reviewed independently. Findings tagged Pre-existing go into the plan.
