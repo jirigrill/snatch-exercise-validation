@@ -3,7 +3,7 @@
 No reuse from open PRs. Thresholds come from spec decisions 1–3 (placeholders until checked against labels.csv).
 
 ## labels.csv (first commit)
-- `prototype/labels.csv`: `clip, attempt, result, intended_type`. Fill it from the current filenames and `docs/clip-log.md`.
+- `prototype/labels.csv`: `clip, attempt, result, intended_type, reason, fault, note` (one row per true rep, side views only; done, see README). `reason` = the S8 reason expected for a failed lift; `fault` = the technique fault from the filename, for S9 (a fault alone leaves the lift completed); `note` says where the label comes from (`from filename; unchecked` = not checked against the video).
 - Replaces filename labels; no filename parsing for labels.
 
 ## S7 angles + events
