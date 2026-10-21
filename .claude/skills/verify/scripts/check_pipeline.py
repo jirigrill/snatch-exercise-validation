@@ -31,7 +31,10 @@ from pathlib import Path
 
 import numpy as np
 
+from snatch import athlete_store
+from snatch import fill as fl
 from snatch import overlay as ov
+from snatch import scale as sca
 from snatch import skeleton as skel
 from snatch.plate import ellipse_dist
 from snatch.pose import HALPE26, SIDE_OF
@@ -41,6 +44,11 @@ from snatch.stages import CALIBRATE, STAGES
 from snatch.stages.attempts import key_frames
 
 WORST = 4  # frames in <overlay>_worst.jpg
+BODY_PX_PER_M_CAL = 352.8  # body px/m of the T5 calibration session (docs/results/35-body-height.md); x S5's factor = this clip's
+HOLDOUT_GATE_CM = 3.0  # S6 hide-a-seen-knee: median knee position error above this FAILs
+HOLDOUT_TARGET_CM = 2.0
+MIN_HOLDOUT_FRAMES = 40  # fewer candidate frames: reported, not gated
+DIP_DEG = 3.0  # a knee re-bend: the angle drops and recovers by this much
 WORST_GAP = 24  # at least this many frames apart (0.1 s at 240 fps), so not 4 neighbours
 
 
@@ -220,25 +228,34 @@ def _session(name: str) -> str:
 
 def check_scale(out: Path, scale_method: str | None = None) -> str:
     sc = json.loads((out / "scale.json").read_text())
-    want = {"factor", "method", "n_frames", "spread", "frames", "thigh_shank", "thigh_shank_cal"}
+    want = {"factor", "method", "n_frames", "spread", "frames", "thigh_shank", "thigh_shank_cal",
+            "thigh_factor", "shank_factor", "segment_frames", "segment_source"}
     assert set(sc) == want, f"scale.json fields {sorted(sc)}, expected {sorted(want)}"
     assert sc["method"] in ("standing", "visible_knee", "none"), f"method {sc['method']}"
     if scale_method:
         assert sc["method"] == scale_method, f"method {sc['method']}, expected {scale_method}"
     if sc["method"] == "none":
         assert sc["factor"] is None and sc["n_frames"] == 0, f"method none but factor {sc['factor']}, n_frames {sc['n_frames']}"
+        assert (sc["thigh_factor"], sc["shank_factor"], sc["segment_frames"], sc["segment_source"]) == (None, None, 0, "none"), \
+            f"method none but segment fields {sc['thigh_factor']}, {sc['shank_factor']}, {sc['segment_frames']}, {sc['segment_source']}"
         return "method none (factor null, 0 frames): no usable frames, run goes on; proportions, plate and T1 checks skipped"
     used = runs_to_frames(sc["frames"])
     assert sc["factor"] > 0 and len(used) == sc["n_frames"] > 0, f"factor {sc['factor']}, n_frames {sc['n_frames']}"
     rel = abs(sc["thigh_shank"] / sc["thigh_shank_cal"] - 1)
     assert rel <= 0.10, f"thigh/shank {sc['thigh_shank']} vs the skeleton's {sc['thigh_shank_cal']}: {rel:.1%} off"
+    seg = sc["segment_source"] == "visible_knee"
+    assert sc["segment_source"] in ("visible_knee", "factor_only") and seg == (sc["segment_frames"] > 0), \
+        f"segment_source {sc['segment_source']} with {sc['segment_frames']} frames"
+    assert sc["thigh_factor"] > 0 and sc["shank_factor"] > 0 and (seg or (sc["thigh_factor"], sc["shank_factor"]) == (1.0, 1.0)), \
+        f"thigh_factor {sc['thigh_factor']}, shank_factor {sc['shank_factor']} from {sc['segment_frames']} frames"
     p = np.load(out / "plate.npz")
     ppm = p["px_per_m"][used][p["found"].astype(bool)[used]]
     assert len(ppm), "plate not found on any frame used"
     ratio = sc["factor"] / float(np.median(ppm))
     line = (f"{sc['method']}, factor {sc['factor']:.3f} on {sc['n_frames']} frames, spread {sc['spread']:.3f}, "
             f"thigh/shank {sc['thigh_shank']:.3f} vs cal {sc['thigh_shank_cal']:.3f} ({rel:.1%}), "
-            f"factor / plate px/m {ratio:.4f}")
+            f"factor / plate px/m {ratio:.4f}, thigh x{sc['thigh_factor']:.3f} shank x{sc['shank_factor']:.3f} "
+            f"({sc['segment_source']}, {sc['segment_frames']} frames)")
     # recompute from the raw keypoints and the plate, as the stage does (snatch.scale.covered)
     raw = np.load(out / "raw_pose.npz")
     side = SIDE_OF[json.loads((out / "facing.json").read_text())["facing"]]
@@ -276,7 +293,120 @@ def check_scale(out: Path, scale_method: str | None = None) -> str:
     return line
 
 
-CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate, "S3": check_attempts, "S5": check_scale}
+def dips(a: np.ndarray, deg: float = DIP_DEG) -> int:
+    """Knee dips in an angle series: a drop of >= deg from a local max that then recovers by >= deg."""
+    a = a[~np.isnan(a)]
+    if not len(a):
+        return 0
+    n, high, low, falling = 0, a[0], a[0], False
+    for x in a[1:]:
+        if falling:
+            low = min(low, x)
+            if x >= low + deg:
+                n, falling, high = n + 1, False, x
+        else:
+            high = max(high, x)
+            if x <= high - deg:
+                falling, low = True, x
+    return n
+
+
+def check_fill(out: Path) -> str:
+    pose = np.load(out / "pose.npz")
+    raw = np.load(out / "raw_pose.npz")
+    plate = dict(np.load(out / "plate.npz"))
+    sc = json.loads((out / "scale.json").read_text())
+    attempts = json.loads((out / "attempts.json").read_text())["attempts"]
+    windows = [(int(a["window"][0]), int(a["window"][1])) for a in attempts]
+    side = SIDE_OF[json.loads((out / "facing.json").read_text())["facing"]]
+    sign = 1.0 if side == "r" else -1.0
+    n = len(raw["t"])
+    kp, filled, hidden = pose["keypoints"], pose["filled"], pose["hidden"]
+    assert kp.shape == (n, 26, 2) and filled.shape == hidden.shape == (n, 26), \
+        f"keypoints {kp.shape}, hidden {hidden.shape}, filled {filled.shape} for {n} frames"
+    assert pose["scores"].shape == (n, 26) and np.array_equal(pose["t"], raw["t"]), "scores / t differ from raw_pose.npz"
+    assert np.array_equal(pose["ranges"], raw["ranges"]), "ranges differ from raw_pose.npz"
+    assert filled.dtype == hidden.dtype == bool, f"hidden {hidden.dtype}, filled {filled.dtype}"
+    assert np.array_equal(np.isnan(kp), np.isnan(raw["keypoints"])), "NaN frames differ from raw_pose.npz"
+    j = {m: HALPE26[f"{side}_{m}"] for m in ("hip", "knee", "ankle")}
+    others = np.ones(26, bool)
+    others[j["knee"]] = False
+    assert np.array_equal(kp[:, others], raw["keypoints"][:, others], equal_nan=True), "a joint other than the near knee changed"
+    assert not filled[:, others].any(), "something other than the near knee is filled"
+    hid = sca.covered(raw["keypoints"], plate, side, fl.HIDDEN_DIST)
+    assert np.array_equal(hidden[:, list(j.values())], hid), "hidden is not the near hip/knee/ankle inside the plate outline"
+    assert not hidden[:, [i for i in range(26) if i not in j.values()]].any(), "hidden outside the near hip, knee, ankle"
+    fade = fl.fade_frames(raw["t"])
+    near = np.convolve(hidden[:, j["knee"]].astype(float), np.ones(fade), mode="same") > 0  # hidden, grown by the cross-fade
+    assert not (filled[:, j["knee"]] & ~near).any(), f"knee filled more than {fade // 2} frames from a hidden frame"
+    if sc["method"] == "none":
+        assert not filled.any(), "scale method none, yet something is filled"
+    t = np.asarray(raw["t"], float)
+    k = sca.smoothed(raw["keypoints"], t, windows, side)
+    # worst: filled knee frames first (hybrid vs RTMPose's knee, biggest first), then hidden-not-filled, then the rest
+    gap = np.hypot(*(kp[:, j["knee"]] - raw["keypoints"][:, j["knee"]]).T)
+    rank = np.where(filled[:, j["knee"]], 2e6, np.where(hidden[:, list(j.values())].any(1), 1e6, 0.0)) + np.nan_to_num(gap)
+    worst(out, "6_filled", rank, "filled frames first: hybrid knee farthest from RTMPose's (purple vs grey), then hidden "
+          "joints that were not filled (ring), then the rest", ov.shown_frames(n, 0, None, 4, [pose], None))
+    line = f"{int(filled[:, j['knee']].sum())} knee frames filled, {int(hidden[:, j['knee']].sum())} hidden"
+    if sc["method"] == "none":
+        return line + "; scale method none: nothing filled, hold-out skipped"
+    return line + "; " + _holdout(out, raw, plate, sc, windows, side, sign, k) + "; " + _rebend(out, pose, raw, attempts, windows, side)
+
+
+def _holdout(out: Path, raw, plate: dict, sc: dict, windows, side: str, sign: float, k: np.ndarray) -> str:
+    """Hide a seen knee: rebuild it on frames where it is visible and compare, two folds by time."""
+    sk = athlete_store.load(out.parent / "athletes", "verify", athlete_store.SKELETON)
+    assert sk, "no skeleton.json in the root's athletes/verify"
+    tab = skel.LengthTable.from_json(sk[side])
+    j = {m: HALPE26[f"{side}_{m}"] for m in ("hip", "knee", "ankle")}
+    hip, knee, ank = k[:, j["hip"]], k[:, j["knee"]], k[:, j["ankle"]]
+    hid = sca.covered(raw["keypoints"], plate, side, fl.HIDDEN_DIST)
+    inside = np.zeros(len(k), bool)
+    for s, e in windows:
+        inside[s:e] = True
+    ang = skel.joint_angle(hip, knee, ank)
+    scaled = tab.scaled(sc["factor"])
+    with np.errstate(invalid="ignore"):
+        _, ok_all = fl.rebuild(hip, ank, scaled, sc["thigh_factor"], sc["shank_factor"], sign)
+        cand = (inside & (raw["scores"][:, j["knee"]] >= skel.MIN_SCORE) & ~hid.any(1) & (ang >= sca.SEG_MIN_DEG)
+                & (ang < sca.SEG_MAX_DEG) & ok_all)
+    idx = np.flatnonzero(cand)
+    if len(idx) < MIN_HOLDOUT_FRAMES:
+        return f"hold-out: too few frames ({len(idx)})"
+    cov = sca.covered(raw["keypoints"], plate, side)
+    cm_per_px = 100 / (BODY_PX_PER_M_CAL * sc["factor"])
+    folds = []
+    for fit, test in ((idx[:len(idx) // 2], idx[len(idx) // 2:]), (idx[len(idx) // 2:], idx[:len(idx) // 2])):
+        tf, sf, used = sca.segment_factors(k, raw["scores"], windows, tab, side, cov, sc["factor"], fit)
+        reb, ok = fl.rebuild(hip[test], ank[test], scaled, tf, sf, sign)
+        pos = np.hypot(*(reb - knee[test]).T)[ok] * cm_per_px
+        deg = np.abs(skel.joint_angle(hip[test], reb, ank[test]) - ang[test])[ok]
+        folds.append((float(np.median(pos)), float(np.median(deg)), len(test), len(used), tf, sf))
+    pos, deg = (float(np.mean([f[i] for f in folds])) for i in (0, 1))
+    assert pos <= HOLDOUT_GATE_CM, f"hold-out knee position error {pos:.1f} cm > {HOLDOUT_GATE_CM} cm: {folds}"
+    per = "; ".join(f"fold {i + 1}: {f[0]:.1f} cm {f[1]:.1f} deg on {f[2]} frames, fitted on {f[3]} x{f[4]:.3f}/x{f[5]:.3f}"
+                    for i, f in enumerate(folds))
+    return f"hold-out {pos:.1f} cm (target {HOLDOUT_TARGET_CM:.0f}, gate {HOLDOUT_GATE_CM:.0f}), {deg:.1f} deg, {len(idx)} frames ({per})"
+
+
+def _rebend(out: Path, pose, raw, attempts: list[dict], windows, side: str) -> str:
+    """Knee dips between each attempt's start and bar peak: the hybrid must not have more than RTMPose."""
+    t = np.asarray(raw["t"], float)
+    p = np.load(out / "plate.npz")
+    rise = height_above_floor(p["hub_y"], p["found"].astype(bool), p["px_per_m"], p["t"])
+    ang = {name: skel.sagittal_angles(sca.smoothed(kp, t, windows, side), side)["knee"]
+           for name, kp in (("hybrid", pose["keypoints"]), ("rtmpose", raw["keypoints"]))}
+    n = {name: 0 for name in ang}
+    for a in attempts:
+        peak = a["start"] + int(np.nanargmax(rise[a["start"]:a["end"]]))
+        for name in ang:
+            n[name] += dips(ang[name][a["start"]:peak + 1])
+    assert n["hybrid"] <= n["rtmpose"], f"re-bend: hybrid {n['hybrid']} knee dips >= {DIP_DEG:.0f} deg, RTMPose {n['rtmpose']}"
+    return f"re-bend dips (start to peak): hybrid {n['hybrid']}, RTMPose {n['rtmpose']}"
+
+
+CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate, "S3": check_attempts, "S5": check_scale, "S6": check_fill}
 # Files a stage still writes when it stops the run (checked on a --stop run; no content check).
 STOP_FILES = {"S2": ("plate_check.jpg", "overlays/2_plate.mp4"),
               "S3": ("attempts.json", "overlays/3_attempts.mp4")}

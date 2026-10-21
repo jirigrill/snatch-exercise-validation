@@ -15,6 +15,7 @@ every stage's overlay (the colors below). Each layer is optional:
           passed=True (S2's sanity check), orange also when passed=False.
 - boxes:  also draw the crop given to the pose model (yellow)
 - dim, frame_labels: S3's attempts: frames in `dim` are darkened, `frame_labels(i)` adds label lines
+- annotate: `annotate(img, i)` draws anything more on frame i (full-size image, before the crop)
 - extra: frames drawn in addition to every `step`-th one (the worst/key frames of a stage's review),
           when they pass the same range and posed/found filter
 """
@@ -83,6 +84,18 @@ def _text(img: np.ndarray, s: str, line: int) -> None:
     cv2.putText(img, s, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 255, 255), 2)
 
 
+def _legend(img: np.ndarray, entries: Sequence[tuple[str, tuple[int, int, int]]]) -> None:
+    """Small dark box at the bottom left, one colored square + text per entry."""
+    font, size, h = cv2.FONT_HERSHEY_SIMPLEX, 0.45, 20
+    w = 22 + max(cv2.getTextSize(s, font, size, 1)[0][0] for s, _ in entries)
+    y0 = img.shape[0] - h * len(entries) - 8
+    cv2.rectangle(img, (0, y0), (min(w + 8, img.shape[1]), img.shape[0]), (0, 0, 0), -1)
+    for k, (s, c) in enumerate(entries):
+        y = y0 + 6 + h * k
+        cv2.rectangle(img, (6, y), (16, y + 10), c, -1)
+        cv2.putText(img, s, (22, y + 10), font, size, (255, 255, 255), 1, cv2.LINE_AA)
+
+
 def _box(img: np.ndarray, b: np.ndarray, color: tuple[int, int, int], thick: int) -> None:
     if not np.isnan(b).any():
         cv2.rectangle(img, (int(b[0]), int(b[1])), (int(b[2]), int(b[3])), color, thick)
@@ -145,12 +158,16 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
            scale: float = 0.5, zoom: bool = False, flag_px: float = 10.0,
            notes: Sequence[str] = (), dim: np.ndarray | None = None,
            frame_labels: Callable[[int], Sequence[str]] | None = None,
-           extra: Sequence[int] = ()) -> dict[str, int]:
+           extra: Sequence[int] = (), annotate: Callable[[np.ndarray, int], None] | None = None,
+           legend: Sequence[tuple[str, tuple[int, int, int]]] = (),
+           colors: tuple[tuple[int, int, int], ...] | None = None) -> dict[str, int]:
     """Write the overlay video; returns {"frames": written, "flagged": above flag_px}.
 
     notes: extra label lines on every frame (e.g. facing and the color legend).
     dim: per-frame bool, True = darken the frame; frame_labels(i): extra label lines on frame i.
     extra: frames always drawn besides every `step`-th (see shown_frames).
+    legend: (text, BGR color) entries, drawn small on a dark box at the bottom left of the (cropped) image.
+    colors: (left, right, centre) for the pose skeleton instead of the defaults (one pose run).
     """
     info = probe(clip)
     show = shown_frames(info.n_frames, start, end, step, poses, plate, extra)
@@ -184,10 +201,12 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
             if "t" in plate:
                 cv2.polylines(img, [hub_trail(plate, i).reshape(-1, 1, 2)], False, color, 3)
             cv2.circle(img, c, 8, (0, 0, 255), -1)
-        for p, colors in zip(poses, pose_colors(len(poses))):
+        for p, pcolors in zip(poses, [colors] if colors and len(poses) == 1 else pose_colors(len(poses))):
             if boxes:
                 _box(img, p["pose_bbox"][i], CROP_COLOR, 2)
-            _skeleton(img, p["keypoints"][i], colors, p["scores"][i] if "scores" in p else None)
+            _skeleton(img, p["keypoints"][i], pcolors, p["scores"][i] if "scores" in p else None)
+        if annotate is not None:
+            annotate(img, i)
         worst = None
         if dist is not None:
             worst = float(np.nanmax(dist[i]))
@@ -195,6 +214,8 @@ def render(clip: str, out_path: str, *, person: Arrays | None = None,
         img = cv2.resize(img[y0:y1, x0:x1], size, interpolation=cv2.INTER_AREA)
         for line, s in enumerate(labels):
             _text(img, s, line)
+        if legend:
+            _legend(img, legend)
         if worst is not None and worst > flag_px:
             flagged += 1
             cv2.rectangle(img, (0, 0), (img.shape[1] - 1, img.shape[0] - 1), (0, 0, 255), 8)
