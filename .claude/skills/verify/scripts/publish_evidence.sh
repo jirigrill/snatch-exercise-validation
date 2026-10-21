@@ -3,11 +3,12 @@
 # usage: .claude/skills/verify/scripts/publish_evidence.sh <evidence_root> <review.md>
 #   review.md: `## <stage>` sections of bullets `- <clip id> <image stem>: <plain-English verdict>`,
 #   one per image shown for that stage, naming every frame of a _worst image (render_comment.py has
-#   the format). DRY_RUN=1 prints the comment and pushes nothing.
+#   the format; a `no proof: <reason>` line under a stage stands in for its proof). DRY_RUN=1 prints the comment and pushes nothing.
 # What is shown: with a baseline (<root>/base/, from base_run.sh) the stages whose outputs differ from
 # main's on any clip (diff_outputs.py, rerun here); without one the stages whose code changed vs the
 # merge base with origin/main (stage_files.py show; SHOW_STAGES="S2 C3" adds names, `all` shows all) and
-# the comment says so. render_comment.py checks the review (fails here, before anything is pushed) and
+# the comment says so. A new/changed stage needs a proof or a `no proof:` line, and the root a log for
+# every test clip T1-T8 (render_comment.py fails otherwise). render_comment.py checks the review (fails here, before anything is pushed) and
 # writes the comment: result per clip, a table of every stage (new / changed / identical / absent), then
 # per shown stage its guide text (features/stage-guide.md), proof (<root>/proof/<stage>/verdict.md +
 # images, written by the PR's own script) and per clip the detail lines, images and review bullets.

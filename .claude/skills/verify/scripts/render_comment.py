@@ -12,6 +12,10 @@ key is "<stage> calibration" when the stage is also an analyze stage (S1, S4), e
 
 review.md: `## <stage>` sections of bullets `- <clip id> <image stem>: <verdict>` (a stage's images are
 png/jpg outputs and, of an mp4, its _sheet and _worst jpg). Text before the first `##` is kept as notes.
+A shown stage that is new or changed needs a proof (<root>/proof/<label>/verdict.md, written by
+scripts/proofs/<stage>.py) or, in its review section, a line `no proof: <reason>` (rendered in the stage's
+section as "**No proof:** <reason>"; not an image bullet). When any stage is new or changed the root needs a
+log for every test clip T1-T8 (vids/test/), else it fails.
 Fails (exit 1, before anything is pushed) when a shown image has no bullet, a bullet of a _worst image
 misses a frame of its .worst, a bullet names no shown image, a section is for a stage that is not shown,
 or the guide has no section for a shown stage. All clips stay open; only over GitHub's 65536 characters
@@ -49,19 +53,21 @@ def guide() -> dict[str, tuple[str, str]]:
     return out
 
 
-def parse_review(text: str) -> tuple[str, dict[str, list[tuple[str, set[str], str]]]]:
-    """(notes before the first ##, {section: [(clip id, stems, bullet text)]})."""
-    notes, sections, cur = [], {}, None
+def parse_review(text: str) -> tuple[str, dict[str, list[tuple[str, set[str], str]]], dict[str, str]]:
+    """(notes before the first ##, {section: [(clip id, stems, bullet text)]}, {section: `no proof:` reason})."""
+    notes, sections, no_proof, cur, name = [], {}, {}, None, ""
     for line in text.splitlines():
         if m := re.match(r"##\s+(.+?)\s*$", line):
-            cur = sections.setdefault(m[1], [])
+            cur, name = sections.setdefault(m[1], []), m[1]
         elif cur is None:
             notes.append(line)
+        elif m := re.match(r"no proof:\s*(.+?)\s*$", line, flags=re.I):
+            no_proof[name] = m[1]
         elif m := re.match(r"- (\S+) ([^:]+):", line.replace("`", "")):
             cur.append((m[1], set(re.split(r"\s*(?:,|&|\band\b|\s)\s*", m[2].strip())), line))
         elif cur and line.strip():
             cur[-1] = (*cur[-1][:2], cur[-1][2] + "\n" + line)
-    return "\n".join(notes).strip(), sections
+    return "\n".join(notes).strip(), sections, no_proof
 
 
 def log_detail(logs: dict[str, list[str]], clip: str, ctx: str, stage: str) -> list[str]:
@@ -95,6 +101,12 @@ def images(stage, d: Path) -> list[str]:
     return [x for x in out if (d / x).is_file()]
 
 
+def test_clips() -> list[str]:
+    """T ids of the test clips (vids/test/T<n>_*.MOV, as doctor.sh and run_clip.sh), T1-T8 when that dir is missing."""
+    found = sorted({p.name.split("_")[0] for p in (HERE.parents[3] / "vids" / "test").glob("T[0-9]*_*.MOV")}, key=lambda t: int(t[1:]))
+    return found or [f"T{i}" for i in range(1, 9)]
+
+
 def shown_stages(root: Path) -> tuple[dict[tuple[str, str], str], dict[str, dict], str]:
     """({(kind, stage): state} for the shown stages, {stage: {clip: state}} for the table, note)."""
     if (root / "base").is_dir():
@@ -116,7 +128,8 @@ def shown_stages(root: Path) -> tuple[dict[tuple[str, str], str], dict[str, dict
 
 
 def main(root: Path, review_path: Path, url: str, files_line: str) -> str:
-    gd, (notes, review) = guide(), parse_review(review_path.read_text())
+    gd = guide()
+    notes, review, no_proof = parse_review(review_path.read_text())
     shown, table, note = shown_stages(root)
     dirs = {clip_id(p.name): p for p in sorted(root.iterdir()) if p.is_dir() and p.name not in ("athletes", "base", "proof")}
     analyze_names = {s.name for s in STAGES}
@@ -155,6 +168,18 @@ def main(root: Path, review_path: Path, url: str, files_line: str) -> str:
                                    if not any(re.search(rf"(?<!\d){n}(?!\d)", t[2]) for t in b)]
             plan.append((kind, st, per_clip))
     keys = {key(k, s) for k, s in shown}
+    changed = sorted({s for (k, s), v in shown.items() if v in ("new", "changed", "code changed")})
+    missing = [t for t in test_clips() if not results.get(t)]
+    if changed and missing:
+        errors.append(f"stage {', '.join(changed)} changed: run every test clip (T1-T8) into this root; runs are stage-cached "
+                      f"(no log with a result line for {', '.join(missing)})")
+    for (kind, s), v in shown.items():
+        label = key(kind, s)
+        if v in ("new", "changed", "code changed") and not (root / "proof" / label.replace(" ", "_") / "verdict.md").is_file() \
+                and label not in no_proof:
+            errors.append(f"{label} is {v} and has no proof: write .claude/skills/verify/scripts/proofs/{s.lower()}.py producing "
+                          f"{root.name}/proof/{label.replace(' ', '_')}/verdict.md (see SKILL.md, Proof spec), or add the line "
+                          f"`no proof: <why>` under `## {label}` in the review")
     errors += [f"review section `## {k}` is for a stage that is not shown (stale review)" for k in review if k not in keys]
     errors += [f"{k}: bullet `{t[2].splitlines()[0][:50]}` names no shown image"
                for k, bs in review.items() if k in keys for t in bs if id(t) not in used]
@@ -213,6 +238,8 @@ def main(root: Path, review_path: Path, url: str, files_line: str) -> str:
             cal = f" (calibration, {per_clip[0][0]})" if kind == "calibrate" and per_clip else ""
             out += ["", f"### {st.name} · {title}{cal} ({state})", "", body]
             proof = root / "proof" / label.replace(" ", "_")
+            if label in no_proof and not (proof / "verdict.md").is_file():
+                out += ["", f"**No proof:** {no_proof[label]}"]
             if (proof / "verdict.md").is_file():
                 verdict = re.sub(r"^(#{1,6}) ", lambda m: "#" * min(6, len(m.group(1)) + 3) + " ",
                                  (proof / "verdict.md").read_text().strip(), flags=re.M)
