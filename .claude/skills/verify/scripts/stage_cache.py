@@ -41,7 +41,9 @@ MODELS = Path.home() / ".cache" / "rtmlib" / "hub" / "checkpoints"
 
 
 def content(path: Path) -> bytes:
-    """What a file holds, minus run-to-run noise: npz arrays but VOLATILE, else the bytes."""
+    """What a file holds, minus run-to-run noise: npz arrays but VOLATILE, else the bytes; a directory: every file's name and content."""
+    if path.is_dir():
+        return b"".join(str(f.relative_to(path)).encode() + b"\0" + content(f) for f in sorted(path.rglob("*")) if f.is_file())
     if path.suffix != ".npz":
         return path.read_bytes()
     with np.load(path, allow_pickle=False) as z:
@@ -70,6 +72,15 @@ def key(stage: Stage, ctx: Context, env: str) -> str | None:
         st = p.stat()
         h.update(f"\0{name}\0".encode() + (f"{st.st_size} {st.st_mtime_ns}".encode() if name == CLIP else content(p)))
     return h.hexdigest()[:16]
+
+
+def copy(src: Path, dst: Path) -> None:
+    """A file or a directory output (S7's grabs/); a directory replaces the old one."""
+    if src.is_dir():
+        shutil.rmtree(dst, ignore_errors=True)
+        shutil.copytree(src, dst)
+    else:
+        shutil.copy2(src, dst)
 
 
 def outputs(stage: Stage) -> list[str]:
@@ -104,7 +115,7 @@ def main(mode: str, out: Path, athletes: Path, clip: Path, cache: Path, calibrat
                 break
             for o in outputs(stage):
                 (out / o).parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(entry / o, out / o)
+                copy(entry / o, out / o)
             (out / f"{stage.name}.meta.json").write_text(json.dumps({"hash": stage_hash(stage, ctx), "version": stage.version}))
             reused.append(stage.name)
             continue
@@ -123,7 +134,7 @@ def main(mode: str, out: Path, athletes: Path, clip: Path, cache: Path, calibrat
         shutil.rmtree(tmp, ignore_errors=True)
         for o in outputs(stage):
             (tmp / o).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(out / o, tmp / o)
+            copy(out / o, tmp / o)
         (tmp / ".done").touch()
         shutil.rmtree(entry, ignore_errors=True)
         tmp.rename(entry)

@@ -10,6 +10,7 @@ discards everything. `pipeline_status.json` holds each stage's state in
 pipeline order: done, skipped (hash unchanged) or failed; a stage that --only
 or --from did not pick is up_to_date or stale. An `always` stage (a check, no
 outputs) runs every time and keeps no meta.
+An output may be a directory (S7's grabs/): it replaces the old one.
 `SKELETON` and `ATHLETE` name the athlete's skeleton.json and athlete.json: as an
 input, a stage that lists one reruns when it changes; as an output (C3 writes
 SKELETON), it is written to the athlete profile, not out/<clip>.
@@ -116,6 +117,8 @@ def _run_one(stage: Stage, ctx: Context, digest: str) -> None:
                 continue
             dest = ctx.path(name)
             dest.parent.mkdir(parents=True, exist_ok=True)
+            if dest.is_dir():  # a directory output replaces the old one (Path.replace cannot onto a non-empty dir)
+                shutil.rmtree(dest)
             (tmp / name).replace(dest)
 
     try:

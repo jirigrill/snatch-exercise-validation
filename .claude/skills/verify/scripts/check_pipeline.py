@@ -37,12 +37,15 @@ from snatch import overlay as ov
 from snatch import scale as sca
 from snatch import skeleton as skel
 from snatch.plate import ellipse_dist
+from snatch import phases as ph
 from snatch.pose import HALPE26, SIDE_OF
 from snatch.reps import Lift, height_above_floor
 from snatch.stage import SKELETON, Stage
 from snatch.stages import CALIBRATE, STAGES
 from snatch.stages.attempts import key_frames
 
+REPO = Path(__file__).resolve().parents[4]
+S7_REFERENCE = REPO / "prototype/tests/data/s7_reference.json"  # true S7 border frames + tolerances (+ "passing")
 WORST = 4  # frames in <overlay>_worst.jpg
 BODY_PX_PER_M_CAL = 352.8  # body px/m of the T5 calibration session (docs/results/35-body-height.md); x S5's factor = this clip's
 HOLDOUT_GATE_CM = 3.0  # S6 hide-a-seen-knee: median knee position error above this FAILs
@@ -406,7 +409,100 @@ def _rebend(out: Path, pose, raw, attempts: list[dict], windows, side: str) -> s
     return f"re-bend dips (start to peak): hybrid {n['hybrid']}, RTMPose {n['rtmpose']}"
 
 
-CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate, "S3": check_attempts, "S5": check_scale, "S6": check_fill}
+def s7_errors(out: Path, ref: dict, clip: str) -> dict[str, dict[str, tuple[int | None, int | None, float | None, bool]]]:
+    """{attempt: {border: (true frame, S7 frame, S7 - true in s or None, passes)}} for a clip in the reference.
+    Passes: both null, or both frames within tolerance_s (time from frame_times.npy)."""
+    rec = json.loads((out / "phases.json").read_text())
+    t = np.load(out / "frame_times.npy")
+    res: dict[str, dict[str, tuple[int | None, int | None, float | None, bool]]] = {}
+    for r in rec["attempts"]:
+        truth = ref["clips"][clip].get(str(r["attempt"]))
+        if truth is None:
+            continue
+        row = {}
+        for n in ph.BORDERS:
+            tf = truth[n]["frame"]
+            sf = r["borders"][n]["frame"] if r["borders"][n] else None
+            if tf is None or sf is None:
+                row[n] = (tf, sf, None, tf is None and sf is None)
+            else:
+                d = float(t[sf] - t[tf])
+                row[n] = (tf, sf, d, abs(d) <= ref["tolerance_s"][n] + 1e-9)
+        res[str(r["attempt"])] = row
+    return res
+
+
+def s7_regression(out: Path, clip: str, ref_path: Path = S7_REFERENCE) -> tuple[list[str], list[str], list[str]]:
+    """(detail lines, regressions, improvements) of S7 vs the true frames; ([], [], []) for a clip not in the reference."""
+    ref = json.loads(ref_path.read_text())
+    if clip not in ref["clips"]:
+        return [], [], []
+    lines, bad, better = [], [], []
+    for k, row in s7_errors(out, ref, clip).items():
+        passing = ref.get("passing", {}).get(clip, {}).get(k, [])
+        cells = []
+        for n, (tf, sf, d, ok) in row.items():
+            cells.append(f"{n} {'null' if sf is None else 'S7 ' + str(sf)} vs {'null' if tf is None else tf}"
+                         + (f" {d:+.3f}s" if d is not None else "") + (" pass" if ok else " FAIL"))
+            if n in passing and not ok:
+                bad.append(f"{clip} a{k} {n}")
+            if ok and n not in passing:
+                better.append(f"{clip} a{k} {n}")
+        lines.append(f"a{k} vs true: " + "; ".join(cells) + f" ({sum(v[3] for v in row.values())}/{len(row)} pass)")
+    return lines, bad, better
+
+
+def check_phases(out: Path) -> str:
+    rec = json.loads((out / "phases.json").read_text())
+    attempts = json.loads((out / "attempts.json").read_text())["attempts"]
+    pose = np.load(out / "pose.npz")
+    assert [r["attempt"] for r in rec["attempts"]] == [a["attempt"] for a in attempts], "phases.json: not one record per attempt"
+    assert rec["params"] == ph.PARAMS, "phases.json params are not the code's thresholds"
+    clip = out.name.split("_")[0]  # T1 ...
+    lines = []
+    for r, a in zip(rec["attempts"], attempts):
+        k, (s, e) = r["attempt"], a["window"]
+        assert r["window"] == [s, e], f"attempt {k}: window {r['window']} is not attempts.json's {[s, e]}"
+        b = r["borders"]
+        assert list(b) == list(ph.BORDERS), f"attempt {k}: borders {list(b)}"
+        frames = [(n, b[n]["frame"]) for n in ph.BORDERS if b[n]]
+        assert all(s <= f < e for _, f in frames), f"attempt {k}: a border outside the window {s}-{e}: {frames}"
+        assert [f for _, f in frames] == sorted(f for _, f in frames), f"attempt {k}: borders out of order: {frames}"
+        oh = r["bar_overhead"]
+        if oh:
+            assert s <= oh["start"] < oh["end"] <= e, f"attempt {k}: bar_overhead {oh} outside the window"
+            assert all(f < oh["end"] for _, f in frames), f"attempt {k}: a border after bar_overhead end {oh['end']}"
+        assert (oh is None) == (b["bar_lowest"] is None and b["standing"] is None), \
+            f"attempt {k}: bar_overhead {oh}, bar_lowest {b['bar_lowest']}, standing {b['standing']} (null together)"
+        assert [p["name"] for p in r["phases"]] == [n for n, *_ in ph.PHASES], f"attempt {k}: phase names"
+        for p, (_, x, y) in zip(r["phases"], ph.PHASES):
+            want_s = s if x is None else (b[x]["frame"] if b[x] else None)
+            want_e = (oh["end"] if oh else None) if y is None else (b[y]["frame"] if b[y] else None)
+            assert (p["start"], p["end"]) == (want_s, want_e), f"attempt {k}: phase {p['name']} {p['start']}-{p['end']}, borders say {want_s}-{want_e}"
+        for n, f in frames:
+            assert (out / "grabs" / f"a{k}_{n}.jpg").is_file(), f"attempt {k}: grabs/a{k}_{n}.jpg missing"
+        assert len(list((out / "grabs").glob(f"a{k}_*.jpg"))) == len(frames), f"attempt {k}: grabs without a border"
+        if clip in ("T3", "T7"):
+            assert oh is None, f"attempt {k}: {clip} never goes overhead, bar_overhead {oh}"
+        elif clip in ("T1", "T2", "T6", "T8"):
+            assert oh, f"attempt {k}: {clip} goes overhead, bar_overhead null"
+            for n in ("liftoff", "full_extension", "bar_peak", "bar_lowest", "standing"):
+                assert b[n], f"attempt {k}: {clip} border {n} is null"
+        lines.append(f"a{k} " + " ".join(f"{n}={b[n]['frame'] if b[n] else 'null'}" for n in ph.BORDERS)
+                     + (f" overhead {oh['start']}-{oh['end']}" if oh else " no overhead"))
+    rows = [ln for ln in (out / "angles.csv").read_text().splitlines()[1:]]
+    posed = int((~np.isnan(pose["keypoints"]).all((1, 2))).sum())
+    assert len(rows) == posed == sum(a["window"][1] - a["window"][0] for a in attempts), \
+        f"angles.csv {len(rows)} rows, {posed} posed frames"
+    ref_lines, bad, better = s7_regression(out, clip)
+    lines += ref_lines
+    for b in better:
+        lines.append(f"improved: {b}, update passing in s7_reference.json")
+    assert not bad, f"regression vs true frames (passed per s7_reference.json 'passing', fails now): {bad}; " + "; ".join(ref_lines)
+    return "\n    ".join(lines)
+
+
+CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate, "S3": check_attempts, "S5": check_scale, "S6": check_fill, "S7": check_phases}
 # Files a stage still writes when it stops the run (checked on a --stop run; no content check).
 STOP_FILES = {"S2": ("plate_check.jpg", "overlays/2_plate.mp4"),
               "S3": ("attempts.json", "overlays/3_attempts.mp4")}
@@ -433,7 +529,8 @@ def main(out: Path, run: str, skeleton: Path | None = None, stop: str | None = N
     print(f"{run}: {' '.join(f'{k}={v}' for k, v in got.items())}")
     for stage in (s for s in stages if s.name != stop):
         paths = [skeleton if o == SKELETON else out / o for o in stage.outputs]
-        missing = [str(p) for p in paths if p is None or not p.is_file() or p.stat().st_size == 0]
+        missing = [str(p) for p in paths if p is None or not (any(f.is_file() and f.stat().st_size for f in p.rglob("*")) if p.is_dir()
+                                                              else p.is_file() and p.stat().st_size)]
         if missing:
             errors.append(f"{stage.name}: missing {missing}")
         elif run == "first" and stage.name in checks:
