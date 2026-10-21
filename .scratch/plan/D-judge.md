@@ -7,7 +7,7 @@ No reuse from open PRs. Thresholds come from spec decisions 1–3 (placeholders 
 - Replaces filename labels; no filename parsing for labels.
 
 ## S7 angles + events
-- Written from scratch (v1's `angles.py` + `phases.py` were deleted with v1, see B-milestone.md item 0; git history has them): a stage that loops over attempts.json, not over overhead runs.
+- Written from scratch (v1's `angles.py` + `phases.py` were deleted with v1, see validation-milestone.md item 0; git history has them): a stage that loops over attempts.json, not over overhead runs.
 - Reads `pose.npz` (S6) + `frame_times.npy`. Every event carries `filled` from the S6 mask.
 - No overhead run → partial record, missing events = null.
 - Out: angles.csv (+ filled columns), angles.png, phases.json, phase_sheet.jpg, grabs/; overlay `6_phases.mp4` (**new**).
