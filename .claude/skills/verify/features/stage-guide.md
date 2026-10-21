@@ -66,6 +66,14 @@ What to look for:
 - `6_filled_sheet`: zoomed on the attempt windows. Grey = RTMPose's near leg (dot at its knee), purple = the filled knee with its thigh and shank, yellow-orange ring = a hidden joint that was not filled, white = the rest of the skeleton (the far leg is not drawn), green = plate outline. Where the plate covers the knee, purple should sit where a knee plausibly is, with a bend that fits the pose; grey wanders there.
 - `6_filled_worst`: the frames the stage scores worst on (see `6_filled.worst` for the criterion). Say per frame whether the purple knee is plausible.
 
+## S7 · Angles and phases
+What it does: per attempt, smooths the near side, computes hip, knee and elbow angles, and marks 7 borders that cut the attempt into 8 phases (starting_position, first_pull, transition, second_pull, turnover, catch, recovery, hold). Rules: `docs/results/37-s7-phases.md`. A border it cannot find is null; no bar_overhead (hub above the nose for >= 0.25 s) = a failed pull, so bar_lowest and standing are null.
+What to look for:
+- `7_phases_sheet`: zoomed on the attempt windows, near-side skeleton, plate and hub trail; the top-left text gives attempt, phase name and hip/knee/elbow; an orange banner names a border on its frame. Liftoff = the bar just leaving the floor; full_extension = the legs straight at the top of the pull; bar_peak = the hub at its top after that; bar_lowest = the hub at the bottom of the catch; standing = upright under the bar.
+- `angles.png`: per attempt hip (blue), knee (green), elbow (purple) in degrees, hub height (orange, right axis), dashed line + label per border, phases shaded, red bar at the bottom = the S6-filled knee. Borders must sit at the knee peak (full_extension), a knee dip (deepest_rebend), the hub's top (bar_peak) and dip (bar_lowest).
+- `phase_sheet.jpg` (no worst sheet): one row per attempt, one tile per border in order (liftoff, first_knee_max, deepest_rebend, full_extension, bar_peak, bar_lowest, standing), "none" = null. The yellow line is shoulder-hip-knee-ankle, the red dot the hub; `grabs/` holds the full-size tiles.
+- `phases.json` / `angles.csv` (no image): borders as {frame, t, filled, hidden}; `bar_overhead` {start, end}; csv: one row per posed frame, `*_filled` = S6 mask, `wrist_hidden` = wrist inside the plate outline. A null `deepest_rebend` / `first_knee_max` is allowed (no >= 3 deg re-bend); null `bar_overhead` is right on T3 and T7 only.
+
 ## C3 · Fit the leg skeleton
 What it does: measures the athlete's leg lengths against hip-ankle distance on the bar-only clip and stores them as the skeleton, then rebuilds the knee from them as a self-test.
 What to look for:

@@ -72,7 +72,7 @@ flowchart TB
   S5 -- "proportions off" --> P5STOP["STOP<br/>'cannot scale skeleton'"]:::new
   S5 --> S6["S6 · Fill hidden knee<br/>skeleton → hybrid joints"]:::move
   SK --> S6
-  S6 --> S7["S7 · Angles + v2 events per attempt"]:::have
+  S6 --> S7["S7 · Angles + phases per attempt"]:::have
   S7 --> S8["S8 · Judge per attempt<br/>performed / intended type, lift_result"]:::new
   S8 --> S9["S9 · Technique findings (planned)"]:::new
   S9 --> REP["Report<br/>report.json + final overlay"]:::new
@@ -120,7 +120,7 @@ flowchart TB
       <tr class="step" data-k="S4"><td>S4 pose (attempt windows)</td><td><code>raw_pose.npz</code>, <code>facing.json</code> (near side follows from facing)</td><td><code>4_pose.mp4</code></td></tr>
       <tr class="step" data-k="S5"><td>S5 clip scale</td><td><code>scale.json</code></td><td><code>5_scale.jpg</code></td></tr>
       <tr class="step" data-k="S6"><td>S6 fill hidden joints</td><td><code>pose.npz</code> (hybrid + filled-mask)</td><td><code>6_filled.mp4</code></td></tr>
-      <tr class="step" data-k="S7"><td>S7 angles + events</td><td><code>angles.csv</code>, <code>angles.png</code>, <code>phases.json</code>, <code>phase_sheet.jpg</code>, <code>grabs/</code></td><td><code>7_phases.mp4</code></td></tr>
+      <tr class="step" data-k="S7"><td>S7 angles + phases</td><td><code>angles.csv</code>, <code>angles.png</code>, <code>phases.json</code>, <code>phase_sheet.jpg</code>, <code>grabs/</code></td><td><code>7_phases.mp4</code></td></tr>
       <tr class="step" data-k="S8"><td>S8 judge</td><td><code>judgement.json</code></td><td><code>8_judgement.mp4</code></td></tr>
       <tr class="step" data-k="S9"><td>S9 technique findings (planned)</td><td><code>findings.json</code></td><td><code>9_findings.mp4</code></td></tr>
       <tr class="step" data-k="REP"><td>Report</td><td><code>report.json</code>, <code>pipeline_status.json</code></td><td><code>overlay.mp4</code> (all layers)</td></tr>
@@ -235,12 +235,12 @@ const D = {
     how:"lengths × scale.json factor, thigh × thigh_factor, shank × shank_factor; facing from facing.json\nhidden = near hip/knee/ankle inside the plate outline + 10 % margin (ellipse_dist < 1.1)\nscale.json method none: fill nothing, the mask marks the hidden joints hidden (not filled); S8 treats hidden like filled (low_confidence)\nknee = two_circle_knee(hip, ankle) where hidden (gain ≤ 2)\nknee only (decided 2026-10-19); the wrist stays RTMPose's, a wrist fill is a later item if S7/S8 need it\ncheck: hide a seen knee at 90–150°, rebuild it with multipliers fitted on the other half of the frames: ≤ 3 cm median (target 2 cm); the hybrid adds no ≥ 3° knee dip over RTMPose's\nthe filled-mask travels on: angles.csv gets a filled column per joint, every S7 event gets filled=true|false",
     out:"<code>pose.npz</code> (hybrid keypoints + a filled-mask per joint, t)",
     ov:"<code>6_filled.mp4</code>: RTMPose joint (grey) and filled joint (purple), plate outline. <b>New.</b>" },
-  S7: { t:"S7 · Angles + events per attempt", tag:"new",
-    in:"<code>pose.npz</code>, <code>plate.npz</code>, <code>attempts.json</code>",
-    code:"new: written from scratch (v1's angles.py, phases.py (find_reps_v2), spread.py, analyze.py, compare_phases.py are in git history (deleted with v1 in #68; last on main at 6469c5b), reference only). snatch/signals.py (smooth) stays; skeleton.sagittal_angles has hip and knee. events_for_attempt(window): runs v2 on the attempt slice, picks the longest overhead run, returns null events when there is none. Unlike v1's find_reps_v2, which iterated overhead runs and dropped reps without one. A regression test pins phases_v2.json for the 6 eye-accepted reps, plus a failed-pull fixture.",
-    how:"loops over attempts.json, not over overhead runs\nper attempt: smooth keypoints → joint angles (near side from facing.json) incl. elbow\nframe times from frame_times.npy\nfrozen v2 events (hub): liftoff, full extension, bar peak, transition, catch, overhead run (≥ 0.25 s), lockout\nsame events for every snatch type; S8 classifies\nno overhead run → partial record, missing events = null\nevery event carries filled=true|false from the S6 mask",
-    out:"<code>angles.csv</code> (+ filled columns), <code>angles.png</code>, <code>phases.json</code> (one record per attempt), <code>phase_sheet.jpg</code>, <code>grabs/</code>",
-    ov:"<code>7_phases.mp4</code>: current phase name + angle values, a freeze-frame marker at each event. <b>New.</b>" },
+  S7: { t:"S7 · Angles + phases per attempt", tag:"new",
+    in:"<code>pose.npz</code> (keypoints, t, filled, hidden), <code>plate.npz</code>, <code>attempts.json</code>, <code>facing.json</code>, the clip (grabs, overlay); <code>t</code> = frame_times.npy",
+    code:"new: written from scratch (v1's angles.py, phases.py (find_reps_v2), spread.py, analyze.py, compare_phases.py are in git history (deleted with v1 in #68; last on main at 6469c5b), reference only). snatch/phases.py: find_phases(signals) is pure, the stage (stages/phases.py) smooths and writes. Rules in docs/results/37-s7-phases.md (v2's liftoff, re-bend, full extension, lockout kept; first knee max, bar peak, bar lowest new). One R3 unit test (no dip, no re-bend); the clips are the main test.",
+    how:"loops over attempts.json, not over overhead runs; near side from facing.json; every duration through t, never × fps\nper attempt: smooth keypoints (gap fill + Savitzky-Golay 0.1 s) → hip, knee, elbow angles\nmarker bar_overhead: hub above the nose ≥ 0.25 s, the longest run\nborders: liftoff, first_knee_max, deepest_rebend, full_extension, bar_peak, bar_lowest, standing (null when not found; no overhead → bar_lowest and standing null)\nphases: starting_position, first_pull, transition, second_pull, turnover, catch, recovery, hold\nsame rules for every snatch type; S8 classifies\nevery border carries filled and hidden from the S6 masks",
+    out:"<code>angles.csv</code> (+ filled columns, wrist_hidden), <code>angles.png</code>, <code>phases.json</code> (one record per attempt), <code>phase_sheet.jpg</code>, <code>grabs/</code>",
+    ov:"<code>7_phases.mp4</code>: current phase name + hip/knee/elbow values, a coloured banner at each border frame. <b>New.</b>" },
   S8: { t:"S8 · Judge per attempt", tag:"new",
     in:"<code>phases.json</code>, <code>angles.csv</code>, <code>plate.npz</code>, <code>--intended</code>, <code>labels.csv</code>",
     code:"new: snatch/judge.py (type classifier + outcome).",

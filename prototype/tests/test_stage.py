@@ -230,3 +230,15 @@ def test_stop_keeps_the_outputs_but_writes_no_meta(ctx: Context) -> None:
     assert not (ctx.out / "S2b.txt").exists() and not (ctx.out / "S2.meta.json").exists()
     assert run_stages(stages, ctx, log=_quiet) == 6
     assert calls == ["S2", "S2"]
+
+
+def test_directory_output_replaces_old(ctx: Context) -> None:
+    """R2: a directory output replaces the existing one (Path.replace fails onto a non-empty dir), no stale files stay."""
+    def run(c: Context, tmp: Path) -> None:
+        (tmp / "d").mkdir()
+        (tmp / "d" / f"k{c.params['k']}.txt").write_text("x")
+
+    stage = Stage("D", (CLIP,), ("d",), run, params=("k",))
+    run_stages([stage], ctx, log=_quiet)
+    run_stages([stage], Context(ctx.clip, ctx.out, {"k": 2}), log=_quiet)
+    assert sorted(p.name for p in (ctx.out / "d").iterdir()) == ["k2.txt"]

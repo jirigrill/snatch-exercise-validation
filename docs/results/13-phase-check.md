@@ -1,3 +1,5 @@
+> The freeze below is replaced by [37-s7-phases.md](37-s7-phases.md) (decided 2026-10-21): new names, new borders; v2's liftoff, re-bend, full-extension and lockout rules are kept there.
+
 # 13 — Phase-marking check
 
 Ticket: [#13](https://github.com/jirigrill/snatch-exercise-validation/issues/13) (parent [#11](https://github.com/jirigrill/snatch-exercise-validation/issues/11)). Reviewed 2026-10-02.

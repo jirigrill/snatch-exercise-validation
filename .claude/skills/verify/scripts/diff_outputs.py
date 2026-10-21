@@ -84,7 +84,7 @@ def compare(a: Path, b: Path) -> str | None:
     return None if a.read_bytes() == b.read_bytes() else "bytes differ"
 
 
-def files_of(stage: Stage, root: Path, clip: str) -> list[tuple[str, str]]:
+def files_of(stage: Stage, root: Path, clip: str, base: Path | None = None) -> list[tuple[str, str]]:
     """(name for the report, path relative to the root) of every file the stage's outputs stand for."""
     out = []
     for o in stage.outputs:
@@ -92,6 +92,9 @@ def files_of(stage: Stage, root: Path, clip: str) -> list[tuple[str, str]]:
             out += [(str(p.relative_to(root)), str(p.relative_to(root))) for p in sorted(root.glob("athletes/*/skeleton.json"))]
         elif o.endswith(".mp4"):
             out += [(x, f"{clip}/{x}") for x in (o, o[:-4] + "_sheet.jpg", o[:-4] + "_worst.jpg", o[:-4] + ".worst")]
+        elif (root / clip / o).is_dir() or base is not None and (base / clip / o).is_dir():  # a directory output: its files
+            names = {p.relative_to(r / clip) for r in (root, base) if r is not None for p in (r / clip / o).rglob("*") if p.is_file()}
+            out += [(str(x), f"{clip}/{x}") for x in sorted(names)]
         else:
             out.append((o, f"{clip}/{o}"))
     return out
@@ -101,7 +104,7 @@ def stage_state(stage: Stage, root: Path, base: Path, clip: str) -> dict:
     if not stage.outputs:
         return {"state": "no outputs", "files": {}}
     files, ran = {}, False
-    for name, rel in files_of(stage, root, clip):
+    for name, rel in files_of(stage, root, clip, base):
         a, b = root / rel, base / rel
         if not a.exists() and not b.exists():
             continue

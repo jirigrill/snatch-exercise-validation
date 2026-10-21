@@ -1,0 +1,488 @@
+{
+ "about": "S7 phase borders: reference frames per test clip/attempt (2026-10-21). Not ground truth: a change detector for S7 (check_pipeline.py fails when a border in 'passing' stops agreeing). source 'human' = the developer's pick (not a coach) on a review page that outlined every candidate's frame as a letter, S7's among them (26 of 28 frame picks equal a candidate's frame, 9 S7's: anchored); 'markers agree' = mean of two blind agent markers (opus, sonnet) within tolerance, not seen by the developer. frame null = the border does not exist. Plateau borders (bar_peak, bar_lowest, full_extension) span 20-30 frames, wider than the tolerance, so timing at the tolerance is not established by this reference. T8 attempt 1 = T1 (same cut start, same frames). Tolerance in seconds of frame time. Replace with an unanchored, range-marked reference in the validation milestone.",
+ "tolerance_s": {
+  "liftoff": 0.03,
+  "first_knee_max": 0.05,
+  "deepest_rebend": 0.05,
+  "full_extension": 0.05,
+  "bar_peak": 0.03,
+  "bar_lowest": 0.03,
+  "standing": 0.1
+ },
+ "clips": {
+  "T1": {
+   "1": {
+    "liftoff": {
+     "frame": 242,
+     "source": "human",
+     "markers": {
+      "opus": 266,
+      "sonnet": 270
+     }
+    },
+    "first_knee_max": {
+     "frame": 371,
+     "source": "human",
+     "markers": {
+      "opus": 371,
+      "sonnet": 406
+     }
+    },
+    "deepest_rebend": {
+     "frame": null,
+     "source": "human",
+     "markers": {
+      "opus": 400,
+      "sonnet": 420
+     }
+    },
+    "full_extension": {
+     "frame": 460,
+     "source": "human",
+     "markers": {
+      "opus": 446,
+      "sonnet": 460
+     }
+    },
+    "bar_peak": {
+     "frame": 511,
+     "source": "markers agree",
+     "markers": {
+      "opus": 513,
+      "sonnet": 508
+     }
+    },
+    "bar_lowest": {
+     "frame": 600,
+     "source": "human",
+     "markers": {
+      "opus": 590,
+      "sonnet": 600
+     }
+    },
+    "standing": {
+     "frame": 853,
+     "source": "human",
+     "markers": {
+      "opus": 732,
+      "sonnet": 722
+     }
+    }
+   }
+  },
+  "T8": {
+   "1": {
+    "liftoff": {
+     "frame": 242,
+     "source": "human",
+     "markers": {
+      "opus": 252,
+      "sonnet": 314
+     }
+    },
+    "first_knee_max": {
+     "frame": 371,
+     "source": "human",
+     "markers": {
+      "opus": 380,
+      "sonnet": 407
+     }
+    },
+    "deepest_rebend": {
+     "frame": null,
+     "source": "human",
+     "markers": {
+      "opus": 406,
+      "sonnet": 412
+     }
+    },
+    "full_extension": {
+     "frame": 460,
+     "source": "human",
+     "markers": {
+      "opus": 435,
+      "sonnet": 456
+     }
+    },
+    "bar_peak": {
+     "frame": 511,
+     "source": "markers agree",
+     "markers": {
+      "opus": 512,
+      "sonnet": 510
+     }
+    },
+    "bar_lowest": {
+     "frame": 600,
+     "source": "human",
+     "markers": {
+      "opus": 584,
+      "sonnet": 578
+     }
+    },
+    "standing": {
+     "frame": 853,
+     "source": "human",
+     "markers": {
+      "opus": 714,
+      "sonnet": 722
+     }
+    }
+   },
+   "2": {
+    "liftoff": {
+     "frame": 1880,
+     "source": "human",
+     "markers": {
+      "opus": 1895,
+      "sonnet": 1936
+     }
+    },
+    "first_knee_max": {
+     "frame": 2000,
+     "source": "human",
+     "markers": {
+      "opus": 2000,
+      "sonnet": 2015
+     }
+    },
+    "deepest_rebend": {
+     "frame": 2015,
+     "source": "human",
+     "markers": {
+      "opus": 2023,
+      "sonnet": 2024
+     }
+    },
+    "full_extension": {
+     "frame": 2050,
+     "source": "markers agree",
+     "markers": {
+      "opus": 2048,
+      "sonnet": 2051
+     }
+    },
+    "bar_peak": {
+     "frame": 2124,
+     "source": "markers agree",
+     "markers": {
+      "opus": 2123,
+      "sonnet": 2125
+     }
+    },
+    "bar_lowest": {
+     "frame": 2215,
+     "source": "human",
+     "markers": {
+      "opus": 2215,
+      "sonnet": 2170
+     }
+    },
+    "standing": {
+     "frame": 2484,
+     "source": "human",
+     "markers": {
+      "opus": 2339,
+      "sonnet": 2345
+     }
+    }
+   }
+  },
+  "T2": {
+   "1": {
+    "liftoff": {
+     "frame": 239,
+     "source": "human",
+     "markers": {
+      "opus": 264,
+      "sonnet": 274
+     }
+    },
+    "first_knee_max": {
+     "frame": 367,
+     "source": "human",
+     "markers": {
+      "opus": 367,
+      "sonnet": 408
+     }
+    },
+    "deepest_rebend": {
+     "frame": 402,
+     "source": "human",
+     "markers": {
+      "opus": 402,
+      "sonnet": 426
+     }
+    },
+    "full_extension": {
+     "frame": 465,
+     "source": "human",
+     "markers": {
+      "opus": 444,
+      "sonnet": 465
+     }
+    },
+    "bar_peak": {
+     "frame": 525,
+     "source": "human",
+     "markers": {
+      "opus": 525,
+      "sonnet": 516
+     }
+    },
+    "bar_lowest": {
+     "frame": 679,
+     "source": "human",
+     "markers": {
+      "opus": 664,
+      "sonnet": 650
+     }
+    },
+    "standing": {
+     "frame": 971,
+     "source": "human",
+     "markers": {
+      "opus": 832,
+      "sonnet": 820
+     }
+    }
+   }
+  },
+  "T3": {
+   "1": {
+    "liftoff": {
+     "frame": 312,
+     "source": "human",
+     "markers": {
+      "opus": 312,
+      "sonnet": 350
+     }
+    },
+    "first_knee_max": {
+     "frame": 403,
+     "source": "human",
+     "markers": {
+      "opus": 403,
+      "sonnet": 448
+     }
+    },
+    "deepest_rebend": {
+     "frame": 464,
+     "source": "human",
+     "markers": {
+      "opus": 448,
+      "sonnet": 464
+     }
+    },
+    "full_extension": {
+     "frame": 488,
+     "source": "markers agree",
+     "markers": {
+      "opus": 488,
+      "sonnet": 488
+     }
+    },
+    "bar_peak": {
+     "frame": 550,
+     "source": "markers agree",
+     "markers": {
+      "opus": 553,
+      "sonnet": 546
+     }
+    },
+    "bar_lowest": {
+     "frame": null,
+     "source": "markers agree",
+     "markers": {
+      "opus": null,
+      "sonnet": null
+     }
+    },
+    "standing": {
+     "frame": null,
+     "source": "markers agree",
+     "markers": {
+      "opus": null,
+      "sonnet": null
+     }
+    }
+   }
+  },
+  "T6": {
+   "1": {
+    "liftoff": {
+     "frame": 42,
+     "source": "human",
+     "markers": {
+      "opus": 46,
+      "sonnet": 58
+     }
+    },
+    "first_knee_max": {
+     "frame": 70,
+     "source": "human",
+     "markers": {
+      "opus": 70,
+      "sonnet": 79
+     }
+    },
+    "deepest_rebend": {
+     "frame": 76,
+     "source": "human",
+     "markers": {
+      "opus": 76,
+      "sonnet": 83
+     }
+    },
+    "full_extension": {
+     "frame": 95,
+     "source": "human",
+     "markers": {
+      "opus": 86,
+      "sonnet": 95
+     }
+    },
+    "bar_peak": {
+     "frame": 106,
+     "source": "markers agree",
+     "markers": {
+      "opus": 106,
+      "sonnet": 105
+     }
+    },
+    "bar_lowest": {
+     "frame": 124,
+     "source": "human",
+     "markers": {
+      "opus": 124,
+      "sonnet": 124
+     }
+    },
+    "standing": {
+     "frame": 186,
+     "source": "human",
+     "markers": {
+      "opus": 164,
+      "sonnet": 163
+     }
+    }
+   }
+  },
+  "T7": {
+   "1": {
+    "liftoff": {
+     "frame": 147,
+     "source": "human",
+     "markers": {
+      "opus": 147,
+      "sonnet": 160
+     }
+    },
+    "first_knee_max": {
+     "frame": 192,
+     "source": "human",
+     "markers": {
+      "opus": 192,
+      "sonnet": 197
+     }
+    },
+    "deepest_rebend": {
+     "frame": null,
+     "source": "markers agree",
+     "markers": {
+      "opus": null,
+      "sonnet": null
+     }
+    },
+    "full_extension": {
+     "frame": null,
+     "source": "human",
+     "markers": {
+      "opus": 192,
+      "sonnet": null
+     }
+    },
+    "bar_peak": {
+     "frame": null,
+     "source": "human",
+     "markers": {
+      "opus": 210,
+      "sonnet": 228
+     }
+    },
+    "bar_lowest": {
+     "frame": null,
+     "source": "markers agree",
+     "markers": {
+      "opus": null,
+      "sonnet": null
+     }
+    },
+    "standing": {
+     "frame": null,
+     "source": "markers agree",
+     "markers": {
+      "opus": null,
+      "sonnet": null
+     }
+    }
+   }
+  }
+ },
+ "passing": {
+  "T1": {
+   "1": [
+    "liftoff",
+    "deepest_rebend",
+    "bar_peak",
+    "standing"
+   ]
+  },
+  "T8": {
+   "1": [
+    "liftoff",
+    "deepest_rebend",
+    "bar_peak",
+    "standing"
+   ],
+   "2": [
+    "full_extension",
+    "bar_peak",
+    "standing"
+   ]
+  },
+  "T2": {
+   "1": [
+    "liftoff",
+    "first_knee_max",
+    "deepest_rebend",
+    "bar_peak",
+    "bar_lowest",
+    "standing"
+   ]
+  },
+  "T3": {
+   "1": [
+    "full_extension",
+    "bar_peak",
+    "bar_lowest",
+    "standing"
+   ]
+  },
+  "T6": {
+   "1": [
+    "liftoff",
+    "bar_peak",
+    "standing"
+   ]
+  },
+  "T7": {
+   "1": [
+    "liftoff",
+    "deepest_rebend",
+    "bar_lowest",
+    "standing"
+   ]
+  }
+ }
+}

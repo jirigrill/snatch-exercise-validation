@@ -27,6 +27,14 @@ Order: item 0 (v1 removal) → V1 → V2 → V3, one PR each (V3 may be plan edi
 | S3 | attempt count, start/end frames, key frames (liftoff, peak, back on floor), `not_a_pull` |
 | S4 | near-side shoulder, elbow, wrist, hip, knee, ankle, heel, toe (px); facing |
 | C3 (T5) | skeleton lengths vs lengths measured on frames with the leg visible |
+| S7 | phase borders vs a new reference, replacing `prototype/tests/data/s7_reference.json` (from #77: anchored, timing not established, see `docs/results/37-s7-phases.md`) |
+
+### S7 reference (from #77)
+- The developer marks every border unanchored: plain every-frame strips (`mark_strips.py`), no candidate frames outlined, no marker or S7 frames shown.
+- Plateau borders (bar_peak, bar_lowest, full_extension; standing if it spans) are marked as a range [first, last frame where it could be]; S7 passes when inside the range ± 1 frame.
+- Repeatability: T8 attempt 1 marked again in a separate sitting (same frames as T1, not told); the spread per border sets what tolerance the reference can support.
+- A coach checks the re-bend borders (first_knee_max, deepest_rebend) on 2–3 clips.
+- Then: update `passing`, rerun the S7 proof, and only then judge S7's timing.
 
 ## Review A: blind marking
 - Two markers, Opus and Sonnet, each on its own; neither sees pipeline output (no overlays, no numbers).
