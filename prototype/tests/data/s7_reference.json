@@ -1,5 +1,5 @@
 {
- "about": "S7 phase borders, true frames per test clip/attempt (decided 2026-10-21). source: 'human' = the developer's verdict on a blind review page (markers disagreed, or agreed and S7 was off); 'markers agree' = mean of two blind markers (opus, sonnet) within tolerance. frame null = the border does not exist. T8 attempt 1 = T1 (same cut start, same frames). Tolerance in seconds of frame time.",
+ "about": "S7 phase borders: reference frames per test clip/attempt (2026-10-21). Not ground truth: a change detector for S7 (check_pipeline.py fails when a border in 'passing' stops agreeing). source 'human' = the developer's pick (not a coach) on a review page that outlined every candidate's frame as a letter, S7's among them (26 of 28 frame picks equal a candidate's frame, 9 S7's: anchored); 'markers agree' = mean of two blind agent markers (opus, sonnet) within tolerance, not seen by the developer. frame null = the border does not exist. Plateau borders (bar_peak, bar_lowest, full_extension) span 20-30 frames, wider than the tolerance, so timing at the tolerance is not established by this reference. T8 attempt 1 = T1 (same cut start, same frames). Tolerance in seconds of frame time. Replace with an unanchored, range-marked reference in the validation milestone.",
  "tolerance_s": {
   "liftoff": 0.03,
   "first_knee_max": 0.05,

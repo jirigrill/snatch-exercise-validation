@@ -25,9 +25,18 @@ Replaces the freeze in [13-phase-check.md](13-phase-check.md) (v2 phase definiti
 `angles.csv` (hip, knee, elbow, S6 filled mask per joint, `wrist_hidden`, hub_y), `angles.png`, `phases.json`, `grabs/a<k>_<border>.jpg`, `phase_sheet.jpg`, `overlays/7_phases.mp4`.
 
 ## Checked against true frames (2026-10-21)
-Clips T1, T2, T3, T6, T7, T8 (7 attempts, 49 borders). Two blind markers (Opus, Sonnet agents) marked every border from raw frame strips (`mark_strips.py`), no pipeline output. Where they disagreed beyond tolerance, or agreed and S7 was off, the developer picked the true frame on a blind review page (`s7_marks_review.py`, candidates as letters): 31 borders; the other 18 = the markers' mean. True frames: `prototype/tests/data/s7_reference.json`; `check_pipeline.py` checks every clip run against it (a border in `passing` that fails = FAIL). Tolerance (s): liftoff, bar_peak, bar_lowest 0.03; first_knee_max, deepest_rebend, full_extension 0.05; standing 0.10.
+Clips T1, T2, T3, T6, T7, T8 (7 attempts, 49 borders). Two blind markers (Opus, Sonnet agents) marked every border from raw frame strips (`mark_strips.py`), no pipeline output. Where they disagreed beyond tolerance, or agreed and S7 was off, the developer picked the frame on a review page (`s7_marks_review.py`): 31 borders; the other 18 = the markers' mean, not seen by the developer. Reference frames: `prototype/tests/data/s7_reference.json`; `check_pipeline.py` checks every clip run against it (a border in `passing` that stops agreeing = FAIL). Tolerance (s): liftoff, bar_peak, bar_lowest 0.03; first_knee_max, deepest_rebend, full_extension 0.05; standing 0.10.
 
-**S7 passes 28 of 49** (markers: Opus 27, Sonnet 21; details in the PR's S7 proof):
+**The reference is not ground truth** and not precise enough to judge timing at these tolerances:
+- Anchoring: the page outlined every candidate's frame as a letter, S7's among them (which letter was S7 was hidden, its frame was not). 26 of the developer's 28 frame picks are exactly a candidate's frame, 9 exactly S7's (liftoff T1, T2, T6, T7; standing T1, T2, T6, T8 a2; bar_lowest T2).
+- Plateaus: bar_peak, bar_lowest and full_extension span 20-30 frames (bar level, knee near straight), wider than a 0.03 s tolerance (7 frames at 240 fps).
+- Definitions: standing on T1 is f722-732 for both markers, f853 for the developer and S7 (0.5 s): a reading of "legs straight".
+- Repeatability: the same frames marked twice (T1 = T8 a1) differ by up to 0.18 s for a marker; the developer marked them once.
+- The developer is not a coach; the re-bend borders (knee behind the plate) are the hardest.
+
+So the table below is agreement with that reference, not accuracy: a timing fail does not prove S7 is off, a timing pass (liftoff, standing: anchored) does not prove it right. **What holds regardless:** S7 gives no first_knee_max / deepest_rebend where every judge saw a re-bend (the 3 deg rule does not fire on these clips), and borders that do not exist on the standup T7. For S8 these gaps do not change a result (T7 has no overhead, failed either way; S8 reads bar_overhead, bar_peak and the angles around bar_lowest / full_extension, plateaus where a 0.05 s shift barely changes the value); they matter for S9's technique faults. A reference precise enough for timing is a validation-milestone task (unanchored marking, ranges for plateau borders, a repeat marking, a coach on the re-bend).
+
+**Agreement with the reference: 28 of 49** (markers: Opus 27, Sonnet 21; details in the PR's S7 proof):
 
 | border | pass | how the fails fail |
 |---|---|---|

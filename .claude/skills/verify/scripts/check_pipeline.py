@@ -45,7 +45,7 @@ from snatch.stages import CALIBRATE, STAGES
 from snatch.stages.attempts import key_frames
 
 REPO = Path(__file__).resolve().parents[4]
-S7_REFERENCE = REPO / "prototype/tests/data/s7_reference.json"  # true S7 border frames + tolerances (+ "passing")
+S7_REFERENCE = REPO / "prototype/tests/data/s7_reference.json"  # S7 reference border frames + tolerances (+ "passing"); a change detector, not ground truth
 WORST = 4  # frames in <overlay>_worst.jpg
 BODY_PX_PER_M_CAL = 352.8  # body px/m of the T5 calibration session (docs/results/35-body-height.md); x S5's factor = this clip's
 HOLDOUT_GATE_CM = 3.0  # S6 hide-a-seen-knee: median knee position error above this FAILs
@@ -448,7 +448,7 @@ def s7_regression(out: Path, clip: str, ref_path: Path = S7_REFERENCE) -> tuple[
                 bad.append(f"{clip} a{k} {n}")
             if ok and n not in passing:
                 better.append(f"{clip} a{k} {n}")
-        lines.append(f"a{k} vs true: " + "; ".join(cells) + f" ({sum(v[3] for v in row.values())}/{len(row)} pass)")
+        lines.append(f"a{k} vs reference: " + "; ".join(cells) + f" ({sum(v[3] for v in row.values())}/{len(row)} pass)")
     return lines, bad, better
 
 
@@ -498,7 +498,7 @@ def check_phases(out: Path) -> str:
     lines += ref_lines
     for b in better:
         lines.append(f"improved: {b}, update passing in s7_reference.json")
-    assert not bad, f"regression vs true frames (passed per s7_reference.json 'passing', fails now): {bad}; " + "; ".join(ref_lines)
+    assert not bad, f"S7 moved off the reference frames (agreed per s7_reference.json 'passing', not now): {bad}; " + "; ".join(ref_lines)
     return "\n    ".join(lines)
 
 

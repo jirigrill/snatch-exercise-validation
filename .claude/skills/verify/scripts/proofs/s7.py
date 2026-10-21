@@ -278,8 +278,25 @@ def write_verdict(path: Path, data: dict, ref: dict, strip_names: list[str]) -> 
     ok_n = sum(r["ok"] for r in rows)
     L += ["", f"Overall: **{ok_n}/{len(rows)}** borders pass ({n_att} attempts x {len(ph.BORDERS)} borders).", ""]
     ans = "yes" if ok_n == len(rows) else "no"
-    L.append(f"**Answer: {ans}.** {ok_n} of {len(rows)} borders are within tolerance." +
+    L.append(f"**Answer: {ans}.** {ok_n} of {len(rows)} borders are within tolerance of the reference." +
              ("" if ans == "yes" else " Failing: " + ". ".join(fails_text) + "."))
+    # how far the reference can be trusted: the human picked from outlined candidates (S7's among them)
+    hum = [r for r in rows if r["true"] is not None and ref["clips"][r["clip"]][r["attempt"]][r["border"]]["source"] == "human"]
+    cand = [r for r in hum if r["true"] == r["s7"] or r["true"] in ref["clips"][r["clip"]][r["attempt"]][r["border"]]["markers"].values()]
+    on_s7 = [r for r in hum if r["true"] == r["s7"]]
+    L += ["", "**What this number can and cannot say.** The reference is not precise enough to judge timing at these tolerances:",
+          f"- Anchoring: {len(cand)} of the developer's {len(hum)} frame verdicts are exactly a candidate's frame, {len(on_s7)} of them exactly S7's "
+          f"({', '.join(f'{r['clip']} a{r['attempt']} {r['border']}' for r in on_s7)}). The page hid which letter was S7, not S7's frame, so S7's passes "
+          "there are partly S7 agreeing with itself.",
+          "- Plateaus: the bar sits nearly level for 20-30 frames at its peak and in the catch, and the knee stays near straight over a span at full "
+          "extension; a 0.03 s tolerance (7 frames at 240 fps) is narrower than the event.",
+          "- Definitions: for standing the markers put T1 at f722-732, the developer and S7 at f853 (0.5 s): a different reading of \"legs straight\", "
+          "not precision.",
+          "- The same frames marked twice (T1 = T8 a1, below) differ by up to 0.18 s for a marker.",
+          "- The developer is not a coach; the re-bend borders (knee behind the plate) are the hardest to judge.",
+          "So a timing fail does not prove S7 is off and a timing pass does not prove it is right. What holds regardless of precision: S7 gives no "
+          "first_knee_max / deepest_rebend where every judge saw a re-bend (the 3 deg rule does not fire), and borders that do not exist on the "
+          "standup T7 (full_extension, bar_peak)."]
     if strip_names:
         L += ["", "Images: `1_error_dots.png` (the error of every border, tolerance shaded); per attempt with failing borders a strip of the "
               "frames at the true border next to the frame at S7's (" + ", ".join(f"`{s}`" for s in strip_names) + ")."]
@@ -314,9 +331,9 @@ def write_verdict(path: Path, data: dict, ref: dict, strip_names: list[str]) -> 
           f"Passing borders: S7 {tot['ok']}/{len(rows)}, opus {tot['opus_ok']}/{len(rows)}, sonnet {tot['sonnet_ok']}/{len(rows)}. "
           f"By median error S7 is better than both markers on {', '.join(better) or 'no border'}; worse than both on {', '.join(worse) or 'no border'}; "
           f"between them on {', '.join(mixed) or 'none'}. Consistency (same frames marked twice, median difference): S7 {f3(cm['s7'])} s, "
-          f"opus {f3(cm['opus'])} s, sonnet {f3(cm['sonnet'])} s. Caution: the truth was built from the markers (where both agreed, their mean; "
-          "elsewhere the developer chose after seeing their marks), so it favours the markers; S7's numbers here are a fair floor, the markers' "
-          "numbers a flattering ceiling. Medians over n=1 (first_knee_max, deepest_rebend: S7 gives these borders rarely) say little."]
+          f"opus {f3(cm['opus'])} s, sonnet {f3(cm['sonnet'])} s. Caution: the reference was built from these same candidates (where both markers "
+          "agreed, their mean; elsewhere the developer chose among outlined candidates, S7's included), so it favours whoever's frame the "
+          "developer picked, the markers and S7 alike; these are agreement scores with that reference, not accuracy. Medians over n=1 (first_knee_max, deepest_rebend: S7 gives these borders rarely) say little."]
     # ---- how
     srcs = [ref["clips"][r["clip"]][r["attempt"]][r["border"]]["source"] for r in rows if r["true"] is not None]
     n_h, n_m = srcs.count("human"), srcs.count("markers agree")
@@ -324,17 +341,20 @@ def write_verdict(path: Path, data: dict, ref: dict, strip_names: list[str]) -> 
           f"Two agent markers (opus, sonnet) each marked all {len(ph.BORDERS)} borders of every attempt blind: they saw only raw-frame strips "
           "of the clip (no pipeline output, no code, no S7 result) and wrote a frame per border or null. S7 ran on the same clips. "
           "Truth per border: where the two markers agreed within the tolerance, the mean of their frames (`markers agree`, "
-          f"{n_m} borders with a true frame); where they disagreed, or agreed and S7 was off, the developer looked at the frames on a blind review page "
-          f"(S7's value not shown) and picked the true frame or said the border does not exist (`human`, {n_h} borders with a true frame; "
+          f"{n_m} borders with a true frame); where they disagreed, or agreed and S7 was off, the developer looked at the frames on a review page "
+          f"(a strip with every candidate's frame outlined as a letter, S7's among them, which letter is S7 not shown) and picked the true frame or said the border does not exist (`human`, {n_h} borders with a true frame; "
           "null truths are counted among the human verdicts). Tolerance per border in seconds of frame time: "
           + ", ".join(f"{n} {tol[n]:g}" for n in ph.BORDERS) + ". A border passes when both truth and S7 are null, or both are frames within the tolerance; "
           "S7 giving a border the truth does not have (or the reverse) is a fail.", "",
           "Limits: one lifter, 6 clips (T1, T2, T3, T6, T7, T8), 7 attempts (T1 = T8 attempt 1, the same frames, so effectively 6 distinct), "
           "so a handful of cases per border, not statistics. The human picked from strips, some at every 2nd frame, so a true frame can be 1 frame off "
           "(0.004 s at 240 fps, small against every tolerance). `markers agree` items were not seen by the human: if both markers share a bias, "
-          "the truth carries it, and it favours the markers in question 2. No clip has a different lifter, camera angle or a lift that fails past the pull. "
-          "Nobody tunes S7 to pass this: a no is reported as a no, and the check in `check_pipeline.py` only fails when a border that passed "
-          "before stops passing (`passing` in `prototype/tests/data/s7_reference.json`)."]
+          "the truth carries it. The developer is not a coach and picked from outlined candidates (anchoring, see question 1). No clip has a different "
+          "lifter, camera angle or a lift that fails past the pull. "
+          "Nobody tunes S7 to pass this: a no is reported as a no. The check in `check_pipeline.py` is a change detector, not ground truth: it "
+          "fails only when a border that agreed with the reference stops agreeing (`passing` in `prototype/tests/data/s7_reference.json`). "
+          "A reference precise enough for timing needs unanchored marking (no candidates shown), a range for plateau borders and a repeat "
+          "marking to measure the marker's own spread (validation milestone)."]
     path.write_text("\n".join(L) + "\n")
 
 
