@@ -1,0 +1,69 @@
+clip,attempt,result,intended_type,reason,fault,note
+T1_20261007_3_jiri_v3_powersnatch_5kg_1rep_success_0deg_right_240fps,1,completed,power,,,test clip; rep 1 of 20261007_3
+T2_20261007_4_jiri_v3_squatsnatch_5kg_1rep_success_0deg_right_240fps,1,completed,squat,,,test clip; rep 1 of 20261007_4
+T3_20261007_10_jiri_v3_powersnatch_10kg_1rep_fail-bend-elbows_0deg_right_240fps,1,failed,power,no_overhead,bend-elbows,test clip; rep 1 of 20261007_10; lifter 2026-10-21: bar never overhead
+T4_20261007_7_jiri_v3_powersnatch_5kg_1rep_success_0deg_left_240fps,1,completed,power,,,test clip; rep 1 of 20261007_7
+T5_20261007_2_jiri_v3_powersnatch_bar_1rep_success_0deg_right_240fps,1,completed,power,,,test clip; = 20261007_2 (bar only)
+T6_20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg_60fps,1,completed,power,,,test clip; rep 1 of 20261001_3 (60 fps ladder copy)
+T7_20261001_2_jiri_v1_standup_5kg_1rep_success_0deg_60fps,1,failed,,no_overhead,,test clip; standup (no snatch); rep 1 of 20261001_2 (60 fps ladder copy)
+T8_20261007_3_jiri_v3_powersnatch_5kg_2rep_success_0deg_right_240fps,1,completed,power,,,test clip; reps 1-2 of 20261007_3
+T8_20261007_3_jiri_v3_powersnatch_5kg_2rep_success_0deg_right_240fps,2,completed,power,,,test clip; reps 1-2 of 20261007_3
+20261001_1_jiri_v1_powersnatch_bar_1rep_success_0deg,1,completed,power,,,bar only; type confirmed by lifter 2026-10-02 (clip-log)
+20261001_2_jiri_v1_standup_5kg_1rep_success_0deg,1,failed,,no_overhead,,standup (no snatch)
+20261001_3_jiri_v1_powersnatch_5kg_1rep_success_0deg,1,completed,power,,,type confirmed by lifter 2026-10-02 (clip-log)
+20261001_4_jiri_v1_powersnatch_5kg_1rep_success_0deg,1,completed,power,,,type confirmed by lifter 2026-10-02 (clip-log)
+20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg,1,completed,power,,,type confirmed by lifter 2026-10-02 (clip-log)
+20261001_5_jiri_v1_powersnatch_5kg_2rep_success_0deg,2,completed,power,,,type confirmed by lifter 2026-10-02 (clip-log)
+20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg,1,completed,power,,,type confirmed by lifter 2026-10-02 (clip-log)
+20261001_8_jiri_v2_powersnatch_5kg_2rep_success_0deg,2,completed,power,,,type confirmed by lifter 2026-10-02 (clip-log)
+20261005_2_jiri_v2_powersnatch_5kg_3rep_success_0deg,1,completed,power,,,from filename; unchecked
+20261005_2_jiri_v2_powersnatch_5kg_3rep_success_0deg,2,completed,power,,,from filename; unchecked
+20261005_2_jiri_v2_powersnatch_5kg_3rep_success_0deg,3,completed,power,,,from filename; unchecked
+20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg,1,completed,power,,,from filename; unchecked
+20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg,2,completed,power,,,from filename; unchecked
+20261005_3_jiri_v2_powersnatch_5kg_3rep_success_0deg,3,completed,power,,,from filename; unchecked
+20261005_4_jiri_v2_squatsnatch_5kg_3rep_success_0deg,1,completed,squat,,,from filename; unchecked
+20261005_4_jiri_v2_squatsnatch_5kg_3rep_success_0deg,2,completed,squat,,,from filename; unchecked
+20261005_4_jiri_v2_squatsnatch_5kg_3rep_success_0deg,3,completed,squat,,,from filename; unchecked
+20261005_5_jiri_v2_squatsnatch_5kg_3rep_success_0deg,1,completed,squat,,,from filename; unchecked
+20261005_5_jiri_v2_squatsnatch_5kg_3rep_success_0deg,2,completed,squat,,,from filename; unchecked
+20261005_5_jiri_v2_squatsnatch_5kg_3rep_success_0deg,3,completed,squat,,,from filename; unchecked
+20261005_6_jiri_v2_standup_10kg_2rep_success_0deg,1,failed,,no_overhead,,standup (no snatch); from filename (clip-log still lists it as powersnatch_10kg_3rep); unchecked
+20261005_6_jiri_v2_standup_10kg_2rep_success_0deg,2,failed,,no_overhead,,standup (no snatch); from filename (clip-log still lists it as powersnatch_10kg_3rep); unchecked
+20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg,1,failed,power,no_overhead,faraway,lifter 2026-10-21: bar never overhead
+20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg,2,failed,power,no_overhead,faraway,lifter 2026-10-21: bar never overhead
+20261005_7_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg,3,failed,power,no_overhead,faraway,lifter 2026-10-21: bar never overhead
+20261005_8_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg,1,completed,power,,faraway,lifter 2026-10-21: overhead; technique fault only
+20261005_8_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg,2,completed,power,,faraway,lifter 2026-10-21: overhead; technique fault only
+20261005_8_jiri_v2_powersnatch_10kg_3rep_fail_faraway_0deg,3,completed,power,,faraway,lifter 2026-10-21: overhead; technique fault only
+20261005_14_vladka_v1_powersnatch_5kg_3rep_success_0deg,1,completed,power,,,second lifter; from filename; unchecked
+20261005_14_vladka_v1_powersnatch_5kg_3rep_success_0deg,2,completed,power,,,second lifter; from filename; unchecked
+20261005_14_vladka_v1_powersnatch_5kg_3rep_success_0deg,3,completed,power,,,second lifter; from filename; unchecked
+20261007_1_jiri_v3_standup_bar_3rep_success_0deg_right,1,failed,,no_overhead,,standup (no snatch); bar only
+20261007_1_jiri_v3_standup_bar_3rep_success_0deg_right,2,failed,,no_overhead,,standup (no snatch); bar only
+20261007_1_jiri_v3_standup_bar_3rep_success_0deg_right,3,failed,,no_overhead,,standup (no snatch); bar only
+20261007_2_jiri_v3_powersnatch_bar_1rep_success_0deg_right,1,completed,power,,,bar only; calibration clip; from filename; unchecked
+20261007_3_jiri_v3_powersnatch_5kg_3rep_success_0deg_right,1,completed,power,,,from filename; unchecked
+20261007_3_jiri_v3_powersnatch_5kg_3rep_success_0deg_right,2,completed,power,,,from filename; unchecked
+20261007_3_jiri_v3_powersnatch_5kg_3rep_success_0deg_right,3,completed,power,,,from filename; unchecked
+20261007_4_jiri_v3_squatsnatch_5kg_3rep_success_0deg_right,1,completed,squat,,,from filename; unchecked
+20261007_4_jiri_v3_squatsnatch_5kg_3rep_success_0deg_right,2,completed,squat,,,from filename; unchecked
+20261007_4_jiri_v3_squatsnatch_5kg_3rep_success_0deg_right,3,completed,squat,,,from filename; unchecked
+20261007_7_jiri_v3_powersnatch_5kg_3rep_success_0deg_left,1,completed,power,,,left-facing; from filename; unchecked
+20261007_7_jiri_v3_powersnatch_5kg_3rep_success_0deg_left,2,completed,power,,,left-facing; from filename; unchecked
+20261007_7_jiri_v3_powersnatch_5kg_3rep_success_0deg_left,3,completed,power,,,left-facing; from filename; unchecked
+20261007_8_jiri_v3_powersnatch_7-5kg_3rep_success_0deg_right,1,completed,power,,,from filename; unchecked
+20261007_8_jiri_v3_powersnatch_7-5kg_3rep_success_0deg_right,2,completed,power,,,from filename; unchecked
+20261007_8_jiri_v3_powersnatch_7-5kg_3rep_success_0deg_right,3,completed,power,,,from filename; unchecked
+20261007_9_jiri_v3_powersnatch_10kg_3rep_success_0deg_right,1,completed,power,,,from filename; unchecked
+20261007_9_jiri_v3_powersnatch_10kg_3rep_success_0deg_right,2,completed,power,,,from filename; unchecked
+20261007_9_jiri_v3_powersnatch_10kg_3rep_success_0deg_right,3,completed,power,,,from filename; unchecked
+20261007_10_jiri_v3_powersnatch_10kg_3rep_fail-bend-elbows_0deg_right,1,failed,power,no_overhead,bend-elbows,lifter 2026-10-21: bar never overhead
+20261007_10_jiri_v3_powersnatch_10kg_3rep_fail-bend-elbows_0deg_right,2,failed,power,no_overhead,bend-elbows,lifter 2026-10-21: bar never overhead
+20261007_10_jiri_v3_powersnatch_10kg_3rep_fail-bend-elbows_0deg_right,3,failed,power,no_overhead,bend-elbows,lifter 2026-10-21: bar never overhead
+20261007_11_jiri_v3_powersnatch_5kg_3rep_fail-far-from-body_0deg_right,1,completed,power,,far-from-body,lifter 2026-10-21: overhead; technique fault only
+20261007_11_jiri_v3_powersnatch_5kg_3rep_fail-far-from-body_0deg_right,2,completed,power,,far-from-body,lifter 2026-10-21: overhead; technique fault only
+20261007_11_jiri_v3_powersnatch_5kg_3rep_fail-far-from-body_0deg_right,3,completed,power,,far-from-body,lifter 2026-10-21: overhead; technique fault only
+20261007_12_jiri_v3_powersnatch_5kg_3rep_fail-behind-bar_0deg_right,1,completed,power,,behind-bar,lifter 2026-10-21: overhead; technique fault only
+20261007_12_jiri_v3_powersnatch_5kg_3rep_fail-behind-bar_0deg_right,2,completed,power,,behind-bar,lifter 2026-10-21: overhead; technique fault only
+20261007_12_jiri_v3_powersnatch_5kg_3rep_fail-behind-bar_0deg_right,3,completed,power,,behind-bar,lifter 2026-10-21: overhead; technique fault only

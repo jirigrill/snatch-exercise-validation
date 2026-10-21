@@ -59,7 +59,7 @@ Manual run: `uv run python scripts/pipeline.py <clip> --athlete <id> [--height <
 
 ### Levels
 - **Per commit to a branch/PR:** `pytest -q` + `pyright` (0 errors) + `run_clip.sh` on T1 + `base_run.sh`, look at the changed stages' images, then `publish_evidence.sh <root> review.md` to the PR (the review covers every shown image). When a stage's outputs change or a stage is new (state `new`/`changed` on any clip), run T1–T8 into the one root (stage-cached, so cheap), and every such stage needs a proof or a `no proof:` line; publish FAILs otherwise.
-- **Milestone items only** (`.scratch/plan/README.md`): one `VERIFY_NO_CACHE=1 run_clip.sh` (fresh, audits the stage cache) on T1–T8 (T5 bar-only, T6/T7 60 fps) into one evidence root, every later run cached; what the milestone checks on those outputs comes from its spec in `.scratch/plan/` (B: `B-milestone.md`); publish that root.
+- **Milestone items only** (`.scratch/plan/README.md`): one `VERIFY_NO_CACHE=1 run_clip.sh` (fresh, audits the stage cache) on T1–T8 (T5 bar-only, T6/T7 60 fps) into one evidence root, every later run cached; what the milestone checks on those outputs comes from its spec in `.scratch/plan/` (`validation-milestone.md`); publish that root.
 
 Test clips T1–T8 (`vids/test/`): what each covers and how to rebuild them in [features/test-clips.md](features/test-clips.md). Doctor fails when they are missing. 240 fps clips in `vids/` and `vids/spike/` take minutes to an hour (detector ~0.4 s per detected frame on CPU). Per-feature recipes: `features/README.md`.
 

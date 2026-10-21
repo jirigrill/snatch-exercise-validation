@@ -1,20 +1,20 @@
-# Milestone B: validate the front stages on T1–T8
+# Validation milestone: validate every stage on T1–T8
 
-Goal: find out how correct the outputs of everything built so far are (S-1, S0, S1, S2, S3, S4, side, C3, exits and stops), on T1–T8, measured to the pixel and checked by a human. No pipeline code changes: the output is a bug report with a suggested fix per bug. Settled in a grilling session, 2026-10-16.
+Goal: find out how correct the outputs of every stage (S-1, S0, S1–S8, side, C3, exits and stops), on T1–T8, measured to the pixel and checked by a human. No pipeline code changes: the output is a bug report with a suggested fix per bug. Settled in a grilling session, 2026-10-16.
 
-Order: item 0 (v1 removal) → B1 → B2 → B3, one PR each (B3 may be plan edits only).
+Order: item 0 (v1 removal) → V1 → V2 → V3, one PR each (V3 may be plan edits only).
 
-**Moved after Milestone D (2026-10-19).** Item 0 is done (#68). B1–B3 now run only if D misses the goal (S8 below 100 % agreement with labels.csv), as failure analysis: would making the stages behind D's disagreements precise reach the goal? Scope shrinks to the clips and stages D's per-disagreement notes name (any stage, S5–S8 included, checked the same way against the references); T1–T8 below and the frame counts are the full-scope upper bound. The rest of this file stands as written.
+**Runs once, after Milestone D (merged with the old Milestones B and C, 2026-10-21).** Item 0 is done (#68). Scope: all of T1–T8; if D missed the goal (S8 below 100 % agreement with labels.csv), start with the clips and stages D's per-disagreement notes name. Answers: would making the weak stages precise reach the goal? The stages table below lists the front stages; S5–S8 are checked the same way against the references. Frame counts are the full-scope upper bound. Open S6 items: T3 fill unmeasured, T5 airborne shank/thigh +4–6 %.
 
-## Item 0: remove v1 (own PR, before B1)
+## Item 0: remove v1 (own PR, before V1)
 - Delete: `scripts/analyze.py`, `compare_phases.py`, `extract_person.py`, `extract_pose.py`, `find_reps.py`, `overlay_video.py`, `track_plate.py`, `run_all.sh`; `reps.find_lifts`, `find_pose_lifts`, `find_pose_holds`; `spread.py`, `phases.py`, `angles.py`; all of `scripts/studies/` and `src/snatch/studies/` (conclusions live in the plan and PRs; git keeps them); their tests (`test_phases.py`, `test_spread.py`, `test_angles.py`, the v1 parts of `test_reps.py`).
 - `HALPE26` moves from `angles.py` to `pose.py` (next to `SIDE_OF`); update its importers (calibrate, pose, overlay, skeleton).
-- The T6 item (v1 2 reps vs v2 1) is dropped: B2's blind marking settles T6's true count.
+- The T6 item (v1 2 reps vs v2 1) is dropped: V2's blind marking settles T6's true count.
 - Check: pytest, pyright, `/verify` on T1 with no output change (stage keys may change; content must not).
 
 ## Runs
 - One `VERIFY_NO_CACHE=1` run of T1–T8 into one evidence root (fresh; audits the stage cache). An audit FAIL is a finding, not a stop.
-- Every later run in B1–B3 uses the cache. All runs go through `run_clip.sh`.
+- Every later run in V1–V3 uses the cache. All runs go through `run_clip.sh`.
 - Expected: T1–T3, T6 1 attempt; T4 stops `2 side`; T5 stops `6 S2` (+ calibration); T7 1 attempt (standup, failed); T8 2 attempts.
 
 ## What is validated
@@ -30,7 +30,7 @@ Order: item 0 (v1 removal) → B1 → B2 → B3, one PR each (B3 may be plan edi
 
 ## Review A: blind marking
 - Two markers, Opus and Sonnet, each on its own; neither sees pipeline output (no overlays, no numbers).
-- Marking tool (verify skill, built in B1): zoom in steps (full frame → 4× crop with labelled grid → 16× crop around the point); the agent answers in grid coordinates at each step.
+- Marking tool (verify skill, built in V1): zoom in steps (full frame → 4× crop with labelled grid → 16× crop around the point); the agent answers in grid coordinates at each step.
 - Frames, fixed before marking starts:
   - every 4th frame from liftoff to catch;
   - every 12th frame for the rest of each attempt window;
@@ -46,25 +46,25 @@ Order: item 0 (v1 removal) → B1 → B2 → B3, one PR each (B3 may be plan edi
 - Per frame: correct / wrong + what. Flagged frames are added to Review A.
 
 ## When a difference is a bug
-- Points: pipeline farther from the markers' mean than k × the markers' spread on that point, and > 3 px. k set from the B1 pilot.
+- Points: pipeline farther from the markers' mean than k × the markers' spread on that point, and > 3 px. k set from the V1 pilot.
 - Frames (attempt start/end, key frames): off by more than ±2 frames.
 - A frame where the two markers disagree beyond their usual spread is unclear: it goes to the human, not into the bug count.
 - A finding raised by both reviews is marked as such.
 
 ## Human check (HITL)
 - A `/show-me:show-me` page per clip: each finding as a crop with the pipeline point and markers A and B in different colours, the error in px, Review B's verdict; plus a random 10 % of agreements as a check on the agents.
-- Human verdicts in `.scratch/plan/B-milestone-report.md`: `confirmed / rejected / unsure` + note per finding.
+- Human verdicts in `.scratch/plan/validation-report.md`: `confirmed / rejected / unsure` + note per finding.
 - Only `confirmed` becomes a plan item in `README.md`, linking its finding and the suggested fix.
 
-## B1: marking tool + pilot (PR)
+## V1: marking tool + pilot (PR)
 - Build the marking tool in the verify skill.
 - Pilot on T1 (or the first in-scope clip): both markers mark the same frame set twice; measure spread per point (px), cost per frame (time, tokens).
 - Gate: spread > 10 px on any point (≈ 2.4 cm at 240 fps) → stop and ask (better tool, or a human marks that point).
-- PR gives the measured precision, k, and the cost estimate for B2. The user confirms the cost before B2.
+- PR gives the measured precision, k, and the cost estimate for V2. The user confirms the cost before V2.
 
-## B2: full validation (PR)
-- Fresh run, Reviews A and B on the in-scope clips (T1–T8 at most), the comparison, `B-milestone-report.md` with findings and suggested fixes, the show-me pages.
+## V2: full validation (PR)
+- Fresh run, Reviews A and B on the in-scope clips (T1–T8 at most), the comparison, `validation-report.md` with findings and suggested fixes, the show-me pages.
 - PR also carries CLAUDE.md check 3: what would make this result wrong (forensic pass), and the 3 most urgent open decisions with the case for and against.
 
-## B3: human check
+## V3: human check
 - The human records verdicts in the report; confirmed bugs become plan items.
