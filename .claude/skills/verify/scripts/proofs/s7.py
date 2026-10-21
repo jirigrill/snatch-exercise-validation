@@ -281,7 +281,8 @@ def write_verdict(path: Path, data: dict, ref: dict, strip_names: list[str]) -> 
     L.append(f"**Answer: {ans}.** {ok_n} of {len(rows)} borders are within tolerance of the reference." +
              ("" if ans == "yes" else " Failing: " + ". ".join(fails_text) + "."))
     # how far the reference can be trusted: the human picked from outlined candidates (S7's among them)
-    hum = [r for r in rows if r["true"] is not None and ref["clips"][r["clip"]][r["attempt"]][r["border"]]["source"] == "human"]
+    hum = [r for r in rows if r["true"] is not None and ref["clips"][r["clip"]][r["attempt"]][r["border"]]["source"] == "human"
+           and (r["clip"], r["attempt"]) != ("T8", "1")]  # T8 a1 = T1's frames: one verdict, counted once (under T1)
     cand = [r for r in hum if r["true"] == r["s7"] or r["true"] in ref["clips"][r["clip"]][r["attempt"]][r["border"]]["markers"].values()]
     on_s7 = [r for r in hum if r["true"] == r["s7"]]
     L += ["", "**What this number can and cannot say.** The reference is not precise enough to judge timing at these tolerances:",
