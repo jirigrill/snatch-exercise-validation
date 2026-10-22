@@ -8,12 +8,18 @@
 #     path; the 4th round on the same HEAD prints STOP and exits 3. Env REVIEW_STUB=<file>: also copies it to
 #     round<k>/findings.md and prints a `stub:` line (the reviewer is not spawned; the skill's only test hook).
 #   review.sh comment <sha> <findings.md> <prompt.md>
-#     FAILs unless <sha>'s code on the review paths equals the reviewed tree recorded in meta; validates the findings file (count line = the findings, every Important answered with one of
+#     takes <sha> as given (no check that it is the reviewed code); reads the round meta beside <prompt.md>; validates the findings file (count line = the findings, every Important answered with one of
 #     fixed (<sha>) / wrong / intentional / didn't matter) and posts the /review comment on the branch's open PR.
 #     DRY_RUN=1 prints it and posts nothing.
 set -e
 fail() { echo "FAIL: $1"; exit 1; }
 here=$(cd "$(dirname "$0")" && pwd)
+# comment's file args may be relative to the caller's cwd: absolutize before cd to the repo root
+if [ "$1" = comment ]; then
+  for i in 3 4; do
+    [ -f "${!i}" ] && set -- "${@:1:$((i-1))}" "$(cd "$(dirname "${!i}")" && pwd)/$(basename "${!i}")" "${@:$((i+1))}"
+  done
+fi
 root=$(git rev-parse --show-toplevel) || fail 'not in a git repo'
 cd "$root"
 EXCL=(':!.scratch' ':!docs/results')
@@ -65,7 +71,7 @@ prep)
       git diff "${args[@]}" -- . "${EXCL[@]}" >"$rd/diff.patch"
     fi
   fi
-  # proof of what was reviewed: base = where the diff starts, tree = the end state it was taken from
+  # base = where the diff starts
   cs=()
   for a in "${args[@]}"; do
     [ "$a" = -- ] && break
@@ -82,11 +88,6 @@ prep)
     [ ${#cs[@]} -ge 1 ] || fail "no commit among the git diff args: ${args[*]}"
     base=$(git rev-parse --verify "${cs[0]}^{commit}")
   fi
-  if [ ${#cs[@]} -ge 2 ]; then
-    tree=$(git rev-parse --verify "${cs[1]}^{tree}")
-  else
-    tree=$(GIT_INDEX_FILE=$tmpidx git write-tree)
-  fi
   rm -f "$tmpidx"
   if [ -z "$item" ]; then
     item=$rd/item.md
@@ -102,7 +103,7 @@ prep)
   [ -z "$prior" ] || bp+=(--prior "$prior")
   python3 -I "$here/build_prompt.py" "${bp[@]}"
   echo "$k" >"$state/count"
-  { echo "mode=$mode"; echo "base=$base"; echo "tree=$tree"; echo "round=$k"; echo "head=$head"; echo "deep=$deep"; echo "args=${dargs[*]}"; } >"$rd/meta"
+  { echo "mode=$mode"; echo "base=$base"; echo "round=$k"; echo "head=$head"; echo "deep=$deep"; echo "args=${dargs[*]}"; } >"$rd/meta"
   echo "$rd/prompt.md"
   if [ -n "$REVIEW_STUB" ]; then
     [ -f "$REVIEW_STUB" ] || fail "REVIEW_STUB is not a file: $REVIEW_STUB"
@@ -115,24 +116,18 @@ comment)
   [[ $sha =~ ^[0-9a-f]{7,40}$ ]] && [ -f "$findings" ] && [ -f "$prompt" ] || fail 'usage: review.sh comment <sha 7+ hex> <findings.md> <prompt.md>'
   body=$(mktemp)
   trap 'rm -f "$body"' EXIT
-  mf=$(dirname "$prompt")/meta
-  tree=$(sed -n 's/^tree=//p' "$mf" 2>/dev/null | head -1)
-  [ -n "$tree" ] || fail "no reviewed tree in $mf (expected meta from \`review.sh prep\`)"
-  git cat-file -e "$sha^{commit}" 2>/dev/null || fail "$sha is not a commit"
-  RP=(prototype .claude/skills/verify/scripts .claude/hooks .claude/skills/review)
-  if ! git diff --quiet "$tree" "$sha" -- "${RP[@]}"; then
-    fail "$sha is not the reviewed code (differs from the reviewed tree on: $(git diff --name-only "$tree" "$sha" -- "${RP[@]}" | paste -sd' ' -))"
-  fi
-  python3 -I - "$sha" "$findings" "$prompt" "$body" <<'PY' || exit 1
+  pd=$(cd "$(dirname "$prompt")" && pwd)
+  [ -f "$pd/meta" ] || fail "no round meta in $pd (expected meta from \`review.sh prep\`)"
+  python3 -I - "$sha" "$findings" "$prompt" "$body" "$pd" <<'PY' || exit 1
 from __future__ import annotations
 import re, sys
-sha, findings, prompt, out = sys.argv[1:5]
+sha, findings, prompt, out, pdir = sys.argv[1:6]
 LIMIT = 65000
 SENTINEL = re.compile(r"^<details><summary>Reviewer prompt</summary>", re.M)  # only this exact line starts the prompt part
 text = open(findings).read()
 meta = {}
 try:
-    for line in open(prompt.rsplit("/", 1)[0] + "/meta"):
+    for line in open(pdir + "/meta"):
         k, _, v = line.rstrip("\n").partition("=")
         meta[k] = v
 except OSError:

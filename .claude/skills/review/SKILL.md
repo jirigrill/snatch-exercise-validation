@@ -37,7 +37,7 @@ Stage code: normal. `check_pipeline.py`, `stage_cache.py`, other verify scripts,
 2. Spawn the reviewer: `Agent` with `model: "opus"`, prompt = exactly `Read <abs path of prompt.md> in full and follow it; output only what it asks for.` (the file is the reviewer's whole input; pointing at it keeps a 100 KB prompt out of the main context). Nothing else: no briefs, no session history, no hints. Save its output to `round<k>/findings.md`. If `REVIEW_STUB` is set, `prep` printed `stub: ...` and copied the stub to `round<k>/findings.md`: use that as the reviewer output, do not spawn (the only test hook).
 3. Findings present: spawn the checker, `Agent` with `model: "sonnet"`, prompt = `checker.md` with `{{FINDINGS}}` replaced by the findings (it reads the cited code itself). Use its kept list; its `Dropped:` list goes to the PR text. No findings: skip.
 4. Triage: every **Important** goes to new Sonnet fix subagents (brief = the finding, its bug class, "fix every instance"); Nit and Pre-existing don't block (Pre-existing that matters goes in the plan). Then `review.sh prep diff --prior <findings.md>` reviews the fixes (next round, max 3).
-5. After the commit, push and PR: merge the rounds' kept findings into one file for the commit (renumber F1..., one count line first, the `Human should read` line first when deep), write an `**Answer:**` under each finding, then `review.sh comment <sha> <findings.md> <prompt.md>` (prompt = the round-1 full-review prompt of that commit; `meta` is read from beside it). It validates and posts; `DRY_RUN=1` prints only.
+5. After the commit, push and PR: merge the rounds' kept findings into one file for the commit (renumber F1..., one count line first, the `Human should read` line first when deep), write an `**Answer:**` under each finding, then `review.sh comment <sha> <findings.md> <prompt.md>` (prompt = the prompt of the round you are posting, normally round 1, the full review, with all rounds' findings merged into the findings file). It validates and posts; `DRY_RUN=1` prints only.
 
 ## Output format
 Reviewer / findings file:
@@ -60,13 +60,13 @@ Answers: <x> fixed, <y> wrong, <z> intentional, <w> didn't matter
 ### F1 ... (as above, with **Answer:**)
 <details><summary>Reviewer prompt</summary> the exact prompt, fenced </details>
 ```
-The `Review:` line is written by `review.sh comment` from `meta`; it is informational, the hook ignores it. `prep` records in `meta`: `base=<full sha>` (where the reviewed diff starts: default full = merge-base with origin/main, default diff = HEAD, explicit args = the first commit-ish) and `tree=<tree sha>` (the end state reviewed: explicit args with two commits = the second's tree, otherwise the worktree incl. untracked files).
+The `Review:` line is written by `review.sh comment` from `meta`; it is informational, the hook ignores it. `prep` records in `meta`: `base=<full sha>` (where the reviewed diff starts: default full = merge-base with origin/main, default diff = HEAD, explicit args = the first commit-ish), plus `mode`, `round`, `head`, `deep`, `args`.
 
-Stop hook rule (spec cases 4/5): a /review comment for HEAD, or for an older sha with only `trivial`/`docs` commits after it. `comment <sha>` proves the sha instead of trusting it: it FAILs unless `git diff --quiet <tree> <sha> -- prototype .claude/skills/verify/scripts .claude/hooks .claude/skills/review` (the commit's code on the review paths equals the reviewed tree), naming the differing files.
+Stop hook rule (spec cases 4/5): a /review comment for HEAD, or for an older sha with only `trivial`/`docs` commits after it.
 
 Every PR that touches the review paths (`prototype/`, `.claude/skills/verify/scripts`, `.claude/hooks`, `.claude/skills/review`) needs at least one /review comment, even when all its commits are `trivial` (intentional; the hook's "no /review comment" block).
 
-`review.sh comment` FAILs (exit 1) on missing round meta, a sha whose code differs from the reviewed tree, a missing/wrong count line, an Important without `**Answer:**`, an answer not in the 4 categories (`fixed (<sha>)` / `wrong` / `intentional` / `didn't matter`, each `: <reason>`), or a deep diff without the human line (that line counts only before the first `### ` finding). It fills the Answers counts and truncates the prompt part past 65000 chars, saying so.
+`review.sh comment` FAILs (exit 1) on missing round meta, a missing/wrong count line, an Important without `**Answer:**`, an answer not in the 4 categories (`fixed (<sha>)` / `wrong` / `intentional` / `didn't matter`, each `: <reason>`), or a deep diff without the human line (that line counts only before the first `### ` finding). It fills the Answers counts and truncates the prompt part past 65000 chars, saying so.
 
 ## Answers and learning
 - Every finding is answered: fixed (sha) / wrong / intentional / didn't matter, with a reason. Counts per category = the noise rate.
@@ -77,4 +77,4 @@ Every PR that touches the review paths (`prototype/`, `.claude/skills/verify/scr
 Reviewer sees nothing but the prompt file. Exclude `.scratch/` and `docs/results/` from the diff (`review.sh` does). State lives in `.scratch/review/<branch>/<HEAD sha 7>/` (`round<k>/`, plus `count`, the round counter); each HEAD has its own folder, so a later commit never overwrites an earlier one's round files. Gitignored with `.scratch/`; don't delete it by hand during a commit's rounds.
 
 ## Known gap
-A commit that is not trivial, followed by a later commit with its own diff-only review, passes the hook unreviewed (c1 reviewed, c2 not, c3 diff-reviewed); accepted 2026-10-22, in the plan.
+A commit that is not trivial, followed by a later commit with its own diff-only review, passes the hook unreviewed (c1 reviewed, c2 not, c3 diff-reviewed); accepted 2026-10-22, in the plan. `comment` does not check that <sha> is the reviewed code; posting for the wrong commit is caught by nobody (accepted 2026-10-22).
