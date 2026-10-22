@@ -11,7 +11,7 @@ Pipeline v2 spec: `docs/pipeline-v2.html`. Work queue: `.scratch/plan/README.md`
 - PR body: explain in plain English what the change does and how to read everything it produces (each output file, image, colour, field and number), so someone who didn't follow the session can review it without asking, and what the checks would miss (one pass, as a forensic reviewer would). When text alone isn't enough (a new stage, a changed data flow, a new kind of output), add a `/show-me:show-me` page as a screenshot (verify skill, Evidence).
 - Finish: commit, push, open a PR (not draft) with the check results, publish the evidence to it, then stop. Never merge unless asked.
 
-## Checks after each commit to the branch/PR
+## Checks for each commit to the branch/PR (/review before the commit, the rest after)
 1. `uv run pytest -q` passes; `uv run pyright` 0 errors.
 2. `/review` (before `/verify`) per the skill's commit table; its comment on the PR, every Important answered.
 3. `/verify` on T1; when a stage's outputs change or a stage is new, on T1–T8 into one root (cached) and a proof per such stage (the skill says how: run, look at every sheet incl. each worst frame and write `sheets.md`, publish the evidence to the PR).
