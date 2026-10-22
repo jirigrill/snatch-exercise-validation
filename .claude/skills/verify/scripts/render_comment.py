@@ -1,6 +1,6 @@
 """Check a review file against an evidence root and print the PR comment (publish_evidence.sh).
 
-usage: uv run python render_comment.py <evidence_root> <review.md> <blob url of the root> <files line>   (from prototype/)
+usage: uv run python render_comment.py <evidence_root> <sheets.md> <blob url of the root> <files line>   (from prototype/)
 
 Shown stages = the ones diff_outputs.py found new or changed on any clip (<root>/changes.json), else, with
 no <root>/base/, the ones whose code changed vs main (stage_files.py show; SHOW_STAGES="S2 C3" adds names,
@@ -10,13 +10,15 @@ subsection per clip where it ran: the clip's detail lines from the log and the s
 followed by its review bullet. A calibration stage is its own section "(calibration, T5)" and its review
 key is "<stage> calibration" when the stage is also an analyze stage (S1, S4), else the stage name.
 
-review.md: `## <stage>` sections of bullets `- <clip id> <image stem>: <verdict>` (a stage's images are
+sheets.md: `## <stage>` sections of bullets `- <clip id> <image stem>: <verdict>` (a stage's images are
 png/jpg outputs and, of an mp4, its _sheet and _worst jpg). Text before the first `##` is kept as notes.
 A shown stage that is new or changed needs a proof (<root>/proof/<label>/verdict.md, written by
 scripts/proofs/<stage>.py) or, in its review section, a line `no proof: <reason>` (rendered in the stage's
 section as "**No proof:** <reason>"; not an image bullet). When any stage is new or changed the root needs a
 log for every test clip T1-T8 (vids/test/), else it fails.
-Fails (exit 1, before anything is pushed) when a shown image has no bullet, a bullet of a _worst image
+<root>/fast_gate.txt (one line `checks: pytest P passed, F failed · pyright E errors`, written by
+publish_evidence.sh) is shown verbatim right after the commit line; the header is OK only when also P > 0,
+F = 0 and E = 0. Fails (exit 1, before anything is pushed) when it is missing or malformed, when a shown image has no bullet, a bullet of a _worst image
 misses a frame of its .worst, a bullet names no shown image, a section is for a stage that is not shown,
 or the guide has no section for a shown stage. All clips stay open; only over GitHub's 65536 characters
 are a stage's later clips collapsed, and the comment says so. A proof's own headings are demoted
@@ -36,6 +38,7 @@ from diff_outputs import clip_id, rollup  # pyright: ignore[reportMissingImports
 
 HERE = Path(__file__).resolve().parent
 LIMIT = 65000  # GitHub's comment limit is 65536 characters
+GATE_RE = re.compile(r"^checks: pytest ([0-9]+) passed, ([0-9]+) failed · pyright ([0-9]+) errors")
 STATE_ORDER = ("new", "changed", "identical", "absent", "no outputs")
 
 
@@ -138,6 +141,12 @@ def main(root: Path, review_path: Path, url: str, files_line: str) -> str:
     logs = {clip_id(p.name): p.read_text().splitlines() for p in sorted(root.glob("*.log"))}
     results = {c: next((x for x in reversed(ls) if re.match(r"(OK evidence:|FAIL:)", x)), "") for c, ls in logs.items()}
     ok = all(r.startswith("OK evidence:") for r in results.values())
+    gate_file = root / "fast_gate.txt"  # written by publish_evidence.sh from pytest + pyright
+    gm = GATE_RE.match(gate_file.read_text().strip()) if gate_file.is_file() else None
+    if not gm:
+        raise Fail("pytest/pyright results missing: <root>/fast_gate.txt absent or not `checks: pytest N passed, N failed · pyright N errors`")
+    gate_line = gate_file.read_text().strip()
+    ok = ok and int(gm[1]) > 0 and int(gm[2]) == 0 and int(gm[3]) == 0
 
     # the gate: every shown image has a bullet, every bullet an image, no stale section
     errors, used = [], set()
@@ -204,7 +213,7 @@ def main(root: Path, review_path: Path, url: str, files_line: str) -> str:
     def render(open_clips: int | None) -> str:
         head = f"## /verify evidence: `{root.name}` {'✅ OK' if ok else '❌ FAIL'}"
         first = next(iter(logs.values()), [""])[0]
-        out = [head, "", first, "", "| clip | result |", "|---|---|"]
+        out = [head, "", first, "", gate_line, "", "| clip | result |", "|---|---|"]
         out += [f"| {c} | {'✅ OK' if r.startswith('OK') else '❌ ' + (r or 'no result line (run did not finish)').replace('|', '/')} |"
                 for c, r in results.items()]
         if notes:
