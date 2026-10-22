@@ -48,7 +48,7 @@ Reviewer / findings file:
 <what is wrong, evidence (quote the line), what breaks, what the fix must cover>
 **Answer:** fixed (<sha>): <reason>
 ```
-Tags: **Important** (blocks), **Nit** (max 3, never blocks), **Pre-existing** (bug the PR didn't add). Every finding names its bug class so the fix covers every instance.
+Tags, by effect, whatever the bug class: **Important** (blocks: changes a result, makes a check or the evidence lie, breaks a caller or a later stage, or leaves a misleading doc line), **Nit** (max 3, never blocks), **Pre-existing** (bug the PR didn't add). Every finding names its bug class so the fix covers every instance.
 
 PR comment (one per reviewed commit; the Stop hook parses the text before `<details>`):
 ```
@@ -71,7 +71,7 @@ Every PR that touches the review paths (`prototype/`, `.claude/skills/verify/scr
 ## Answers and learning
 - Every finding is answered: fixed (sha) / wrong / intentional / didn't matter, with a reason. Counts per category = the noise rate.
 - A finding that comes back across PRs becomes a rule (CLAUDE.md, a `check_pipeline.py` check, a pyright setting), not flagged again.
-- A bug review missed and /verify, the milestone or the human found later: ask what the reviewer lacked (context, failure-list entry, spec section) and add it to the failure list in `reviewer.md` or to `build_prompt.py`'s input. General changes only, never naming the case.
+- A bug review missed and /verify, the milestone or the human found later: ask what the reviewer lacked (context, an example bug, spec section) and add it to "Bugs this repo has had (examples, not the limit)" in `reviewer.md` or to `build_prompt.py`'s input. General changes only, never naming the case.
 
 ## Standards
 Reviewer sees nothing but the prompt file. Exclude `.scratch/` and `docs/results/` from the diff (`review.sh` does). State lives in `.scratch/review/<branch>/<HEAD sha 7>/` (`round<k>/`, plus `count`, the round counter); each HEAD has its own folder, so a later commit never overwrites an earlier one's round files. Gitignored with `.scratch/`; don't delete it by hand during a commit's rounds.
