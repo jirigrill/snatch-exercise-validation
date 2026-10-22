@@ -88,7 +88,7 @@ Problem: the agent that plans a change also reviews its diff (CLAUDE.md, Workflo
 | 6 | /verify comment lacks pytest/pyright results, or shows pytest failed or pyright errors > 0 | block |
 | 7 | second stop attempt (`stop_hook_active` true; the stop-on-retry fallback) | allow |
 | 8 | on `main` / `evidence/*`, or no open PR (today's behaviour, kept) | allow |
-| 9 | PR with no `prototype/` or verify-script change vs main (docs-only; today's behaviour, kept) | allow without /review |
+| 9 | PR with no change under the review paths vs main (`prototype/`, verify scripts, `.claude/hooks/`, `.claude/skills/review/`; docs-only) | allow without /review (a hooks/review-only PR needs /review but no /verify) |
 
 ## Overlap with /verify
 - pytest + pyright: run by /verify only (already per commit, `SKILL.md` Fast gate). /verify records the results in its evidence comment (a change to `publish_evidence.sh`/`render_comment.py`); the Stop hook reads them there. /review neither runs nor records them.

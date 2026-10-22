@@ -1,7 +1,7 @@
 # Stage guide
 
 What each pipeline stage does and what to look for in its images. `publish_evidence.sh` copies a stage's section
-(heading = the comment's title, body as is) into the PR comment under that stage, so the reviewer reads it next to the
+(heading = the comment's title, body as is) into the PR comment under that stage, so the reader reads it next to the
 images. One `## <stage name> · <title>` section per stage; the stage name is the key (`snatch.stages`). Keep the first
 line `What it does: …` (one plain sentence) and one bullet per image stem under `What to look for:`. A new stage adds its
 section here (the publish script fails on a shown stage without one).
@@ -9,7 +9,7 @@ section here (the publish script fails on a shown stage without one).
 `<name>_sheet.jpg` = 8 evenly spaced frames of `overlays/<name>.mp4`. `<name>_worst.jpg` = the frames the stage scores
 worst on (from `<name>.worst`: line 1 clip frames, line 2 by what, line 3 each one's frame in the mp4); picked only among
 the frames the overlay draws (every 4th), so the label on the image is the frame on line 1. Evenly spaced frames miss the
-frames where a stage is wrong (#56: the airborne f1695-1698 never showed up), so the review names every worst frame and
+frames where a stage is wrong (#56: the airborne f1695-1698 never showed up), so sheets.md names every worst frame and
 says what is wrong or right there.
 
 ## S-1 · Probe the clip
