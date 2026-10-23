@@ -74,8 +74,9 @@ def probe(path: str) -> ClipInfo:
 def frames(path: str, info: ClipInfo | None = None, stop: int | None = None) -> Iterator[np.ndarray]:
     """Yield rotated BGR frames (H x W x 3, uint8), the first `stop` only when given.
 
-    A caller that stops early passes `stop`: ffmpeg then exits by itself instead of
-    being killed mid-write (its "Broken pipe" error).
+    `stop` saves decoding frames nobody reads. A caller that breaks early without it is
+    fine too: ffmpeg is killed before the pipe closes, so it never writes into a closed
+    pipe (its "Broken pipe" error).
     """
     info = info or probe(path)
     limit = ["-frames:v", str(stop)] if stop is not None else []
@@ -95,8 +96,8 @@ def frames(path: str, info: ClipInfo | None = None, stop: int | None = None) -> 
                 break
             yield np.frombuffer(buf, np.uint8).reshape(info.height, info.width, 3)
     finally:
+        proc.kill()  # before closing the pipe: a consumer that stops early must not make ffmpeg write into a closed pipe (Broken pipe)
         proc.stdout.close()
-        proc.kill()
         proc.wait()
 
 
