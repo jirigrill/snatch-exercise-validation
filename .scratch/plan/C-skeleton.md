@@ -41,7 +41,7 @@ No reuse from open PRs. Source code was in `src/snatch/studies/` and `scripts/st
 - Knee only. `wrist_from_hub` is not restored in S6; wrist fill is a later plan item if S7/S8 need a wrist angle.
 - Re-bends: per attempt, start to bar peak, the hybrid knee may have no more ≥ 3° dips than RTMPose's knee (doc 36: RTMPose invents them behind the plate). Loaded clips have no truth behind the plate, so RTMPose is the comparison.
 - Airborne frames (T5 f1695–1698, shank +6 % on toes): report the reading only, no gate.
-- `6_filled.mp4` (spec colours): plate outline, RTMPose near leg grey, filled knee purple, hidden-not-filled joints a red ring, a legend on the frame.
+- `6_filled.mp4` (spec colours): plate outline, RTMPose near leg grey, filled knee purple, hidden-not-filled joints a yellow-orange ring, a legend on the frame.
 - Open: T2 (squat) and T3 (10 kg) stay at ~2.5 cm with the multipliers; chase later if S7/S8 disagreements point at the knee.
 
 ## Cleanup

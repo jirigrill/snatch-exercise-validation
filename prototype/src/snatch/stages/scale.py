@@ -102,4 +102,4 @@ def run(ctx: Context, tmp: Path) -> None:
         raise StageStop(CANNOT_SCALE_EXIT, "cannot_scale", stop.reason)
 
 
-STAGE = Stage("S5", (CLIP, "raw_pose.npz", "attempts.json", "plate.npz", "facing.json", SKELETON), ("scale.json", OVERLAY), run)
+STAGE = Stage("S5", (CLIP, "raw_pose.npz", "attempts.json", "plate.npz", "facing.json", SKELETON), ("scale.json", OVERLAY), run, version=2)  # 2: scale.json gained the segment fields

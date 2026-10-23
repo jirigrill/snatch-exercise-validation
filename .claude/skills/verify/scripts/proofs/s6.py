@@ -8,15 +8,19 @@ resized to the loaded clips' rest radius) is pasted on the near bar end of a bar
 (spike _1_, standup, 3 pulls, knee always visible). RTMPose runs again on the pasted frames; S6's own
 `snatch.fill.fill` rebuilds the knee from that output. Truth = RTMPose on the clean frames. The skeleton is the
 evidence root's athlete `verify` (calibrated on T5 = spike _2_), scaled by S5's method run on this clip.
-Detector, pose, collar track and pasted pose are cached in .scratch/verify/cache/proof-s6/<key>/.
+Detector, pose, collar track and pasted pose are cached in .scratch/verify/cache/proof-s6/<key>/; a key covers this whole
+file, the snatch modules used (and what they import) and stage_cache.env_key() (models, uv.lock, pipeline.py, macOS).
+S5 here reads the pose as the pipeline would on a loaded clip: RTMPose on the pasted frames inside the pasted spans, the
+clean-frame pose outside them.
 """
 
 import hashlib
-import inspect
 import json
+import os
 import re
 import sys
 import time
+from modulefinder import ModuleFinder
 from pathlib import Path
 
 import cv2
@@ -26,12 +30,13 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[5]
 sys.path.insert(0, str(REPO / ".claude/skills/verify/scripts"))
 
-from check_pipeline import BODY_PX_PER_M_CAL, DIP_DEG, dips  # noqa: E402  # pyright: ignore[reportMissingImports]
+from check_pipeline import BODY_PX_PER_M_CAL, DIP_DEG, HOLDOUT_GATE_CM, HOLDOUT_TARGET_CM, dips  # noqa: E402  # pyright: ignore[reportMissingImports]
 from snatch import athlete_store, person, pose  # noqa: E402
 from snatch import fill as fl  # noqa: E402
 from snatch import scale as sca  # noqa: E402
 from snatch import signals, skeleton as skel, video  # noqa: E402
 from snatch.pose import HALPE26, SIDE_OF  # noqa: E402
+from stage_cache import env_key  # noqa: E402  # pyright: ignore[reportMissingImports]
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
@@ -61,18 +66,36 @@ def file_key(p: Path) -> str:
     return f"{s.st_size}-{int(s.st_mtime)}"
 
 
-def src_hash(*objs) -> str:
-    h = hashlib.sha1()
-    for o in objs:
-        h.update(inspect.getsource(o).encode())
-    return h.hexdigest()[:10]
+def snatch_sources(*mods) -> bytes:
+    """The source of each module and every snatch module it imports (as stage_files.code_files finds them)."""
+    files = set()
+    for m in mods:
+        finder = ModuleFinder(path=[str(Path(m.__file__).parent.parent)])
+        finder.run_script(m.__file__)
+        files |= {f for name, mod in finder.modules.items() if name.startswith("snatch") and (f := getattr(mod, "__file__", None))}
+        files.add(m.__file__)
+    return b"".join(f.encode() + Path(f).read_bytes() for f in sorted(files))
+
+
+def proof_key(mods: tuple, *parts: str) -> str:
+    """A cache key: all of this file, the snatch modules `mods` use, the env key of stage_cache (models, uv.lock, pipeline.py,
+    macOS) and `parts` (the inputs)."""
+    h = hashlib.sha256(Path(__file__).read_bytes())
+    h.update(snatch_sources(*mods))
+    h.update(env_key().encode())
+    h.update("|".join(parts).encode())
+    return h.hexdigest()[:12]
+
+
+CLEAN_MODS = (person, pose, video)
+PASTE_MODS = (person, pose, video, signals, skel)
 
 
 # ---------------------------------------------------------------- clean clip: boxes, pose, pull windows
 
 def clean_pose(cache: Path) -> dict:
     """Boxes and RTMPose on every frame of the clean clip (snatch.person / snatch.pose as S1 / S4 call them)."""
-    key = f"clean-{file_key(CLEAN)}-{src_hash(person, pose, video)}"
+    key = "clean-" + proof_key(CLEAN_MODS, file_key(CLEAN))
     f = cache / key / "clean.npz"
     if f.exists():
         return dict(np.load(f))
@@ -210,9 +233,6 @@ def pasted_images(spans: list[tuple[int, int]], hub: np.ndarray, tex: np.ndarray
         yield img
 
 
-PASTE_FUNCS = (_match, _patch, collar_template, track_collar, plate_texture, paste, pasted_images, pull_windows)
-
-
 # ---------------------------------------------------------------- comparison
 
 def runs_of(mask: np.ndarray) -> list[tuple[int, int]]:
@@ -246,6 +266,7 @@ def stats(x: np.ndarray) -> tuple[float, float]:
 
 
 def main(root: Path) -> None:
+    os.chdir(REPO / "prototype")  # env_key reads scripts/pipeline.py and uv.lock relative to prototype/
     t_start = time.time()
     out_dir = root / "proof/S6"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -276,10 +297,8 @@ def main(root: Path) -> None:
     tex, mask = plate_texture(root, radius)
     ref_wrist = signals.smooth_keypoints(np.load(next(root.glob("calibrate_T5_*/raw_pose.npz")))["keypoints"].astype(float), 240.0)[REF_FRAME, j["wrist"]]
     ref = collar_template(ref_wrist)
-    pkey = "paste-" + hashlib.sha1(("|".join([file_key(CLEAN), file_key(REF_CLIP), src_hash(person, pose, video),
-                                            src_hash(*PASTE_FUNCS), str(spans), f"{radius}", str(HUB_SHIFT),
-                                            hashlib.sha1(tex.tobytes()).hexdigest(), hashlib.sha1(ref.tobytes()).hexdigest()])
-                                           ).encode()).hexdigest()[:12]
+    pkey = "paste-" + proof_key(PASTE_MODS, file_key(CLEAN), file_key(REF_CLIP), str(spans), f"{radius}", str(HUB_SHIFT),
+                                hashlib.sha1(tex.tobytes()).hexdigest(), hashlib.sha1(ref.tobytes()).hexdigest())
     f = cache / pkey / "paste.npz"
     if f.exists():
         pc = dict(np.load(f))
@@ -300,13 +319,16 @@ def main(root: Path) -> None:
     plate = {"found": in_span & ~np.isnan(hub[:, 0]), "hub_x": hub[:, 0], "hub_y": hub[:, 1], "a": np.full(n, radius),
              "b": np.full(n, radius), "angle": np.zeros(n)}
     log(f"collar match score median {np.nanmedian(pc['cscore']):.2f}, min {np.nanmin(pc['cscore']):.2f}")
-    # ---- S5 as the pipeline would run it (clean pose; joints under the pasted plate excluded)
+    # ---- S5 as the pipeline would run it on a loaded clip: RTMPose as the plated frames give it (the pasted-frame pose
+    # inside the pasted spans), the clean-frame pose outside them; joints under the pasted plate excluded by S5's own rule
+    kp5 = np.where(in_span[:, None, None], kp_paste, kp_clean)
+    sc5 = np.where(in_span[:, None], pc["scores"].astype(float), sc_clean)
     wins5 = [(max(p["setup"] - int(S5_PAD_S * fps), 0), min(p["peak"] + int(S5_PAD_S * fps), n)) for p in pulls]
-    k5 = sca.smoothed(kp_clean, t, wins5, side)
-    cov = sca.covered(kp_clean, plate, side)
-    s5 = sca.estimate(k5, sc_clean, t, wins5, tab0, side, cov)
-    assert s5.factor is not None, "S5 method none on the clean clip"
-    thigh_f, shank_f, seg_frames = sca.segment_factors(k5, sc_clean, wins5, tab0, side, cov, s5.factor)
+    k5 = sca.smoothed(kp5, t, wins5, side)
+    cov = sca.covered(kp5, plate, side)
+    s5 = sca.estimate(k5, sc5, t, wins5, tab0, side, cov)
+    assert s5.factor is not None, "S5 method none on the pasted-pose clip"
+    thigh_f, shank_f, seg_frames = sca.segment_factors(k5, sc5, wins5, tab0, side, cov, s5.factor)
     tab = tab0.scaled(s5.factor)
     cm_px = 100 / (BODY_PX_PER_M_CAL * s5.factor)
     log(f"S5: {s5.method}, factor {s5.factor:.3f}, thigh x{thigh_f:.3f} shank x{shank_f:.3f} ({len(seg_frames)} segment frames)")
@@ -319,7 +341,8 @@ def main(root: Path) -> None:
     pos = {name: np.hypot(*(k[:, j["knee"]] - truth[:, j["knee"]]).T) * cm_px for name, k in (("rtm", rtm), ("s6", s6))}
     err = {name: np.abs(a[name] - a["truth"]) for name in ("rtm", "s6")}
     with np.errstate(invalid="ignore"):
-        hidden = plate["found"] & (np.hypot(truth[:, j["knee"], 0] - hub[:, 0], truth[:, j["knee"], 1] - hub[:, 1]) < radius)
+        dist = np.hypot(truth[:, j["knee"], 0] - hub[:, 0], truth[:, j["knee"], 1] - hub[:, 1])  # true knee to the plate's hub, px
+        hidden = plate["found"] & (dist < radius)
     ok = hidden & ~np.isnan(pos["rtm"]) & ~np.isnan(pos["s6"]) & ~np.isnan(err["rtm"]) & ~np.isnan(err["s6"])
     filled_knee = res6.filled[:, j["knee"]]
     rows = []
@@ -328,7 +351,9 @@ def main(root: Path) -> None:
         m[s:e] = True
         m &= ok
         seg = slice(p["setup"], p["peak"] + 1)
-        rows.append({"pull": pi + 1, "n": int(m.sum()), "filled": int((m & filled_knee).sum()), "mask": m,
+        lows = np.array(dip_lows(a["truth"][seg]), int) + p["setup"]  # the truth's dips: a real re-bend behind the plate = one with the knee hidden
+        rows.append({"rim_share": float((m & (dist >= INNER * radius)).sum() / max(int(m.sum()), 1)),
+                     "hidden_dips": int(hidden[lows].sum()),"pull": pi + 1, "n": int(m.sum()), "filled": int((m & filled_knee).sum()), "mask": m,
                      "rtm_cm": stats(pos["rtm"][m]), "s6_cm": stats(pos["s6"][m]),
                      "rtm_deg": stats(err["rtm"][m]), "s6_deg": stats(err["s6"][m]),
                      "dips": {k: dips(a[k][seg]) for k in a}})
@@ -337,7 +362,10 @@ def main(root: Path) -> None:
              "rtm_cm": stats(pos["rtm"][allm]), "s6_cm": stats(pos["s6"][allm]),
              "rtm_deg": stats(err["rtm"][allm]), "s6_deg": stats(err["s6"][allm])}
     with np.errstate(invalid="ignore"):
-        inner = ok & (np.hypot(truth[:, j["knee"], 0] - hub[:, 0], truth[:, j["knee"], 1] - hub[:, 1]) < INNER * radius)
+        inner = ok & (dist < INNER * radius)
+    rim = ok & ~inner  # the knee in the outer ring of the plate
+    rimz = {"n": int(rim.sum()), "rtm_cm": stats(pos["rtm"][rim]), "s6_cm": stats(pos["s6"][rim])}
+    total["rim_share"] = float(rim.sum() / max(int(ok.sum()), 1))
     zone = {"pull": f"knee in the inner {INNER:.0%} of the plate", "n": int(inner.sum()), "filled": int((inner & filled_knee).sum()),
             "rtm_cm": stats(pos["rtm"][inner]), "s6_cm": stats(pos["s6"][inner]),
             "rtm_deg": stats(err["rtm"][inner]), "s6_deg": stats(err["s6"][inner])}
@@ -345,7 +373,7 @@ def main(root: Path) -> None:
     plot_paste(out_dir / "1_paste_curves.png", t, spans, pulls, a, rows, hidden)
     crops(out_dir / "2_paste_crops.jpg", spans, hub, tex, mask, truth, rtm, s6, j, pos, radius, cm_px, ok)
     loaded = plot_loaded(root, out_dir / "3_loaded_curves.png")
-    write_verdict(out_dir / "verdict.md", root, rows, total, zone, s5, thigh_f, shank_f, seg_frames, loaded, radius, pulls, spans, plate, pc)
+    write_verdict(out_dir / "verdict.md", root, rows, total, zone, rimz, s5, thigh_f, shank_f, seg_frames, loaded, radius, pulls, spans, plate, pc)
     log(f"done in {time.time() - t_start:.0f}s -> {out_dir}")
 
 
@@ -481,8 +509,20 @@ def plot_loaded(root: Path, path: Path) -> list[dict]:
     plt.close(fig)
     out = []
     for d, c in zip(data, clips):
-        line = next((ln for ln in (root / f"{c.name}.log").read_text().splitlines() if ln.strip().startswith("S6:")), "")
-        out.append({"clip": d["name"], "log": line.strip()})
+        lines = [ln.strip() for ln in (root / f"{c.name}.log").read_text().splitlines()]
+        line = next((ln for ln in lines if ln.startswith("S6:")), "")
+        err = next((ln for ln in lines if ln.startswith("ERROR S6:")), "")
+        ws = [slice(int(x["window"][0]), int(x["window"][1])) for x in d["att"]]
+        kj = HALPE26[f"{d['side']}_knee"]
+        diff = np.concatenate([np.abs(d["s6"][w] - d["rtm"][w])[d["pz"]["filled"][w, kj]] for w in ws])
+        diff = diff[~np.isnan(diff)]
+        out.append({"clip": d["name"], "log": line, "error": err,
+                    "dev": (len(diff), float(np.median(diff)), float(np.percentile(diff, 90)), float(diff.max())) if len(diff) else None})
+    seen = {c.name for c in clips}
+    for lg in sorted(root.glob("*.log")):  # a clip whose S6 check FAILed and left no pose.npz: not plotted, still a FAIL
+        err = next((ln.strip() for ln in lg.read_text().splitlines() if ln.strip().startswith("ERROR S6:")), "")
+        if err and lg.stem not in seen:
+            out.append({"clip": lg.stem.split("_")[0], "log": "", "error": err, "dev": None})
     return out
 
 
@@ -492,7 +532,11 @@ def fmt(v: tuple[float, float]) -> str:
     return f"{v[0]:.1f} (p90 {v[1]:.1f})"
 
 
-def write_verdict(path: Path, root: Path, rows, total, zone, s5, thigh_f, shank_f, seg_frames, loaded, radius, pulls, spans, plate, pc) -> None:
+def rbs_any(loaded: list[dict]) -> bool:
+    return any(re.search(r"a\d+ hybrid \d+, RTMPose \d+", c["log"]) for c in loaded)
+
+
+def write_verdict(path: Path, root: Path, rows, total, zone, rimz, s5, thigh_f, shank_f, seg_frames, loaded, radius, pulls, spans, plate, pc) -> None:
     L = ["# S6 proof: is the rebuilt knee better than RTMPose's guess behind the plate?", ""]
     L += ["## Question 1: behind the plate, is S6 closer to the real knee than RTMPose?", "",
           "Frames where the true knee is inside the pasted plate. Median (and the 90th percentile, the worse tenth) of the "
@@ -514,8 +558,9 @@ def write_verdict(path: Path, root: Path, rows, total, zone, s5, thigh_f, shank_
              f"(position). Median position error {gain('cm', 0)}, median angle error {gain('deg', 0)}; "
              f"the worse tenth: position {gain('cm', 1)}, angle {gain('deg', 1)}. "
              f"With the knee in the inner {INNER:.0%} of the plate ({zone['n']} frames): position {gain('cm', 0, zone)}, angle {gain('deg', 0, zone)}."
-             + (" Over all frames the position gain is small because in much of the first pull the knee sits near the plate's rim, "
-                "where RTMPose is already close; the gain is larger with the knee well behind the plate and in angle." if modest else ""))
+             + f" Where the true knee is: {rimz['n']} of the {total['n']} frames ({total['rim_share']:.0%}; pull 1: {rows[0]['rim_share']:.0%}) "
+             f"have it in the outer ring of the plate (beyond {INNER:.0%} of the radius), where RTMPose is {rimz['rtm_cm'][0]:.1f} cm off and "
+             f"S6 {rimz['s6_cm'][0]:.1f} cm; in the inner zone RTMPose is {zone['rtm_cm'][0]:.1f} cm off and S6 {zone['s6_cm'][0]:.1f} cm.")
     L += ["", "## Question 2: does S6 invent knee bends?", "",
           f"A dip = the knee angle drops by {DIP_DEG:.0f} deg or more and comes back up by as much, between the start of the lift and "
           "the bar's peak (the rule the pipeline check uses). A dip the true knee does not have is an invented bend.", "",
@@ -526,30 +571,49 @@ def write_verdict(path: Path, root: Path, rows, total, zone, s5, thigh_f, shank_
     tot = {k: sum(r["dips"][k] for r in rows) for k in ("truth", "rtm", "s6")}
     L.append(f"| all | {tot['truth']} | {tot['rtm']} | {tot['s6']} |")
     inv = {k: sum(max(r["dips"][k] - r["dips"]["truth"], 0) for r in rows) for k in ("rtm", "s6")}
+    hd = sum(r["hidden_dips"] for r in rows)
     L += ["", f"**Answer: {'no' if inv['s6'] == 0 else 'yes'}.** Dips beyond the truth's: S6 {inv['s6']}, RTMPose {inv['rtm']} "
           f"(over {len(rows)} pulls). Dips the truth has that are missed: S6 "
           f"{sum(max(r['dips']['truth'] - r['dips']['s6'], 0) for r in rows)}, RTMPose "
-          f"{sum(max(r['dips']['truth'] - r['dips']['rtm'], 0) for r in rows)}. None of these pulls has a real re-bend behind the plate, "
-          "so this shows S6 does not invent one, not that it would find a real one."]
+          f"{sum(max(r['dips']['truth'] - r['dips']['rtm'], 0) for r in rows)}. "
+          f"Of the truth's {tot['truth']} dips, {hd} have the true knee inside the plate at the bottom of the dip"
+          + (" (none of these pulls has a real re-bend behind the plate), so this shows S6 does not invent one, not that it would find a real one."
+             if hd == 0 else "; compare those with the missed counts above.")]
     L += ["", "## Question 3: on real loaded clips, where we can test (knee visible), how close is S6?", "",
           "No truth behind the plate on a loaded clip, so the pipeline check hides a knee that is visible and rebuilds it "
           "(two folds by time: fit the thigh/shank factors on one half, test on the other). From each clip's log:", "",
-          "| clip | knee frames S6 rebuilt | hold-out knee error | frames | re-bend dips, start to peak (S6 / RTMPose) |", "|---|---|---|---|---|"]
-    ho = []
+          "| clip | knee frames S6 rebuilt | hold-out knee error | frames | re-bend dips per attempt, start to peak (S6 / RTMPose) "
+          "| angle change on rebuilt frames, deg (median / p90 / max) |", "|---|---|---|---|---|---|"]
+    ho, worse, failed = [], [], []
     for c in loaded:
         m = re.search(r"hold-out ([\d.]+) cm .*?, ([\d.]+) deg, (\d+) frames", c["log"])
-        rb = re.search(r"hybrid (\d+), RTMPose (\d+)", c["log"])
+        rbs = re.findall(r"a(\d+) hybrid (\d+), RTMPose (\d+)", c["log"])
         fl_ = re.search(r"(\d+) knee frames filled, (\d+) hidden", c["log"])
         why = re.search(r"(hold-out: [^;]*|scale method none[^;]*)", c["log"])
+        if c["error"]:
+            failed.append(c["clip"])
+            L.append(f"| {c['clip']} | **FAIL** | {c['error']} | - | - | - |")
+            continue
         if m:
             ho.append(float(m.group(1)))
+        worse += [f"{c['clip']} a{i}" for i, h, r in rbs if int(h) > int(r)]
+        dv = c["dev"]
         L.append(f"| {c['clip']} | {fl_.group(1) + ' of ' + fl_.group(2) + ' hidden' if fl_ else '-'} | "
                  f"{m.group(1) + ' cm / ' + m.group(2) + ' deg' if m else 'not run: ' + (why.group(1) if why else 'no S6 line')} | "
-                 f"{m.group(3) if m else '-'} | {rb.group(1) + ' / ' + rb.group(2) if rb else '-'} |")
-    L += ["", (f"**Answer:** where the hold-out ran, S6 rebuilds a visible knee to {min(ho):.1f} to {max(ho):.1f} cm median (gate 3 cm, target 2 cm), "
-               "and has no more knee dips than RTMPose on any clip. Not every clip can be tested (see 'not run'); "
-               "3_loaded_curves.png shows where and by how much S6 changes the knee-angle curves S7/S8 will read: only inside the shaded spans, "
-               "mostly by a few degrees." if ho else "**Answer:** no hold-out ran.")]
+                 f"{m.group(3) if m else '-'} | {'; '.join(f'a{i} {h} / {r}' for i, h, r in rbs) or '-'} | "
+                 f"{f'{dv[1]:.1f} / {dv[2]:.1f} / {dv[3]:.1f} ({dv[0]} frames)' if dv else '-'} |")
+    devs = [c["dev"] for c in loaded if c["dev"] and not c["error"]]
+    ok3 = bool(ho) and max(ho) <= HOLDOUT_GATE_CM and not failed and not worse
+    tail = ("" if not devs else f" On the frames S6 rebuilt, the knee angle changes by a median of {min(d[1] for d in devs):.1f} to "
+            f"{max(d[1] for d in devs):.1f} deg per clip (largest single change {max(d[3] for d in devs):.1f} deg); "
+            "3_loaded_curves.png shows where S7/S8 will read the changed curves.")
+    L += ["", (f"**Answer: {'yes' if ok3 else 'no'}.** " if ho or failed else "**Answer: no hold-out ran.** ")
+          + (f"S6 check FAILed on: {', '.join(failed)}. " if failed else "")
+          + (f"Where the hold-out ran, S6 rebuilds a visible knee to {min(ho):.1f} to {max(ho):.1f} cm median (gate {HOLDOUT_GATE_CM:.0f} cm, "
+             f"target {HOLDOUT_TARGET_CM:.0f} cm). " if ho else "")
+          + ("The hybrid has no more knee dips than RTMPose in any attempt listed. " if rbs_any(loaded) and not worse else "")
+          + (f"The hybrid has MORE knee dips than RTMPose in: {', '.join(worse)}. " if worse else "")
+          + "Not every clip can be tested (see 'not run')." + tail]
     L += ["", "## How this test works", "",
           f"A real 5 kg plate (cut from T1, resized to the loaded clips' rest radius of {radius:.0f} px) is pasted on the near bar end "
           f"of the bar-only clip `{CLEAN.name}` in every frame of each pull (setup - {PAD_BEFORE_S} s to peak + {PAD_AFTER_S} s). "
@@ -557,7 +621,8 @@ def write_verdict(path: Path, root: Path, rows, total, zone, s5, thigh_f, shank_
           "RTMPose on the clean frames (the true knee). "
           "This clip is not T5: the athlete's leg lengths were fitted on T5, so testing there would grade S6 on its own calibration data; "
           f"here the lengths are T5's times S5's factor ({s5.factor:.3f}, `{s5.method}`) and thigh x{thigh_f:.3f} / shank x{shank_f:.3f} "
-          f"(from {len(seg_frames)} frames with the knee visible outside the pasted plate), as S5 would fix them on a loaded clip of this session. "
+          f"(from {len(seg_frames)} frames), found by S5's own functions on the pose as the pipeline reads a plated clip: RTMPose on the pasted frames "
+          "inside the pasted spans, RTMPose on the clean frames outside them, joints inside the plate excluded by S5's rule. "
           "Limits: the pasted disc has no shadow, blur or far plate; the person boxes come from the clean frames; the truth is "
           "RTMPose's estimate of a visible knee (about 1 cm jitter), not a marker; the plate sits on a tracked collar "
           f"(match score median {np.nanmedian(pc['cscore']):.2f}, min {np.nanmin(pc['cscore']):.2f}); one lifter, one session, a standup (not a snatch) clip.", ""]
