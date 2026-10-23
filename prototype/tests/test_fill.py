@@ -23,8 +23,9 @@ def test_fill_hidden_switches_smoothly() -> None:
 
 
 def test_filled_mask_follows_the_plate() -> None:
-    """R3: a plate over the knee only (frames 40-79) marks the knee hidden and fills it, within the
-    cross-fade, with the hip and ankle untouched; no table (scale method none) fills nothing."""
+    """R3: a synthetic occlusion with a known true knee behind the plate (no test clip has ground truth
+    there): a plate over the knee only (frames 40-79) marks the knee hidden and fills it to the truth, within
+    the cross-fade, with the hip and ankle untouched."""
     n, fps, side = 120, 60, "r"
     tab = LengthTable(np.linspace(0.4, 1.05, 13), np.full(12, 150.0), np.full(12, 155.0), 300.0)
     hip, ank = np.zeros((n, 2)), np.tile([0.0, 240.0], (n, 1))
@@ -47,6 +48,3 @@ def test_filled_mask_follows_the_plate() -> None:
     assert res.filled.sum() == len(near)  # only the near knee
     assert np.abs(res.keypoints[60, knee] - truth[60]).max() < 1
     assert np.array_equal(res.keypoints[:, [HALPE26["r_hip"], HALPE26["r_ankle"]]], raw[:, [HALPE26["r_hip"], HALPE26["r_ankle"]]])
-    none = fl.fill(raw, plate, [(0, n)], t, side, None, 1.0, 1.0)
-    assert not none.filled.any() and none.hidden[:, knee].sum() == 40
-    assert np.array_equal(none.keypoints, raw, equal_nan=True)

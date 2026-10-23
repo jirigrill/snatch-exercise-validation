@@ -52,6 +52,7 @@ HOLDOUT_GATE_CM = 3.0  # S6 hide-a-seen-knee: median knee position error above t
 HOLDOUT_TARGET_CM = 2.0
 MIN_HOLDOUT_FRAMES = 40  # fewer candidate frames: reported, not gated
 DIP_DEG = 3.0  # a knee re-bend: the angle drops and recovers by this much
+SPEC_HIDDEN_DIST = 1.1  # spec (C-skeleton.md): hidden = inside the plate ellipse x 1.1; a literal, not fill.HIDDEN_DIST, so a drift fails S6
 WORST_GAP = 24  # at least this many frames apart (0.1 s at 240 fps), so not 4 neighbours
 
 
@@ -336,7 +337,9 @@ def check_fill(out: Path) -> str:
     others[j["knee"]] = False
     assert np.array_equal(kp[:, others], raw["keypoints"][:, others], equal_nan=True), "a joint other than the near knee changed"
     assert not filled[:, others].any(), "something other than the near knee is filled"
-    hid = sca.covered(raw["keypoints"], plate, side, fl.HIDDEN_DIST)
+    kept = ~filled[:, j["knee"]]
+    assert np.array_equal(kp[kept, j["knee"]], raw["keypoints"][kept, j["knee"]], equal_nan=True), "the near knee changed on a frame not marked filled"
+    hid = sca.covered(raw["keypoints"], plate, side, SPEC_HIDDEN_DIST)
     assert np.array_equal(hidden[:, list(j.values())], hid), "hidden is not the near hip/knee/ankle inside the plate outline"
     assert not hidden[:, [i for i in range(26) if i not in j.values()]].any(), "hidden outside the near hip, knee, ankle"
     fade = fl.fade_frames(raw["t"])
@@ -364,7 +367,7 @@ def _holdout(out: Path, raw, plate: dict, sc: dict, windows, side: str, sign: fl
     tab = skel.LengthTable.from_json(sk[side])
     j = {m: HALPE26[f"{side}_{m}"] for m in ("hip", "knee", "ankle")}
     hip, knee, ank = k[:, j["hip"]], k[:, j["knee"]], k[:, j["ankle"]]
-    hid = sca.covered(raw["keypoints"], plate, side, fl.HIDDEN_DIST)
+    hid = sca.covered(raw["keypoints"], plate, side, SPEC_HIDDEN_DIST)
     inside = np.zeros(len(k), bool)
     for s, e in windows:
         inside[s:e] = True
@@ -400,13 +403,15 @@ def _rebend(out: Path, pose, raw, attempts: list[dict], windows, side: str) -> s
     rise = height_above_floor(p["hub_y"], p["found"].astype(bool), p["px_per_m"], p["t"])
     ang = {name: skel.sagittal_angles(sca.smoothed(kp, t, windows, side), side)["knee"]
            for name, kp in (("hybrid", pose["keypoints"]), ("rtmpose", raw["keypoints"]))}
-    n = {name: 0 for name in ang}
+    per: list[dict[str, int]] = []
     for a in attempts:
         peak = a["start"] + int(np.nanargmax(rise[a["start"]:a["end"]]))
-        for name in ang:
-            n[name] += dips(ang[name][a["start"]:peak + 1])
-    assert n["hybrid"] <= n["rtmpose"], f"re-bend: hybrid {n['hybrid']} knee dips >= {DIP_DEG:.0f} deg, RTMPose {n['rtmpose']}"
-    return f"re-bend dips (start to peak): hybrid {n['hybrid']}, RTMPose {n['rtmpose']}"
+        per.append({name: dips(ang[name][a["start"]:peak + 1]) for name in ang})
+    for i, d in enumerate(per):
+        assert d["hybrid"] <= d["rtmpose"], \
+            f"re-bend, attempt {i + 1}: hybrid {d['hybrid']} knee dips >= {DIP_DEG:.0f} deg, RTMPose {d['rtmpose']}"
+    return "re-bend dips (start to peak): " + ", ".join(
+        f"a{i + 1} hybrid {d['hybrid']}, RTMPose {d['rtmpose']}" for i, d in enumerate(per))
 
 
 def s7_errors(out: Path, ref: dict, clip: str) -> dict[str, dict[str, tuple[int | None, int | None, float | None, bool]]]:
