@@ -48,7 +48,7 @@ Reviewer / findings file:
 <what is wrong, evidence (quote the line), what breaks, what the fix must cover>
 **Answer:** fixed (<sha>): <reason>
 ```
-Tags, by effect, whatever the bug class: **Important** (blocks: changes a result, makes a check or the evidence lie, breaks a caller or a later stage, or leaves a misleading doc line), **Nit** (max 3, never blocks), **Pre-existing** (bug the PR didn't add). Every finding names its bug class so the fix covers every instance.
+Tags, by effect, whatever the bug class: **Important** (blocks): it makes a result, a check or the evidence wrong now, breaks a caller or a later stage, or a doc line misleads a reader about behaviour. **Nit** (at most 3, never blocks): a real issue that makes nothing wrong today: it fails safe (a crash or a "no", never a false pass) in a case no test clip or current caller hits, a message or doc wording that is imprecise but misleads nobody, a robustness gap that fails safe in a case no test clip or current caller hits. A silent wrong result is Important, whether or not a test clip hits it. **Pre-existing**: a real bug the PR didn't add; does not block. Every finding names its bug class so the fix covers every instance.
 
 PR comment (one per reviewed commit; the Stop hook parses the text before `<details>`):
 ```
