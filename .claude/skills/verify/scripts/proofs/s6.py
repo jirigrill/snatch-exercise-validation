@@ -460,6 +460,22 @@ def crops(path: Path, spans, hub, tex, mask, truth, rtm, s6, j, pos, radius, cm_
     cv2.imwrite(str(path), np.vstack([leg, sheet]), [cv2.IMWRITE_JPEG_QUALITY, 88])
 
 
+REQUIRED_CLIPS = ("T1", "T2", "T3", "T6", "T7", "T8")  # Q3 needs these; one that is missing or did not finish is a FAIL, not a pass
+
+
+def log_problem(root: Path, stem: str) -> str:
+    """Why this clip's log says it did not finish ("" = fine): no log, a FAIL: result line, an ERROR S6: line, or no OK evidence: line."""
+    lg = root / f"{stem}.log"
+    if not lg.exists():
+        return "no log in the root (clip not run)"
+    lines = [ln.strip() for ln in lg.read_text().splitlines()]
+    for pre in ("FAIL:", "ERROR S6:"):
+        hit = next((ln for ln in lines if ln.startswith(pre)), "")
+        if hit:
+            return hit
+    return "" if any(ln.startswith("OK evidence:") for ln in lines) else "log has no OK evidence: line (run did not finish)"
+
+
 def loaded_clips(root: Path) -> list[Path]:
     return sorted(p for p in root.iterdir() if p.is_dir() and (p / "pose.npz").exists())
 
@@ -509,9 +525,10 @@ def plot_loaded(root: Path, path: Path) -> list[dict]:
     plt.close(fig)
     out = []
     for d, c in zip(data, clips):
-        lines = [ln.strip() for ln in (root / f"{c.name}.log").read_text().splitlines()]
+        lg = root / f"{c.name}.log"
+        lines = [ln.strip() for ln in lg.read_text().splitlines()] if lg.exists() else []
         line = next((ln for ln in lines if ln.startswith("S6:")), "")
-        err = next((ln for ln in lines if ln.startswith("ERROR S6:")), "")
+        err = log_problem(root, c.name)
         ws = [slice(int(x["window"][0]), int(x["window"][1])) for x in d["att"]]
         kj = HALPE26[f"{d['side']}_knee"]
         diff = np.concatenate([np.abs(d["s6"][w] - d["rtm"][w])[d["pz"]["filled"][w, kj]] for w in ws])
@@ -523,6 +540,13 @@ def plot_loaded(root: Path, path: Path) -> list[dict]:
         err = next((ln.strip() for ln in lg.read_text().splitlines() if ln.strip().startswith("ERROR S6:")), "")
         if err and lg.stem not in seen:
             out.append({"clip": lg.stem.split("_")[0], "log": "", "error": err, "dev": None})
+    have = {o["clip"] for o in out}
+    for name in REQUIRED_CLIPS:
+        if name in have:
+            continue
+        stems = sorted(lg.stem for lg in root.glob(f"{name}_*.log"))
+        why = log_problem(root, stems[0]) if stems else "no log in the root (clip not run)"
+        out.append({"clip": name, "log": "", "error": (why or "no pose.npz (S6 left no pose)") + " [missing]", "dev": None})
     return out
 
 
