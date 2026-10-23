@@ -65,7 +65,8 @@ def _attempt(a: dict, kp: np.ndarray, plate: dict, t: np.ndarray, side: str, fil
     elbow = joint_angle(sm["shoulder"], sm["elbow"], sm["wrist"])
     ppm = float(np.nanmedian(np.asarray(plate["px_per_m"], float)[s:e]))
     found = find_phases(knee=knee, hub_y=hub, hip_y=sm["hip"][:, 1], knee_y=sm["knee"][:, 1], nose_y=sm["nose"][:, 1],
-                        t=tw, px_per_m=ppm)
+                        t=tw, px_per_m=ppm,
+                        px_per_m_frame=np.asarray(plate["px_per_m"], float)[s:e])
     w = kp[s:e, j["wrist"]]
     with np.errstate(invalid="ignore"):
         d = ellipse_dist(w[:, 0], w[:, 1], plate["hub_x"][s:e], plate["hub_y"][s:e], plate["a"][s:e], plate["b"][s:e],

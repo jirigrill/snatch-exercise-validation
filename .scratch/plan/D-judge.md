@@ -22,7 +22,7 @@ Written from scratch (v1's `angles.py` + `phases.py` in git history, 6469c5b, re
 | turnover | full extension → bar peak | bar peak: first hub high point after full extension; no dip (muscle) → highest hub before standing (**new**) |
 | catch | bar peak → bar lowest | bar lowest: lowest hub between bar peak and the legs straight again (first frame after the knee's low with knee within 5° of its max while overhead); = bar peak if no dip (**new**; the bound is not `standing`, which depends on it, nor the overhead end, which catches the bar being lowered) |
 | recovery | bar lowest → standing | standing: v2 lockout rule (first frame after bar lowest with knee within 5° of its max while overhead). Arms locked = S8 |
-| hold | standing → bar_overhead end | |
+| hold | standing → hold end | hold end: first frame after `standing` where the hub falls > 5 cm (plate px/m) below its median since `standing`, else `bar_overhead` end (**new** 2026-10-23: the lowering is not hold) |
 
 - Marker `bar_overhead` (start, end): hub above the nose ≥ 0.25 s, longest run in the attempt. Not a phase.
 - A border S7 can't find → null (no bar_overhead = failed pull: partial record). Every border frame carries `filled`.
@@ -51,14 +51,14 @@ Scope: every attempt (completed or failed); result + type only. Technique is S9 
   | # | reason | result | fails when |
   |---|---|---|---|
   | 1 | `no_overhead` | failed | no S7 `bar_overhead` |
-  | 2 | `elbow_unlocked` | failed | in the hold: elbow < 165° (only frames with the wrist seen), or hub–shoulder horizontal offset > 15 % of arm length, or hub–shoulder distance < 90 % of arm length |
-  | 3 | `no_standup` | failed | no S7 `standing` (hip above knee, knee ≥ 160°) |
-  | 4 | `hold_short` | failed | `standing` → `bar_overhead` end < 1 s (frame times) |
-  | 5 | `dropped` | failed | hub max − min height over `standing` → `bar_overhead` end ≥ 10 cm (per-frame px/m from plate.npz) |
+  | 2 | `elbow_unlocked` | failed | in the hold: elbow < 165° on frames with the wrist seen; no such frame → unsure (decided 2026-10-23: the hub–shoulder offset is dropped until C3 has an arm length; the side-view shoulder keypoint sits 20–26 % of thigh in front of a locked bar on T1/T8) |
+  | 3 | `no_standup` | failed | no S7 `standing` (S8 reads the border, no own rule) |
+  | 4 | `hold_short` | failed | S7 `hold` phase < 0.5 s (frame times; placeholder, decided 2026-10-23: the test lifts hold 0.6–0.8 s, the competition 1 s needs a recording-protocol change first) |
+  | – | (`dropped` removed 2026-10-23: S7 ends the hold at a 5 cm drop, so a drop shows as `hold_short`) | | |
   | 6 | `type_mismatch` | failed | performed ≠ intended; skipped when intended_source = inferred or performed unknown |
   | 7 | `low_confidence` | unknown | no check failed, but one is unsure: its frames rely on a filled/hidden hip or knee, or the plate is lost in the hold |
   - Each check is pass / fail / unsure. A clear fail on reliable frames wins over any unsure (e.g. elbow bent on seen frames + knee filled → `failed: elbow_unlocked`). completed = every check passes.
-  - Arm length: skeleton px × scale.json factor; without S5 scale, the median shoulder–wrist distance over the hold on frames with the wrist seen.
+  - No arm length for now (decided 2026-10-23: skeleton.json has no arm, and the wrist is under the plate on every T1 hold frame): the hub–shoulder ≥ 90 % arm check is dropped and the offset is relative to thigh length (decided 2026-10-23: a cm limit would fit one lifter). Later (after all stages, fine-tuning): arm length in C3 skeleton.json × scale factor, then restore both arm-relative checks.
 - Out: `judgement.json` per attempt {performed_type, intended_type, intended_source, lift_result, reason, evidence_frames, checks: {name: {value, threshold, unit, pass|fail|unsure, frames: [start, end]}}}; evidence_frames = the deciding check's frames. Overlay `8_judgement.mp4`. `judgement_sheet.jpg`: a row per attempt, frames at `bar_lowest`, `standing`, mid-hold, `bar_overhead` end, each with the verdict + check values; the worst frame per check is marked.
 - Proof (verify): T1–T8 cached into one root, look at every judgement sheet, `sheets.md`.
 

@@ -14,6 +14,7 @@ An output may be a directory (S7's grabs/): it replaces the old one.
 `SKELETON` and `ATHLETE` name the athlete's skeleton.json and athlete.json: as an
 input, a stage that lists one reruns when it changes; as an output (C3 writes
 SKELETON), it is written to the athlete profile, not out/<clip>.
+`LABELS` names the repo's prototype/labels.csv (S8 reads it; a label change reruns S8).
 """
 
 import hashlib
@@ -29,6 +30,8 @@ from snatch import athlete_store
 CLIP = "<clip>"
 SKELETON = "<skeleton>"
 ATHLETE = "<athlete>"
+LABELS = "<labels>"
+LABELS_CSV = Path(__file__).resolve().parents[2] / "labels.csv"
 STATUS_FILE = "pipeline_status.json"
 MISSING_INPUT_EXIT = 9
 
@@ -47,6 +50,8 @@ class Context:
             return athlete_store.path(self.athletes, str(self.params["athlete"]), athlete_store.SKELETON)
         if name == ATHLETE:
             return athlete_store.path(self.athletes, str(self.params["athlete"]), athlete_store.ATHLETE)
+        if name == LABELS:
+            return LABELS_CSV
         return self.out / name
 
 

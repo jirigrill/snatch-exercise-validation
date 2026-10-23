@@ -44,6 +44,7 @@ REBEND_DEG = 3.0  # knee minimum prominence
 PEAK_M = 0.02  # bar peak prominence, m
 STAND_DEG = 5.0  # standing: knee within this of its maximum
 SMOOTH_S = 0.1  # smoothing window of the signals (the caller smooths)
+HOLD_DROP_M = 0.05  # hold ends when the hub falls this far below its median since standing
 
 BORDERS = ("liftoff", "first_knee_max", "deepest_rebend", "full_extension", "bar_peak", "bar_lowest", "standing")
 PHASES = (("starting_position", None, "liftoff"), ("first_pull", "liftoff", "first_knee_max"),
@@ -51,7 +52,7 @@ PHASES = (("starting_position", None, "liftoff"), ("first_pull", "liftoff", "fir
           ("turnover", "full_extension", "bar_peak"), ("catch", "bar_peak", "bar_lowest"),
           ("recovery", "bar_lowest", "standing"), ("hold", "standing", None))
 PARAMS = dict(min_overhead_s=MIN_OVERHEAD_S, rise_px_s=RISE_PX_S, rebend_deg=REBEND_DEG, peak_m=PEAK_M,
-              stand_deg=STAND_DEG, smooth_s=SMOOTH_S)
+              stand_deg=STAND_DEG, smooth_s=SMOOTH_S, hold_drop_m=HOLD_DROP_M)
 
 
 @dataclass(frozen=True)
@@ -98,9 +99,18 @@ def bar_peak_frame(hub_y: np.ndarray, start: int, end: int, prominence_px: float
     return (start + int(peaks[0]), True) if len(peaks) else (start + int(np.argmax(height)), False)
 
 
+def hold_end(hub_y: np.ndarray, ppm: np.ndarray, stand: int, end: int, drop_m: float = HOLD_DROP_M) -> int:
+    """First frame in (stand, end) with the hub > drop_m below its median over [stand, frame]; none: end."""
+    for i in range(stand + 1, end):
+        if hub_y[i] - np.median(hub_y[stand:i + 1]) > drop_m * ppm[i]:
+            return i
+    return end
+
+
 def find_phases(*, knee: np.ndarray, hub_y: np.ndarray, hip_y: np.ndarray, knee_y: np.ndarray,
-                nose_y: np.ndarray, t: np.ndarray, px_per_m: float) -> Found:
-    """The borders and phases of one attempt window (arrays: one value per frame of the window)."""
+                nose_y: np.ndarray, t: np.ndarray, px_per_m: float, px_per_m_frame: np.ndarray | None = None) -> Found:
+    """The borders and phases of one attempt window (arrays: one value per frame of the window).
+    px_per_m_frame: per-frame scale for the hold end (default: px_per_m everywhere)."""
     n = len(t)
     runs = overhead_runs(hub_y < nose_y, t, MIN_OVERHEAD_S)
     over = max(runs, key=lambda r: (t[r[1] - 1] - t[r[0]], -r[0])) if runs else None
@@ -132,9 +142,11 @@ def find_phases(*, knee: np.ndarray, hub_y: np.ndarray, hip_y: np.ndarray, knee_
             b["standing"] = bl + int(np.argmax(seg >= seg.max() - STAND_DEG))
     else:
         b["liftoff"] = None  # no pull found before the bar went up
+    ppm = np.full(n, px_per_m) if px_per_m_frame is None else px_per_m_frame
+    hold_e = None if over is None else (over[1] if b["standing"] is None else hold_end(hub_y, ppm, b["standing"], over[1]))
     phases: list[tuple[str, int | None, int | None]] = []
     for name, a, z in PHASES:
         s = 0 if a is None else b[a]
-        e = (over[1] if over else None) if z is None else b[z]
+        e = hold_e if z is None else b[z]
         phases.append((name, s, e))
     return Found(b, over, phases)
