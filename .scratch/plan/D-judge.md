@@ -64,14 +64,14 @@ Scope: every attempt (completed or failed); result + type only. Technique is S9 
 
 ## S9 findings (contract only)
 `snatch/findings.py` writes `findings.json` per attempt: empty `findings[]` + `metrics`. Never changes lift_result. Decided 2026-10-24 (grilling): metrics are chosen to show the lifter where the lift goes wrong, one per phase, measurement only (no thresholds).
-- Metrics (plate hub, S2; cm via the S7 scale factor; x signed by `facing`, + = away from the lifter):
+- Metrics (plate hub, S2; cm via the plate `px_per_m` (S2 plate.npz), median over the attempt window's found frames, as S7 uses (decided 2026-10-24; not S5's factor); x signed by `facing`, + = away from the lifter):
   1. `pull1_away_cm`: max hub x away from the lifter vs liftoff, liftoff→first_knee_max (far-from-body, faraway).
   2. `pull2_toward_cm`: hub x toward the lifter, first_knee_max→full_extension (bar swept in).
   3. `loop_away_cm`: max hub x away after full_extension, full_extension→bar_lowest (bar swung away).
   4. `peak_height_pct`: hub height at bar_peak above liftoff, % of athlete height_m.
   5. `drop_under_cm`: hub height bar_peak − bar_lowest (getting under the bar).
   6. `catch_x_cm`: hub x at bar_lowest − liftoff (jump forward/back).
-- Each metric: `{value, unit, frames: [start, end], missing: [border names]}`; value null when a border is missing (T3, T7: no bar_overhead → 4–6 null; no first_knee_max → 1–2 null, kept on S7 borders by decision 2026-10-24, see S7 rule gaps). Scale method none: cm null, `value_px` kept.
+- Each metric: `{value, unit, frames: [start, end], missing: [border names]}`; value null when a border is missing (T3, T7: no bar_overhead → 4–6 null; no first_knee_max → 1–2 null, kept on S7 borders by decision 2026-10-24, see S7 rule gaps). cm null only when the attempt has no found plate frame to give px_per_m; `value_px` always kept (decided 2026-10-24).
 - `findings_sheet.jpg`: a row per attempt, hub trail over the liftoff frame coloured by phase, each metric drawn as a labelled arrow/span at its frames with its value. This is the S9 proof.
 - Deferred to plan item "S9 rules": shoulder−bar x and min elbow before full_extension (need S8-style seen/filled handling), fault thresholds + findings, `9_findings.mp4`, metric definitions checked against `docs/research/10a`.
 

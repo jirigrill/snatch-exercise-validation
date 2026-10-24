@@ -38,6 +38,8 @@ from snatch import overlay as ov
 from snatch import scale as sca
 from snatch import skeleton as skel
 from snatch.plate import ellipse_dist
+from snatch import findings as fd
+from snatch.stages.findings import track_of
 from snatch import judge as jd
 from snatch import phases as ph
 from snatch.pose import HALPE26, SIDE_OF
@@ -556,7 +558,69 @@ def check_judgement(out: Path) -> str:
     return "\n    ".join(lines)
 
 
-CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate, "S3": check_attempts, "S5": check_scale, "S6": check_fill, "S7": check_phases, "S8": check_judgement}
+REPORT_KEYS = ["clip", "attempt", "final_label", "reason", "performed_type", "intended_type", "phases", "key_angles",
+               "metrics", "findings", "warnings"]
+
+
+def check_findings(out: Path) -> str:
+    """S9 + report done-when 1, 2, 4: schema, report label == judgement, a null metric names its missing borders."""
+    fnd = json.loads((out / "findings.json").read_text())["attempts"]
+    phases = json.loads((out / "phases.json").read_text())["attempts"]
+    judged = json.loads((out / "judgement.json").read_text())["attempts"]
+    trk = track_of(dict(np.load(out / "plate.npz")))
+    assert [f["attempt"] for f in fnd] == [p["attempt"] for p in phases], "findings.json: not one record per attempt"
+    lines = []
+    for f, p in zip(fnd, phases):
+        k, (s, e) = f["attempt"], p["window"]
+        assert f["findings"] == [], f"attempt {k}: findings {f['findings']} before S9 rules"
+        assert list(f["metrics"]) == list(fd.METRICS), f"attempt {k}: metrics {list(f['metrics'])}"
+        for n, m in f["metrics"].items():
+            assert set(m) == {"value", "value_px", "unit", "frames", "at", "missing"}, f"a{k} {n}: keys {set(m)}"
+            unit, sb, eb, extra = fd.METRICS[n]
+            assert m["unit"] == unit
+            want_missing = [b for b in (sb, eb) if not p["borders"].get(b)] + (
+                list(extra) if "bar_overhead" in extra and p["bar_overhead"] is None else [])
+            got = [b for b in m["missing"] if not b.startswith("plate@")]
+            assert got == want_missing, f"a{k} {n}: missing {m['missing']}, borders say {want_missing}"
+            assert got == m["missing"] or m["missing"][len(got):] == [f"plate@{sb}", f"plate@{eb}"], f"a{k} {n}: missing {m['missing']}"
+            if m["missing"]:
+                assert m["value"] is None and m["value_px"] is None, f"a{k} {n}: value with missing {m['missing']}"
+            else:
+                bs, be = p["borders"][sb]["frame"], p["borders"][eb]["frame"]
+                assert m["frames"] is not None and bs <= m["frames"][0] <= m["frames"][1] <= be, f"a{k} {n}: frames {m['frames']} outside {bs}-{be}"
+                assert m["at"] is not None and m["frames"][0] <= m["at"] <= m["frames"][1] and s <= m["at"] < e, f"a{k} {n}: at {m['at']}"
+                assert m["value_px"] is not None, f"a{k} {n}: value_px null with nothing missing"
+                assert m["value"] is not None or fd.scale(trk, (s, e)) is None, f"a{k} {n}: value null with px_per_m and nothing missing"
+        lines.append(f"a{k} " + " ".join(f"{n}={m['value'] if m['value'] is not None else 'null:' + ','.join(m['missing'])}"
+                                          for n, m in f["metrics"].items()))
+    rep = json.loads((out / "report.json").read_text())["attempts"]
+    with (out / "angles.csv").open() as fh:
+        rows = {int(q["frame"]): q for q in csv.DictReader(fh)}
+    side = SIDE_OF[json.loads((out / "facing.json").read_text())["facing"]]
+    pose_hidden = np.asarray(np.load(out / "pose.npz")["hidden"], bool)
+    srcs: list[str] = []
+    assert [r["attempt"] for r in rep] == [j["attempt"] for j in judged], "report.json: not one record per judged attempt"
+    for r, j, f in zip(rep, judged, fnd):
+        assert list(r) == REPORT_KEYS, f"report a{r['attempt']}: keys {list(r)}"
+        assert (r["final_label"], r["reason"]) == (j["lift_result"], j["reason"]), f"report a{r['attempt']}: label {r['final_label']} {r['reason']} != judgement"
+        assert r["final_label"] in ("completed", "failed", "unknown") and r["metrics"] == f["metrics"]
+        bd = phases[[q["attempt"] for q in phases].index(r["attempt"])]["borders"]
+        for b, ang in r["key_angles"].items():
+            if ang is None:
+                assert bd.get(b) is None or bd[b]["frame"] not in rows, f"report a{r['attempt']} {b}: null with an angles row"
+                continue
+            row = rows[bd[b]["frame"]]
+            for n, v in ang.items():
+                hid = row["wrist_hidden"] == "1" if n == "elbow" else bool(pose_hidden[bd[b]["frame"], HALPE26[f"{side}_{n}"]])
+                want = "hidden" if hid else "filled" if row[f"{n}_filled"] == "1" else "seen"
+                assert v["source"] == want and v["deg"] == float(row[n]), f"report a{r['attempt']} {b} {n}: {v} != {want} {row[n]}"
+                srcs.append(f"a{r['attempt']} {b} {n}={v['source']}")
+    assert (out / "overlay.mp4").is_file() and (out / "overlay.mp4").stat().st_size, "overlay.mp4 missing"
+    return "\n    ".join(lines + [f"report.json: {len(rep)} attempt(s), labels == judgement.json",
+                                "key_angles " + " ".join(srcs)])
+
+
+CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate, "S3": check_attempts, "S5": check_scale, "S6": check_fill, "S7": check_phases, "S8": check_judgement, "S9": check_findings}
 # Files a stage still writes when it stops the run (checked on a --stop run; no content check).
 STOP_FILES = {"S2": ("plate_check.jpg", "overlays/2_plate.mp4"),
               "S3": ("attempts.json", "overlays/3_attempts.mp4")}
