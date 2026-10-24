@@ -24,6 +24,7 @@ the stage is most likely wrong, not only evenly spaced ones.
 """
 
 import argparse
+import csv
 import json
 import re
 from collections.abc import Sequence
@@ -37,11 +38,13 @@ from snatch import overlay as ov
 from snatch import scale as sca
 from snatch import skeleton as skel
 from snatch.plate import ellipse_dist
+from snatch import judge as jd
 from snatch import phases as ph
 from snatch.pose import HALPE26, SIDE_OF
 from snatch.reps import Lift, height_above_floor
 from snatch.stage import SKELETON, Stage
 from snatch.stages import CALIBRATE, STAGES
+from snatch.stages import judge as sj
 from snatch.stages.attempts import key_frames
 
 REPO = Path(__file__).resolve().parents[4]
@@ -465,6 +468,11 @@ def check_phases(out: Path) -> str:
     assert rec["params"] == ph.PARAMS, "phases.json params are not the code's thresholds"
     clip = out.name.split("_")[0]  # T1 ...
     lines = []
+    hub = np.full(len(pose["keypoints"]), np.nan)
+    with (out / "angles.csv").open() as f:
+        for row in csv.DictReader(f):
+            hub[int(row["frame"])] = float(row["hub_y"])
+    ppm = np.asarray(np.load(out / "plate.npz")["px_per_m"], float)
     for r, a in zip(rec["attempts"], attempts):
         k, (s, e) = r["attempt"], a["window"]
         assert r["window"] == [s, e], f"attempt {k}: window {r['window']} is not attempts.json's {[s, e]}"
@@ -483,6 +491,8 @@ def check_phases(out: Path) -> str:
         for p, (_, x, y) in zip(r["phases"], ph.PHASES):
             want_s = s if x is None else (b[x]["frame"] if b[x] else None)
             want_e = (oh["end"] if oh else None) if y is None else (b[y]["frame"] if b[y] else None)
+            if y is None and oh and b["standing"]:  # hold end: recomputed from angles.csv hub_y + plate.npz px_per_m
+                want_e = ph.hold_end(hub, ppm, b["standing"]["frame"], oh["end"])
             assert (p["start"], p["end"]) == (want_s, want_e), f"attempt {k}: phase {p['name']} {p['start']}-{p['end']}, borders say {want_s}-{want_e}"
         for n, f in frames:
             assert (out / "grabs" / f"a{k}_{n}.jpg").is_file(), f"attempt {k}: grabs/a{k}_{n}.jpg missing"
@@ -494,7 +504,7 @@ def check_phases(out: Path) -> str:
             for n in ("liftoff", "full_extension", "bar_peak", "bar_lowest", "standing"):
                 assert b[n], f"attempt {k}: {clip} border {n} is null"
         lines.append(f"a{k} " + " ".join(f"{n}={b[n]['frame'] if b[n] else 'null'}" for n in ph.BORDERS)
-                     + (f" overhead {oh['start']}-{oh['end']}" if oh else " no overhead"))
+                     + (f" overhead {oh['start']}-{oh['end']} hold_end={r['phases'][-1]['end']}" if oh else " no overhead"))
     rows = [ln for ln in (out / "angles.csv").read_text().splitlines()[1:]]
     posed = int((~np.isnan(pose["keypoints"]).all((1, 2))).sum())
     assert len(rows) == posed == sum(a["window"][1] - a["window"][0] for a in attempts), \
@@ -507,7 +517,46 @@ def check_phases(out: Path) -> str:
     return "\n    ".join(lines)
 
 
-CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate, "S3": check_attempts, "S5": check_scale, "S6": check_fill, "S7": check_phases}
+def check_judgement(out: Path) -> str:
+    rec = json.loads((out / "judgement.json").read_text())
+    phases = json.loads((out / "phases.json").read_text())["attempts"]
+    assert [r["attempt"] for r in rec["attempts"]] == [p["attempt"] for p in phases], "judgement.json: not one record per attempt"
+    assert rec["params"] == jd.PARAMS, "judgement.json params are not the code's thresholds"
+    lines, worst_frames = [], set()
+    for j, p in zip(rec["attempts"], phases):
+        k, (s, e) = j["attempt"], p["window"]
+        c = j["checks"]
+        assert list(c) == list(jd.CHECKS), f"attempt {k}: checks {list(c)}"
+        res = {n: v["result"] for n, v in c.items()}
+        assert set(res.values()) <= {"pass", "fail", "unsure", "skipped"}, f"attempt {k}: results {res}"
+        fails = [n for n in jd.CHECKS if res[n] == "fail"]
+        unsure = [n for n in jd.CHECKS if res[n] == "unsure"]
+        want = ("failed", fails[0]) if fails else ("unknown", "low_confidence") if unsure else ("completed", None)
+        assert (j["lift_result"], j["reason"]) == want, f"attempt {k}: {j['lift_result']} {j['reason']}, checks say {want}: {res}"
+        assert (res["no_overhead"] == "fail") == (p["bar_overhead"] is None), f"attempt {k}: no_overhead {res['no_overhead']} vs bar_overhead {p['bar_overhead']}"
+        assert j["performed_type"] in (*jd.TYPES, "unknown") and j["intended_source"] in ("param", "labels", "inferred")
+        ev = j["evidence_frames"]
+        assert (ev is None) == (j["reason"] is None), f"attempt {k}: evidence_frames {ev} with reason {j['reason']}"
+        if ev is not None:
+            assert ev == c[j["reason"]]["frames"] and s <= ev[0] <= ev[1] <= e, f"attempt {k}: evidence_frames {ev} outside the window {s}-{e}"
+        for n, v in c.items():
+            if v["frames"] is not None:
+                assert s <= v["frames"][0] <= v["frames"][1] <= e, f"attempt {k}: {n} frames {v['frames']} outside {s}-{e}"
+            if v.get("worst") is not None:
+                assert s <= v["worst"] < e, f"attempt {k}: {n} worst {v['worst']} outside {s}-{e}"
+                if v["result"] in ("fail", "unsure"):
+                    worst_frames.add(v["worst"])
+        lines.append(f"a{k} {j['performed_type']} (intended {j['intended_type']}, {j['intended_source']}): "
+                     f"{j['lift_result']} {j['reason'] or ''} | " + " ".join(f"{n}={res[n]}" for n in jd.CHECKS))
+    pose = np.load(out / "pose.npz")
+    shown = ov.shown_frames(len(pose["keypoints"]), 0, None, 4, [{"keypoints": pose["keypoints"]}], None,
+                            sorted(sj.worst_frames(rec["attempts"])))
+    picks = sorted(f for f in worst_frames if f in set(shown.tolist()))[:WORST]
+    write_worst(out, "8_judgement", picks, "S8: the worst frame of each failed / unsure check (drawn ones)", shown)
+    return "\n    ".join(lines)
+
+
+CHECKS = {"S-1": check_probe, "S1": check_person, "S4": check_pose, "S2": check_plate, "S3": check_attempts, "S5": check_scale, "S6": check_fill, "S7": check_phases, "S8": check_judgement}
 # Files a stage still writes when it stops the run (checked on a --stop run; no content check).
 STOP_FILES = {"S2": ("plate_check.jpg", "overlays/2_plate.mp4"),
               "S3": ("attempts.json", "overlays/3_attempts.mp4")}

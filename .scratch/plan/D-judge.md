@@ -22,7 +22,7 @@ Written from scratch (v1's `angles.py` + `phases.py` in git history, 6469c5b, re
 | turnover | full extension → bar peak | bar peak: first hub high point after full extension; no dip (muscle) → highest hub before standing (**new**) |
 | catch | bar peak → bar lowest | bar lowest: lowest hub between bar peak and the legs straight again (first frame after the knee's low with knee within 5° of its max while overhead); = bar peak if no dip (**new**; the bound is not `standing`, which depends on it, nor the overhead end, which catches the bar being lowered) |
 | recovery | bar lowest → standing | standing: v2 lockout rule (first frame after bar lowest with knee within 5° of its max while overhead). Arms locked = S8 |
-| hold | standing → bar_overhead end | |
+| hold | standing → hold end | hold end: first frame after `standing` where the hub falls > 5 cm (plate px/m) below its median since `standing`, else `bar_overhead` end (**new** 2026-10-23: the lowering is not hold) |
 
 - Marker `bar_overhead` (start, end): hub above the nose ≥ 0.25 s, longest run in the attempt. Not a phase.
 - A border S7 can't find → null (no bar_overhead = failed pull: partial record). Every border frame carries `filled`.
@@ -38,19 +38,29 @@ Written from scratch (v1's `angles.py` + `phases.py` in git history, 6469c5b, re
 - PR reports per border: S7 − true (s), pass/fail vs tolerance.
 - The confirmed frames are saved as the reference; regression test (R5) checks phases.json against them within tolerance.
 
-## S8 judge (new: `snatch/judge.py`)
-- performed_type after the bar peak:
-  - muscle: knee drops ≤ 10° below full extension (no rebend)
-  - power: rebend, hip above knee at the catch
-  - squat: hip at or below knee at the catch
-  - unknown: split / unclear (`unsupported_type`), or hip/knee filled at the catch (`low_confidence`)
+## S8 judge (new: `snatch/judge.py`; gaps decided 2026-10-23)
+Scope: every attempt (completed or failed); result + type only. Technique is S9 (a fault that still gets the bar up = completed).
+- performed_type (S7 names):
+  - muscle: knee drops ≤ 10° below its `full_extension` value over `bar_peak` → `standing` (no rebend)
+  - power: rebend, hip above knee at the `bar_lowest` frame
+  - squat: hip at or below knee at the `bar_lowest` frame
+  - unknown: split / unclear (`unsupported_type`), hip/knee filled at `bar_lowest` (`low_confidence`), or no `bar_peak` / no `bar_overhead` (failed pull: nothing caught)
 - intended_type: `--intended` > labels.csv > inferred (= performed); record `intended_source`.
-- lift_result = completed / failed / unknown + reason:
-  - completed in one overhead run: arms locked (hub over the shoulder, hub–shoulder ≥ 90 % of arm length; elbow ≥ 165° only on frames where the wrist is seen), stand-up (hip above knee, knee ≥ 160°), hold ≥ 1 s (frame times), bar drop < 10 cm, type matches intended
-  - reasons: `no_overhead`, `elbow_unlocked`, `no_standup`, `hold_short`, `dropped`, `type_mismatch`, `low_confidence`
-  - `type_mismatch` is skipped when intended_source = inferred or performed is unknown
-- Out: judgement.json; overlay `8_judgement.mp4`.
-- Rewrite these rules in S7's names (bar peak → `bar_peak`, catch → `catch` phase, stand-up → `standing`, hold = `standing` → `bar_overhead` end).
+- lift_result = completed / failed / unknown + reason. Checks, in order (first fail = `reason`):
+
+  | # | reason | result | fails when |
+  |---|---|---|---|
+  | 1 | `no_overhead` | failed | no S7 `bar_overhead` |
+  | 2 | `elbow_unlocked` | failed | in the hold: elbow < 165° on frames with the wrist seen; no such frame → unsure (decided 2026-10-23: the hub–shoulder offset is dropped until C3 has an arm length; the side-view shoulder keypoint sits 20–26 % of thigh in front of a locked bar on T1/T8) |
+  | 3 | `no_standup` | failed | no S7 `standing` (S8 reads the border, no own rule) |
+  | 4 | `hold_short` | failed | S7 `hold` phase < 0.5 s (frame times; placeholder, decided 2026-10-23: the test lifts hold 0.6–0.8 s, the competition 1 s needs a recording-protocol change first) |
+  | – | (`dropped` removed 2026-10-23: S7 ends the hold at a 5 cm drop, so a drop shows as `hold_short`) | | |
+  | 6 | `type_mismatch` | failed | performed ≠ intended; skipped when intended_source = inferred or performed unknown |
+  | 7 | `low_confidence` | unknown | no check failed, but one is unsure: its frames rely on a filled/hidden hip or knee, or the plate is lost in the hold |
+  - Each check is pass / fail / unsure. A clear fail on reliable frames wins over any unsure (e.g. elbow bent on seen frames + knee filled → `failed: elbow_unlocked`). completed = every check passes.
+  - No arm length for now (decided 2026-10-23: skeleton.json has no arm, and the wrist is under the plate on every T1 hold frame): the hub–shoulder ≥ 90 % arm check is dropped and the offset is relative to thigh length (decided 2026-10-23: a cm limit would fit one lifter). Later (after all stages, fine-tuning): arm length in C3 skeleton.json × scale factor, then restore both arm-relative checks.
+- Out: `judgement.json` per attempt {performed_type, intended_type, intended_source, lift_result, reason, evidence_frames, checks: {name: {value, threshold, unit, pass|fail|unsure, frames: [start, end]}}}; evidence_frames = the deciding check's frames. Overlay `8_judgement.mp4`. `judgement_sheet.jpg`: a row per attempt, frames at `bar_lowest`, `standing`, mid-hold, `bar_overhead` end, each with the verdict + check values; the worst frame per check is marked.
+- Proof (verify): T1–T8 cached into one root, look at every judgement sheet, `sheets.md`.
 
 ## S9 findings (contract only)
 `snatch/findings.py` writes `findings.json` with an empty `findings[]` + the bar-path metrics that are cheap now (horizontal travel, peak height). Never changes lift_result.
@@ -65,7 +75,7 @@ Delete `scripts/run_all.sh`. Update the verify skill, `prototype/README.md` and 
 
 ## Tests (only if a clip cannot cover it)
 - judge: a table test with one synthetic angle trace per reason + per type.
-- Agreement script: run judge on all clips vs labels.csv; besides the %, a confusion matrix of lift_result and of performed type, and the reason for each disagreement. The S8 target is 100 %; report the actual number in the PR.
+- Agreement script: run judge on T1–T8 vs labels.csv; besides the %, a confusion matrix of lift_result and of performed type, and the cause of each disagreement. No agreement target (labels.csv holds the intended lift, not what was performed; thresholds are not fitted): every miss is named as an upstream stage error (S4–S7, plan item), a wrong label (fix labels.csv) or the lifter performing other than intended (expected, reported).
 
 ## Done when
 All clips in labels.csv run end-to-end through `pipeline.py`, agreement is reported, and run_all.sh is gone.

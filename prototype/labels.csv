@@ -1,6 +1,6 @@
 clip,attempt,result,intended_type,reason,fault,note
 T1_20261007_3_jiri_v3_powersnatch_5kg_1rep_success_0deg_right_240fps,1,completed,power,,,test clip; rep 1 of 20261007_3
-T2_20261007_4_jiri_v3_squatsnatch_5kg_1rep_success_0deg_right_240fps,1,completed,squat,,,test clip; rep 1 of 20261007_4
+T2_20261007_4_jiri_v3_squatsnatch_5kg_1rep_success_0deg_right_240fps,1,completed,squat,,,test clip; rep 1 of 20261007_4; lifter 2026-10-23: caught as a deep power snatch (intended squat)
 T3_20261007_10_jiri_v3_powersnatch_10kg_1rep_fail-bend-elbows_0deg_right_240fps,1,failed,power,no_overhead,bend-elbows,test clip; rep 1 of 20261007_10; lifter 2026-10-21: bar never overhead
 T4_20261007_7_jiri_v3_powersnatch_5kg_1rep_success_0deg_left_240fps,1,completed,power,,,test clip; rep 1 of 20261007_7
 T5_20261007_2_jiri_v3_powersnatch_bar_1rep_success_0deg_right_240fps,1,completed,power,,,test clip; = 20261007_2 (bar only)
