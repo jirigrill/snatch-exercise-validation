@@ -44,7 +44,7 @@ Scope: every attempt (completed or failed); result + type only. Technique is S9 
   - muscle: knee drops ≤ 10° below its `full_extension` value over `bar_peak` → `standing` (no rebend)
   - power: rebend, hip above knee at the `bar_lowest` frame
   - squat: hip at or below knee at the `bar_lowest` frame
-  - unknown: split / unclear (`unsupported_type`), hip/knee filled at `bar_lowest` (`low_confidence`), or no `bar_peak` / no `bar_overhead` (failed pull: nothing caught)
+  - unknown: split / unclear (`unsupported_type`; deferred 2026-10-24: not implemented in #83, no split clip; a split catch is typed power/squat until then), hip/knee filled at `bar_lowest` (`low_confidence`), or no `bar_peak` / no `bar_overhead` (failed pull: nothing caught)
 - intended_type: `--intended` > labels.csv > inferred (= performed); record `intended_source`.
 - lift_result = completed / failed / unknown + reason. Checks, in order (first fail = `reason`):
 
@@ -55,7 +55,7 @@ Scope: every attempt (completed or failed); result + type only. Technique is S9 
   | 3 | `no_standup` | failed | no S7 `standing` (S8 reads the border, no own rule) |
   | 4 | `hold_short` | failed | S7 `hold` phase < 0.5 s (frame times; placeholder, decided 2026-10-23: the test lifts hold 0.6–0.8 s, the competition 1 s needs a recording-protocol change first) |
   | – | (`dropped` removed 2026-10-23: S7 ends the hold at a 5 cm drop, so a drop shows as `hold_short`) | | |
-  | 6 | `type_mismatch` | failed | performed ≠ intended; skipped when intended_source = inferred or performed unknown |
+  | 6 | `type_mismatch` | failed | performed ≠ intended; skipped when intended_source = inferred or performed unknown from a failed pull; unsure when performed unknown from a filled/hidden leg at `bar_lowest` (implemented 2026-10-23) |
   | 7 | `low_confidence` | unknown | no check failed, but one is unsure: its frames rely on a filled/hidden hip or knee, or the plate is lost in the hold |
   - Each check is pass / fail / unsure. A clear fail on reliable frames wins over any unsure (e.g. elbow bent on seen frames + knee filled → `failed: elbow_unlocked`). completed = every check passes.
   - No arm length for now (decided 2026-10-23: skeleton.json has no arm, and the wrist is under the plate on every T1 hold frame): the hub–shoulder ≥ 90 % arm check is dropped and the offset is relative to thigh length (decided 2026-10-23: a cm limit would fit one lifter). Later (after all stages, fine-tuning): arm length in C3 skeleton.json × scale factor, then restore both arm-relative checks.
