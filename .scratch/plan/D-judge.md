@@ -71,7 +71,7 @@ Scope: every attempt (completed or failed); result + type only. Technique is S9 
   4. `peak_height_pct`: hub height at bar_peak above liftoff, % of athlete height_m.
   5. `drop_under_cm`: hub height bar_peak − bar_lowest (getting under the bar).
   6. `catch_x_cm`: hub x at bar_lowest − liftoff (jump forward/back).
-- Each metric: `{value, unit, frames: [start, end], missing: [border names]}`; value null when a border is missing (T3, T7: no bar_overhead → 4–6 null). Scale method none: cm null, `value_px` kept.
+- Each metric: `{value, unit, frames: [start, end], missing: [border names]}`; value null when a border is missing (T3, T7: no bar_overhead → 4–6 null; no first_knee_max → 1–2 null, kept on S7 borders by decision 2026-10-24, see S7 rule gaps). Scale method none: cm null, `value_px` kept.
 - `findings_sheet.jpg`: a row per attempt, hub trail over the liftoff frame coloured by phase, each metric drawn as a labelled arrow/span at its frames with its value. This is the S9 proof.
 - Deferred to plan item "S9 rules": shoulder−bar x and min elbow before full_extension (need S8-style seen/filled handling), fault thresholds + findings, `9_findings.mp4`, metric definitions checked against `docs/research/10a`.
 
