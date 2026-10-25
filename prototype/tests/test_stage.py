@@ -242,3 +242,34 @@ def test_directory_output_replaces_old(ctx: Context) -> None:
     run_stages([stage], ctx, log=_quiet)
     run_stages([stage], Context(ctx.clip, ctx.out, {"k": 2}), log=_quiet)
     assert sorted(p.name for p in (ctx.out / "d").iterdir()) == ["k2.txt"]
+
+
+@pytest.mark.parametrize("changed", [None, "phases.json", "judgement.json"])
+def test_s9_skips_unchanged_and_reruns_on_phases_or_judgement(tmp_path: Path, changed: str | None) -> None:
+    """R2: S9 (its real inputs) skips on unchanged inputs and goes stale when phases.json or judgement.json changes."""
+    from dataclasses import replace
+
+    from snatch.stage import ATHLETE
+    from snatch.stages import findings
+
+    clip = tmp_path / "clip.MOV"
+    clip.write_bytes(b"v")
+    ctx = Context(clip, tmp_path / "out", {"athlete": "jiri"}, athletes=tmp_path / "ath")
+    ctx.out.mkdir()
+    for name in findings.STAGE.inputs:
+        if name not in (CLIP, ATHLETE):
+            ctx.path(name).write_text("1")
+    ctx.path(ATHLETE).parent.mkdir(parents=True)
+    ctx.path(ATHLETE).write_text("1")
+    calls: list[str] = []
+
+    def run(_: Context, tmp: Path) -> None:
+        calls.append("S9")
+        for o in findings.STAGE.outputs:
+            (tmp / o).write_text("x")
+    stages = [replace(findings.STAGE, run=run)]
+    run_stages(stages, ctx, log=_quiet)
+    if changed:
+        ctx.path(changed).write_text("2")
+    run_stages(stages, ctx, log=_quiet)
+    assert calls == ["S9"] * (2 if changed else 1)

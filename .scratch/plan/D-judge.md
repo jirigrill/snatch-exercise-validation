@@ -63,12 +63,24 @@ Scope: every attempt (completed or failed); result + type only. Technique is S9 
 - Proof (verify): T1–T8 cached into one root, look at every judgement sheet, `sheets.md`.
 
 ## S9 findings (contract only)
-`snatch/findings.py` writes `findings.json` with an empty `findings[]` + the bar-path metrics that are cheap now (horizontal travel, peak height). Never changes lift_result.
+`snatch/findings.py` writes `findings.json` per attempt: empty `findings[]` + `metrics`. Never changes lift_result. Decided 2026-10-24 (grilling): metrics are chosen to show the lifter where the lift goes wrong, one per phase, measurement only (no thresholds).
+- Metrics (plate hub, S2; cm via the plate `px_per_m` (S2 plate.npz), median over the attempt window's found frames, as S7 uses (decided 2026-10-24; not S5's factor); x signed by `facing`, + = away from the lifter):
+  1. `pull1_away_cm`: max hub x away from the lifter vs liftoff, liftoff→first_knee_max (far-from-body, faraway).
+  2. `pull2_toward_cm`: hub x toward the lifter, first_knee_max→full_extension (bar swept in).
+  3. `loop_away_cm`: max hub x away after full_extension, full_extension→bar_lowest (bar swung away).
+  4. `peak_height_pct`: hub height at bar_peak above liftoff, % of athlete height_m.
+  5. `drop_under_cm`: hub height bar_peak − bar_lowest (getting under the bar).
+  6. `catch_x_cm`: hub x at bar_lowest − liftoff (jump forward/back).
+- Each metric: `{value, unit, frames: [start, end], missing: [border names]}`; value null when a border is missing (T3, T7: no bar_overhead → 4–6 null; no first_knee_max → 1–2 null, kept on S7 borders by decision 2026-10-24, see S7 rule gaps). cm null only when the attempt has no found plate frame to give px_per_m; `value_px` always kept (decided 2026-10-24).
+- `findings_sheet.jpg`: a row per attempt, hub trail over the liftoff frame coloured by phase, each metric drawn as a labelled arrow/span at its frames with its value. This is the S9 proof.
+- Deferred to plan item "S9 rules": shoulder−bar x and min elbow before full_extension (need S8-style seen/filled handling), fault thresholds + findings, `9_findings.mp4`, metric definitions checked against `docs/research/10a`.
 
 ## Report
-- In pipeline.py: `report.json` per attempt (phases, key angles, judgement, findings, clip warnings).
+- In pipeline.py: `report.json` per attempt S8 judged: `{clip, attempt, final_label, reason, performed_type, intended_type, phases, key_angles, metrics, findings: [], warnings}`. final_label/reason copied from judgement.json; warnings from the probe/clip warnings.
+- key_angles: knee, hip, elbow at liftoff, full_extension, bar_peak, bar_lowest, standing (from angles.csv, each flagged seen|filled).
+- A clip that stops before S8 (T5 exit 6) gets no report, only pipeline_status.json.
 - Final label: completed / failed / unknown. Without S9 rules, completed_clean / completed_with_errors are not shown.
-- `overlay.mp4` combines all layers.
+- `overlay.mp4`: the existing per-stage overlay layers stacked in stage order, rendered once.
 
 ## Cleanup (spec decision 7, same PR)
 Delete `scripts/run_all.sh`. Update the verify skill, `prototype/README.md` and `docs/results/33-d1-views.md`.
@@ -79,3 +91,14 @@ Delete `scripts/run_all.sh`. Update the verify skill, `prototype/README.md` and 
 
 ## Done when
 All clips in labels.csv run end-to-end through `pipeline.py`, agreement is reported, and run_all.sh is gone.
+
+S9 + report done when (T1–T8 into one root):
+1. findings.json and report.json match the schema for every attempt.
+2. report final_label/reason == judgement.json for every attempt.
+3. findings_sheet.jpg: each metric's arrow on its frames, value matching the image; eye-checked on T1–T8, `sheets.md`.
+4. Null metrics name their missing borders (T3, T7).
+5. Stops unchanged: T5 exit 6, T7 = 1 attempt failed no_overhead, T8 = 2 attempts.
+6. S9 skips when its inputs are unchanged, goes stale on a phases.json / judgement.json change (R2).
+7. overlay.mp4 eye-checked on T1 at the S7 borders.
+8. No reference to run_all.sh left (repo + docs).
+9. Plan item "S9 rules" added to README.

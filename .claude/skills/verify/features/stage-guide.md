@@ -81,6 +81,13 @@ What to look for:
 - `8_judgement` overlay: type + verdict at the end of each attempt.
 - `judgement.json` (no image): `checks{}` per attempt with value, threshold, unit, pass / fail / unsure / skipped, frames; `evidence_frames` = the deciding check's frames. On the test clips the elbow check is unsure on every hold (wrist under the plate), so completed lifts come out unknown: low_confidence.
 
+## S9 · Bar-path metrics (+ report)
+What it does: per attempt, 6 measurements of the plate hub path on S7's borders (no thresholds yet): pull1_away_cm (max forward drift liftoff→first_knee_max), pull2_toward_cm (max sweep back first_knee_max→full_extension), loop_away_cm (max forward full_extension→bar_lowest), peak_height_pct (hub rise liftoff→bar_peak, % of athlete height), drop_under_cm (bar_peak→bar_lowest drop), catch_x_cm (hub x bar_lowest − liftoff). x + = away from the lifter (facing.json). cm via the window's median plate px_per_m. Rules: `.scratch/plan/D-judge.md` "S9 findings".
+What to look for:
+- `findings_sheet.jpg`: one row per attempt, the liftoff frame cropped to the hub path, the path coloured by S7 phase, each metric a numbered arrow (horizontal for x metrics at the `@` frame's height, vertical for the two height metrics) with its value; right tile lists all 6 with frames or the missing borders. Say if each arrow starts and ends where the path is at those borders.
+- `findings.json` / `report.json` (no image): null metric = `missing` names the absent borders (T1/T3/T7: no first_knee_max → 1–2 null; T3/T7: no bar_overhead → 4–6 null). report.json final_label/reason = judgement.json.
+- `overlay.mp4`: all stage overlays one after another (1080p, 30 fps).
+
 ## C3 · Fit the leg skeleton
 What it does: measures the athlete's leg lengths against hip-ankle distance on the bar-only clip and stores them as the skeleton, then rebuilds the knee from them as a self-test.
 What to look for:
