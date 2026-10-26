@@ -572,7 +572,17 @@ def check_findings(out: Path) -> str:
     lines = []
     for f, p in zip(fnd, phases):
         k, (s, e) = f["attempt"], p["window"]
-        assert f["findings"] == [], f"attempt {k}: findings {f['findings']} before S9 rules"
+        assert list(f) == ["attempt", "findings", "checked", "skipped", "metrics"], f"attempt {k}: keys {list(f)}"
+        ck, sk = [c["fault"] for c in f["checked"]], [c["fault"] for c in f["skipped"]]
+        assert sorted(ck + sk) == sorted(fd.FAULTS) and not set(ck) & set(sk), f"a{k}: checked {ck} + skipped {sk} != every fault once"
+        assert all(c["reason"] for c in f["skipped"]), f"a{k}: a skip without a reason"
+        found_ck = [c["fault"] for c in f["checked"] if c["found"]]
+        assert [x["fault"] for x in f["findings"]] == found_ck, f"a{k}: findings {f['findings']} != checked found {found_ck}"
+        for x in f["findings"]:
+            assert list(x) == ["phase", "fault", "severity", "value", "threshold", "evidence_frames"], f"a{k}: finding keys {list(x)}"
+            assert x["severity"] == "warning" and x["evidence_frames"] and all(s <= e_ < e for e_ in x["evidence_frames"]), f"a{k}: {x}"
+        lines.append(f"a{k} faults found={found_ck or '-'} ok={[c for c in ck if c not in found_ck]} "
+                     f"skipped={[(c['fault'], c['reason']) for c in f['skipped']] or '-'}")
         assert list(f["metrics"]) == list(fd.METRICS), f"attempt {k}: metrics {list(f['metrics'])}"
         for n, m in f["metrics"].items():
             assert set(m) == {"value", "value_px", "unit", "frames", "at", "missing"}, f"a{k} {n}: keys {set(m)}"
@@ -602,8 +612,10 @@ def check_findings(out: Path) -> str:
     assert [r["attempt"] for r in rep] == [j["attempt"] for j in judged], "report.json: not one record per judged attempt"
     for r, j, f in zip(rep, judged, fnd):
         assert list(r) == REPORT_KEYS, f"report a{r['attempt']}: keys {list(r)}"
-        assert (r["final_label"], r["reason"]) == (j["lift_result"], j["reason"]), f"report a{r['attempt']}: label {r['final_label']} {r['reason']} != judgement"
-        assert r["final_label"] in ("completed", "failed", "unknown") and r["metrics"] == f["metrics"]
+        err = any(x["severity"] == "error" for x in f["findings"])
+        want = (("completed_with_errors" if err else "completed_clean") if j["lift_result"] == "completed" else j["lift_result"])
+        assert (r["final_label"], r["reason"]) == (want, j["reason"]), f"report a{r['attempt']}: label {r['final_label']} {r['reason']} != {want} {j['reason']}"
+        assert r["metrics"] == f["metrics"] and r["findings"] == f["findings"]
         bd = phases[[q["attempt"] for q in phases].index(r["attempt"])]["borders"]
         for b, ang in r["key_angles"].items():
             if ang is None:
@@ -616,7 +628,7 @@ def check_findings(out: Path) -> str:
                 assert v["source"] == want and v["deg"] == float(row[n]), f"report a{r['attempt']} {b} {n}: {v} != {want} {row[n]}"
                 srcs.append(f"a{r['attempt']} {b} {n}={v['source']}")
     assert (out / "overlay.mp4").is_file() and (out / "overlay.mp4").stat().st_size, "overlay.mp4 missing"
-    return "\n    ".join(lines + [f"report.json: {len(rep)} attempt(s), labels == judgement.json",
+    return "\n    ".join(lines + [f"report.json: {len(rep)} attempt(s), labels consistent with judgement.json + findings",
                                 "key_angles " + " ".join(srcs)])
 
 
