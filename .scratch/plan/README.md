@@ -4,9 +4,14 @@ Spec: `docs/pipeline-v2.html`. Stage details: `B-front.md`, `C-skeleton.md`, `D-
 
 New session: "Do the next unchecked item in .scratch/plan/README.md."
 
-Goal: pipeline v2 judges every labelled clip as labels.csv says (S8 at 100 % agreement), each stage checked on the test clips. Each item says how it moves toward this.
+Goal (decided 2026-10-26): a go / no-go verdict on the product, as fast as possible. Every stage in the spec runs and produces its outputs (MVP: literature thresholds, nothing tuned); then one review of all labelled clips decides. No stage tuning before the verdict.
 
-## Checklist
+Three parts, in order:
+1. **Done**: everything built so far.
+2. **Before the verdict**: 2 items. Nothing else is worked on until the verdict is in.
+3. **After the verdict**: only with a "go" or "go with fine-tuning" verdict. A "no-go" closes the project.
+
+## 1. Done
 - [x] P0 test clips T1–T7 (#51)
 - [x] A runner, stage contract, S−1 probe, S0 athlete store (#50)
 - [x] B prep: frame times, Halpe-26 + facing, cut-clip fix (#52)
@@ -26,15 +31,38 @@ Goal: pipeline v2 judges every labelled clip as labels.csv says (S8 at 100 % agr
 - [x] /review Nit taxonomy (from b53c9aa/1269022 reviews): after 3049c87 (tags by effect) no case is left for Nit: define Nit as its own effect (minor, no wrong result, kept by the checker) in reviewer.md, checker.md, SKILL.md, or drop Nit. (Done: Nit = real but makes nothing wrong today (fails safe, imprecise wording, gap no clip hits); same text in reviewer.md, checker.md, SKILL.md; reviewer lists every Important and checks siblings.)
 - [x] S8 judge: D-judge.md. Thresholds from the spec / lifting rules, not fitted to the test clips (else S4 errors get absorbed and feasibility looks better than it is). Done: agreement vs labels.csv reported.
 - [x] S9 findings contract + report + delete run_all.sh: D-judge.md. Done in feat/s9-findings-report (6 bar-path metrics, report.json, overlay.mp4, proof s9). Open: pull1/pull2 null on T1, T3, T6, T7, T8 until S7 finds first_knee_max without a re-bend (S7 rule gaps).
-- [ ] S9 rules (after the S9 contract): D-judge.md "Deferred". Fault thresholds + findings from the labels.csv `fault` column, shoulder−bar and elbow metrics, `9_findings.mp4`, metric definitions checked against docs/research/10a.
+## 2. Before the verdict (in this order)
+
+- [ ] **Step 1. S9 rules (minimal)**: D-judge.md "S9 rules". Done when: every spec stage runs end-to-end and the spec matches what is built.
+  - 9 faults from `docs/research/11-technique-markers.md` (markers measurable side-on today), thresholds from the literature, not fitted to clips. labels.csv `fault` (intended faults from filenames, unchecked) is **not** the source.
+  - `9_findings.mp4`; report `completed_clean` / `completed_with_errors` (spec decision 3).
+  - Spec update (`docs/pipeline-v2.html`): S9 scope = the 9 faults; the S9 extras and the side-on gaps (below) written as out of scope.
+- [ ] **Step 2. Milestone D = the verdict**. Done when: the developer has written go / go with fine-tuning / no-go in the PR.
+  - All labelled clips (labels.csv: T1–T8 + 24 source clips, 68 attempts) end-to-end through run_clip.sh.
+  - Per attempt: report.json vs labels.csv (result, type); S9 findings by eye vs the video.
+  - An agent reviews blind (video + outputs): for each miss, the stage that was wrong, and fixable (tuning) or a dead end (model / occlusion limit).
+  - The developer checks that table and the overlays, then decides. Verdict options: **go** (good enough) / **go with fine-tuning** (list the stages) / **no-go** (misses are dead ends).
+  - Weigh in the verdict: (1) arm faults (early arm bend, press-out) can't be seen side-on; a second camera angle is the way around it; (2) doc 11: the measurable bar markers did not separate made from missed lifts; the ones that do (knee/hip at end of second pull) sit behind the plate.
+
+Not needed for the verdict, and why (stays after it):
+| Item | Why not now |
+|---|---|
+| S9 extras: velocity, pull timing, load/power/%1RM, per-phase angle summaries | same hub track as the 9 faults; adds no test of the pipeline |
+| Arm faults: early arm bend, press-out; bar–body distance; frontal plane | not measurable side-on (wrist hidden, doc 11 A13/A16, B9, E5); goes into the verdict as a gap |
+| Split catch (`unsupported_type`) | no clip has one |
+| S7 rule gaps, S8 arm length, hold 1 s, plate diameter, S5 same-session, validation milestone | tuning / precision; the verdict says which are worth it |
+
+## 3. After the verdict (only after go / go with fine-tuning)
 - [ ] Plate diameter as input: now the `PLATE_DIAMETER_M = 0.45` constant in `src/snatch/plate.py`, used by S2/S3/S7/S9 (px_per_m); a different plate gives wrong metres. Make it a clip/athlete input (added 2026-10-24).
 - [ ] S8 arm length (fine-tuning, after all stages): add arm length to C3 skeleton.json (× scale factor; fallback for scale method none); restore hub–shoulder ≥ 90 % arm and the hub–shoulder offset (dropped 2026-10-23: no arm length; a locked T1/T8 bar measures 20–26 % of thigh off the side-view shoulder keypoint). Until then S8 can't catch bent arms when the plate hides the wrist.
 - [ ] Hold 1 s (competition rule): recording protocol asks for a 1 s motionless hold; then S8 `hold_short` back from 0.5 s to 1 s.
 - [ ] S7 rule gaps (when S9 needs the pull borders, or after the new S7 reference): first_knee_max without a re-bend; the 3 deg re-bend rule misses real re-bends (T3, T6, T8 a2); no-overhead attempts that never extend (T7) get no full_extension / bar_peak.
-- [ ] Milestone D: all labelled clips end-to-end. For each disagreement with labels.csv: which stage's output was wrong (first guess, by eye). Decides feasibility: requirements met → build the full app; not met → the validation milestone says which stages to make precise.
+- [ ] S9 extras: bar velocity/acceleration, pull timing, load/power/%1RM, per-phase angle summaries, metric definitions checked against docs/research/10a.
+- [ ] S8 split catch (`unsupported_type`): needs a split-catch clip first.
 - [ ] Validation milestone (after D; replaces the old Milestones B and C): every stage S-1…S8 checked on T1–T8, blind marking + eye review + human check, bug report. Spec: `validation-milestone.md`. Open S6 items go in: T3 fill unmeasured, T5 airborne shank/thigh +4–6 %. S7: a new unanchored, range-marked reference (validation-milestone.md, S7 reference).
 - [ ] S5 same-session factor (after D, if D shows it matters): a clip with `method: none` (plate covers the hip on every straight-leg frame, e.g. T7 standup) reuses the factor of a clip from the same camera spot (e.g. same plate px size), so S6 can fill its hidden knee. Decided 2026-10-19 in the S5 PR.
 
+## Tooling (fix when it gets in the way)
 - [ ] sweep_evidence.sh deletes any dir under `.scratch/verify/` without a run log (branch unknown): it deleted the S7 blind marks mid-session. Keep dirs without logs, or keep only `<branch>__*` roots in scope.
 
 Workflow follow-ups (from #63: ~20 min of reruns the cache could have served, ~10 min waiting on an already finished job):

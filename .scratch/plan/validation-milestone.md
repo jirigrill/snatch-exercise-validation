@@ -4,7 +4,7 @@ Goal: find out how correct the outputs of every stage (S-1, S0, S1–S8, side, C
 
 Order: item 0 (v1 removal) → V1 → V2 → V3, one PR each (V3 may be plan edits only).
 
-**Runs once, after Milestone D (merged with the old Milestones B and C, 2026-10-21).** Item 0 is done (#68). Scope: all of T1–T8; if D missed the goal (S8 below 100 % agreement with labels.csv), start with the clips and stages D's per-disagreement notes name. Answers: would making the weak stages precise reach the goal? The stages table below lists the front stages; S5–S8 are checked the same way against the references. Frame counts are the full-scope upper bound. Open S6 items: T3 fill unmeasured, T5 airborne shank/thigh +4–6 %.
+**Runs once, after Milestone D, and only with a "go with fine-tuning" verdict (decided 2026-10-26; merged with the old Milestones B and C, 2026-10-21).** Item 0 is done (#68). Scope: all of T1–T8; start with the clips and stages D's per-disagreement notes name. Answers: would making the weak stages precise reach the goal? The stages table below lists the front stages; S5–S8 are checked the same way against the references. Frame counts are the full-scope upper bound. Open S6 items: T3 fill unmeasured, T5 airborne shank/thigh +4–6 %.
 
 ## Item 0: remove v1 (own PR, before V1)
 - Delete: `scripts/analyze.py`, `compare_phases.py`, `extract_person.py`, `extract_pose.py`, `find_reps.py`, `overlay_video.py`, `track_plate.py`, `run_all.sh`; `reps.find_lifts`, `find_pose_lifts`, `find_pose_holds`; `spread.py`, `phases.py`, `angles.py`; all of `scripts/studies/` and `src/snatch/studies/` (conclusions live in the plan and PRs; git keeps them); their tests (`test_phases.py`, `test_spread.py`, `test_angles.py`, the v1 parts of `test_reps.py`).

@@ -73,7 +73,33 @@ Scope: every attempt (completed or failed); result + type only. Technique is S9 
   6. `catch_x_cm`: hub x at bar_lowest − liftoff (jump forward/back).
 - Each metric: `{value, unit, frames: [start, end], missing: [border names]}`; value null when a border is missing (T3, T7: no bar_overhead → 4–6 null; no first_knee_max → 1–2 null, kept on S7 borders by decision 2026-10-24, see S7 rule gaps). cm null only when the attempt has no found plate frame to give px_per_m; `value_px` always kept (decided 2026-10-24).
 - `findings_sheet.jpg`: a row per attempt, hub trail over the liftoff frame coloured by phase, each metric drawn as a labelled arrow/span at its frames with its value. This is the S9 proof.
-- Deferred to plan item "S9 rules": shoulder−bar x and min elbow before full_extension (need S8-style seen/filled handling), fault thresholds + findings, `9_findings.mp4`, metric definitions checked against `docs/research/10a`.
+- Deferred to "S9 rules" (below) and the post-verdict "S9 extras" item (README).
+
+## S9 rules (minimal; decided 2026-10-26)
+Goal: S9 writes real findings so the pipeline is complete for the verdict (README step 1). MVP: thresholds from the sources in `docs/research/11-technique-markers.md` (marker ids below), not fitted to clips. labels.csv `fault` is not the source (intended faults from filenames, unchecked).
+
+Each finding: `{phase, fault, severity, value, threshold, evidence_frames}` in findings.json `findings[]`.
+
+| fault | marker | finding when | phase | source |
+|---|---|---|---|---|
+| `bar_away_second_pull` | B3 X2 | > 14 cm away | second_pull | Shah 3–14 cm |
+| `big_loop` | B4 Xloop | > 12 cm | turnover + catch | Shah 3–12 cm |
+| `catch_jump` | B5 Xnet | \|x\| > 17 cm | catch | Shah 0–17 cm |
+| `pulled_too_high` | B6 | > 85 % of height | turnover | Shah 70–85 % |
+| `deep_drop` | B8 | > 25 cm | catch | Shah 6.5–25 cm |
+| `two_peak_pull` | C2 | a dip in vertical bar speed liftoff → peak speed | first_pull … second_pull | Baumann 1988 via Harbili |
+| `bad_start_back_angle` | A1 | trunk at liftoff outside 40–65° from vertical | starting_position | Soviet norm via 10b |
+| `shoulders_behind_bar` | A4 | shoulder x behind hub x at liftoff | starting_position | coaching cue (no number) |
+| `unstable_overhead` | E3 | hub SD in the hold > X cm | hold | none: pick X, say so in the PR |
+
+- Severity: `warning` past the threshold. No `error` (no source says one of these costs the lift; say so), so `completed_with_errors` can't occur yet; the report still writes `completed_clean` for a completed attempt.
+- A marker on a filled joint (S6 mask) or a missing border → no finding, recorded as skipped with the reason (as S8's unsure).
+- `9_findings.mp4`: fault labels at their evidence frames, bar-path trail.
+- Report: final_label `completed_clean` / `completed_with_errors` / `failed` / `unknown` (spec decision 3).
+- Spec update (`docs/pipeline-v2.html`, S9 node + decision 3): scope = this table; out of scope with the reason: S9 extras (velocity, pull timing, load/power/%1RM, angle summaries: after the verdict); arm faults, bar–body distance, frontal plane (not measurable side-on); S8 split catch (no clip).
+- Not done here: tuning any threshold to the clips.
+
+Done when (T1–T8 into one root): findings.json schema per attempt; every fault either found or skipped with its reason; `9_findings.mp4` eye-checked on T1; findings_sheet shows the faults; report final_label consistent with judgement + findings; spec updated; stops unchanged (T5 exit 6, T7 1 failed, T8 2).
 
 ## Report
 - In pipeline.py: `report.json` per attempt S8 judged: `{clip, attempt, final_label, reason, performed_type, intended_type, phases, key_angles, metrics, findings: [], warnings}`. final_label/reason copied from judgement.json; warnings from the probe/clip warnings.
