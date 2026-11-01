@@ -562,6 +562,15 @@ REPORT_KEYS = ["clip", "attempt", "final_label", "reason", "performed_type", "in
                "metrics", "findings", "warnings"]
 
 
+def _rule_found(fault: str, value: float, threshold: float | list[float]) -> bool:
+    """The S9 comparison of one checked fault: A1 is a range, A4 is '< 0', every other fault is '>'."""
+    if fault == "bad_start_back_angle":
+        assert isinstance(threshold, list)
+        return not threshold[0] <= value <= threshold[1]
+    t = threshold[0] if isinstance(threshold, list) else threshold
+    return value < t if fault == "shoulders_behind_bar" else value > t
+
+
 def check_findings(out: Path) -> str:
     """S9 + report done-when 1, 2, 4: schema, report label == judgement, a null metric names its missing borders."""
     fnd = json.loads((out / "findings.json").read_text())["attempts"]
@@ -572,13 +581,31 @@ def check_findings(out: Path) -> str:
     lines = []
     for f, p in zip(fnd, phases):
         k, (s, e) = f["attempt"], p["window"]
-        assert f["findings"] == [], f"attempt {k}: findings {f['findings']} before S9 rules"
+        assert list(f) == ["attempt", "findings", "checked", "skipped", "metrics"], f"attempt {k}: keys {list(f)}"
+        ck, sk = [c["fault"] for c in f["checked"]], [c["fault"] for c in f["skipped"]]
+        assert sorted(ck + sk) == sorted(fd.FAULTS) and not set(ck) & set(sk), f"a{k}: checked {ck} + skipped {sk} != every fault once"
+        assert all(c["reason"] for c in f["skipped"]), f"a{k}: a skip without a reason"
+        ck_by = {c["fault"]: c for c in f["checked"]}
+        for c in f["checked"]:
+            assert c["value"] is not None, f"a{k} {c['fault']}: checked with a null value"
+            assert c["found"] == _rule_found(c["fault"], c["value"], c["threshold"]), (
+                f"a{k} {c['fault']}: found={c['found']} but value {c['value']} vs threshold {c['threshold']}")
+        found_ck = [c["fault"] for c in f["checked"] if c["found"]]
+        assert [x["fault"] for x in f["findings"]] == found_ck, f"a{k}: findings {f['findings']} != checked found {found_ck}"
+        for x in f["findings"]:
+            assert list(x) == ["phase", "fault", "severity", "value", "threshold", "evidence_frames"], f"a{k}: finding keys {list(x)}"
+            assert x["severity"] == "warning" and x["evidence_frames"] and all(s <= e_ < e for e_ in x["evidence_frames"]), f"a{k}: {x}"
+            c = ck_by[x["fault"]]
+            assert (x["value"], x["threshold"]) == (c["value"], c["threshold"]), f"a{k} {x['fault']}: finding {x} != checked {c}"
+        lines.append(f"a{k} faults found={found_ck or '-'} ok={[c for c in ck if c not in found_ck]} "
+                     f"skipped={[(c['fault'], c['reason']) for c in f['skipped']] or '-'}")
         assert list(f["metrics"]) == list(fd.METRICS), f"attempt {k}: metrics {list(f['metrics'])}"
         for n, m in f["metrics"].items():
             assert set(m) == {"value", "value_px", "unit", "frames", "at", "missing"}, f"a{k} {n}: keys {set(m)}"
             unit, sb, eb, extra = fd.METRICS[n]
             assert m["unit"] == unit
-            want_missing = [b for b in (sb, eb) if not p["borders"].get(b)] + (
+            borders = {**p["borders"], "setup": {"frame": s}}  # metrics may start where the attempt does, not at a border
+            want_missing = [b for b in (sb, eb) if not borders.get(b)] + (
                 list(extra) if "bar_overhead" in extra and p["bar_overhead"] is None else [])
             got = [b for b in m["missing"] if not b.startswith("plate@")]
             assert got == want_missing, f"a{k} {n}: missing {m['missing']}, borders say {want_missing}"
@@ -586,7 +613,7 @@ def check_findings(out: Path) -> str:
             if m["missing"]:
                 assert m["value"] is None and m["value_px"] is None, f"a{k} {n}: value with missing {m['missing']}"
             else:
-                bs, be = p["borders"][sb]["frame"], p["borders"][eb]["frame"]
+                bs, be = borders[sb]["frame"], borders[eb]["frame"]
                 assert m["frames"] is not None and bs <= m["frames"][0] <= m["frames"][1] <= be, f"a{k} {n}: frames {m['frames']} outside {bs}-{be}"
                 assert m["at"] is not None and m["frames"][0] <= m["at"] <= m["frames"][1] and s <= m["at"] < e, f"a{k} {n}: at {m['at']}"
                 assert m["value_px"] is not None, f"a{k} {n}: value_px null with nothing missing"
@@ -602,8 +629,10 @@ def check_findings(out: Path) -> str:
     assert [r["attempt"] for r in rep] == [j["attempt"] for j in judged], "report.json: not one record per judged attempt"
     for r, j, f in zip(rep, judged, fnd):
         assert list(r) == REPORT_KEYS, f"report a{r['attempt']}: keys {list(r)}"
-        assert (r["final_label"], r["reason"]) == (j["lift_result"], j["reason"]), f"report a{r['attempt']}: label {r['final_label']} {r['reason']} != judgement"
-        assert r["final_label"] in ("completed", "failed", "unknown") and r["metrics"] == f["metrics"]
+        err = any(x["severity"] == "error" for x in f["findings"])
+        want = (("completed_with_errors" if err else "completed_clean") if j["lift_result"] == "completed" else j["lift_result"])
+        assert (r["final_label"], r["reason"]) == (want, j["reason"]), f"report a{r['attempt']}: label {r['final_label']} {r['reason']} != {want} {j['reason']}"
+        assert r["metrics"] == f["metrics"] and r["findings"] == f["findings"]
         bd = phases[[q["attempt"] for q in phases].index(r["attempt"])]["borders"]
         for b, ang in r["key_angles"].items():
             if ang is None:
@@ -616,7 +645,7 @@ def check_findings(out: Path) -> str:
                 assert v["source"] == want and v["deg"] == float(row[n]), f"report a{r['attempt']} {b} {n}: {v} != {want} {row[n]}"
                 srcs.append(f"a{r['attempt']} {b} {n}={v['source']}")
     assert (out / "overlay.mp4").is_file() and (out / "overlay.mp4").stat().st_size, "overlay.mp4 missing"
-    return "\n    ".join(lines + [f"report.json: {len(rep)} attempt(s), labels == judgement.json",
+    return "\n    ".join(lines + [f"report.json: {len(rep)} attempt(s), labels consistent with judgement.json + findings",
                                 "key_angles " + " ".join(srcs)])
 
 

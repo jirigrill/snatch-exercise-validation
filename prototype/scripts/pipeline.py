@@ -76,6 +76,14 @@ def angle_source(row: dict, joint: str, pose_hidden: np.ndarray, side: str) -> s
     return "hidden" if hid else "filled" if row[f"{joint}_filled"] == "1" else "seen"
 
 
+def final_label(judged: dict, found: dict) -> str:
+    """D-judge.md "Report": a completed lift is completed_clean without an error finding, else completed_with_errors;
+    failed / unknown as S8 judged."""
+    if judged["lift_result"] != "completed":
+        return judged["lift_result"]
+    return "completed_with_errors" if any(f["severity"] == "error" for f in found["findings"]) else "completed_clean"
+
+
 def report(ctx: Context) -> dict | None:
     """report.json (D-judge.md "Report"): one record per attempt S8 judged; None when S8 or S9 has not run."""
     out = ctx.out
@@ -97,7 +105,7 @@ def report(ctx: Context) -> dict | None:
             r = rows.get(p["borders"][b]["frame"]) if p["borders"].get(b) else None
             key[b] = None if r is None else {
                 n: {"deg": float(r[n]), "source": angle_source(r, n, pose_hidden, side)} for n in KEY_JOINTS}
-        recs.append(dict(clip=ctx.clip.stem, attempt=j["attempt"], final_label=j["lift_result"], reason=j["reason"],
+        recs.append(dict(clip=ctx.clip.stem, attempt=j["attempt"], final_label=final_label(j, found[j["attempt"]]), reason=j["reason"],
                          performed_type=j["performed_type"], intended_type=j["intended_type"],
                          phases=dict(borders=p["borders"], phases=p["phases"], bar_overhead=p["bar_overhead"]),
                          key_angles=key, metrics=found[j["attempt"]]["metrics"],

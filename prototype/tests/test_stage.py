@@ -244,9 +244,9 @@ def test_directory_output_replaces_old(ctx: Context) -> None:
     assert sorted(p.name for p in (ctx.out / "d").iterdir()) == ["k2.txt"]
 
 
-@pytest.mark.parametrize("changed", [None, "phases.json", "judgement.json"])
+@pytest.mark.parametrize("changed", [None, "phases.json", "judgement.json", "pose.npz"])
 def test_s9_skips_unchanged_and_reruns_on_phases_or_judgement(tmp_path: Path, changed: str | None) -> None:
-    """R2: S9 (its real inputs) skips on unchanged inputs and goes stale when phases.json or judgement.json changes."""
+    """R2: S9 (its real inputs) skips on unchanged inputs and goes stale when phases.json, judgement.json or pose.npz changes."""
     from dataclasses import replace
 
     from snatch.stage import ATHLETE
@@ -266,6 +266,7 @@ def test_s9_skips_unchanged_and_reruns_on_phases_or_judgement(tmp_path: Path, ch
     def run(_: Context, tmp: Path) -> None:
         calls.append("S9")
         for o in findings.STAGE.outputs:
+            (tmp / o).parent.mkdir(parents=True, exist_ok=True)
             (tmp / o).write_text("x")
     stages = [replace(findings.STAGE, run=run)]
     run_stages(stages, ctx, log=_quiet)

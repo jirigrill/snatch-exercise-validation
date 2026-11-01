@@ -69,9 +69,11 @@ Scope: every attempt (completed or failed); result + type only. Technique is S9 
   2. `pull2_toward_cm`: hub x toward the lifter, first_knee_max→full_extension (bar swept in).
   3. `loop_away_cm`: max hub x away after full_extension, full_extension→bar_lowest (bar swung away).
   4. `peak_height_pct`: hub height at bar_peak above liftoff, % of athlete height_m.
-  5. `drop_under_cm`: hub height bar_peak − bar_lowest (getting under the bar).
+  5. `drop_under_cm`: hub height at the highest hub (min hub_y) − bar_lowest (getting under the bar).
   6. `catch_x_cm`: hub x at bar_lowest − liftoff (jump forward/back).
-- Each metric: `{value, unit, frames: [start, end], missing: [border names]}`; value null when a border is missing (T3, T7: no bar_overhead → 4–6 null; no first_knee_max → 1–2 null, kept on S7 borders by decision 2026-10-24, see S7 rule gaps). cm null only when the attempt has no found plate frame to give px_per_m; `value_px` always kept (decided 2026-10-24).
+  7. `peak_rise_pct`: hub height at the highest hub (min hub_y) above setup (the attempt window start), % of height; the B6 rule adds one plate radius (0.225 m).
+  8. `net_x_cm`: hub x at bar_lowest − setup (B5 Xnet; includes the first-pull movement).
+- Each metric: `{value, unit, frames: [start, end], missing: [border names]}`; value null when a border is missing (T3, T7: no bar_overhead → 4–8 null; no first_knee_max → 1–2 null, kept on S7 borders by decision 2026-10-24, see S7 rule gaps). cm null only when the attempt has no found plate frame to give px_per_m; `value_px` always kept (decided 2026-10-24).
 - `findings_sheet.jpg`: a row per attempt, hub trail over the liftoff frame coloured by phase, each metric drawn as a labelled arrow/span at its frames with its value. This is the S9 proof.
 - Deferred to "S9 rules" (below) and the post-verdict "S9 extras" item (README).
 
@@ -83,14 +85,16 @@ Each finding: `{phase, fault, severity, value, threshold, evidence_frames}` in f
 | fault | marker | finding when | phase | source |
 |---|---|---|---|---|
 | `bar_away_second_pull` | B3 X2 | > 14 cm away | second_pull | Shah 3–14 cm |
-| `big_loop` | B4 Xloop | > 12 cm | turnover + catch | Shah 3–12 cm |
-| `catch_jump` | B5 Xnet | \|x\| > 17 cm | catch | Shah 0–17 cm |
-| `pulled_too_high` | B6 | > 85 % of height | turnover | Shah 70–85 % |
-| `deep_drop` | B8 | > 25 cm | catch | Shah 6.5–25 cm |
+| `big_loop` | B4 Xloop | > 12 cm from the highest hub (min hub_y) to the bar catch | turnover + catch | Shah 3–12 cm |
+| `catch_jump` | B5 Xnet | \|x\| > 17 cm, x from setup (attempt start) | catch | Shah 0–17 cm |
+| `pulled_too_high` | B6 | (0.225 m + (hub_y[setup] − min hub_y) / px_per_m) / height_m > 85 % | turnover | Shah 70–85 % |
+| `deep_drop` | B8 | highest hub (min hub_y) − bar catch > 25 cm | catch | Shah 6.5–25 cm |
 | `two_peak_pull` | C2 | a dip in vertical bar speed liftoff → peak speed | first_pull … second_pull | Baumann 1988 via Harbili |
 | `bad_start_back_angle` | A1 | trunk at liftoff outside 40–65° from vertical | starting_position | Soviet norm via 10b |
 | `shoulders_behind_bar` | A4 | shoulder x behind hub x at liftoff | starting_position | coaching cue (no number) |
 | `unstable_overhead` | E3 | hub SD in the hold > X cm | hold | none: pick X, say so in the PR |
+
+- B4/B6/B8 read the highest hub (`min hub_y`) within `setup`..bar catch, B1's bar-path window; the overhead hold after the catch is outside it.
 
 - Severity: `warning` past the threshold. No `error` (no source says one of these costs the lift; say so), so `completed_with_errors` can't occur yet; the report still writes `completed_clean` for a completed attempt.
 - A marker on a filled joint (S6 mask) or a missing border → no finding, recorded as skipped with the reason (as S8's unsure).
