@@ -1,5 +1,5 @@
-"""S9 proof: are the 6 bar-path metrics read on S7's borders, null exactly where a border is missing, and does
-report.json carry judgement.json's label?
+"""S9 proof: are the 8 bar-path metrics read on S7's borders (setup for B5/B6), null exactly where a border is
+missing, and does report.json carry judgement.json's label?
 
 usage (from prototype/): uv run python ../.claude/skills/verify/scripts/proofs/s9.py <evidence_root>
 writes <evidence_root>/proof/S9/{verdict.md, 1_findings_sheets.jpg}
@@ -50,6 +50,7 @@ def sheets(clips: list[tuple[str, Path]], path: Path) -> None:
     parts = []
     for c, d in clips:
         im = cv2.imread(str(d / "findings_sheet.jpg"))
+        assert im is not None, d / "findings_sheet.jpg"
         im = cv2.resize(im, (WIDTH, round(im.shape[0] * WIDTH / im.shape[1])), interpolation=cv2.INTER_AREA)
         bar = np.full((34, WIDTH, 3), 255, np.uint8)
         cv2.putText(bar, c, (8, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2, cv2.LINE_AA)
@@ -95,7 +96,8 @@ def write_verdict(path: Path, clips: list[tuple[str, Path]], root: Path) -> None
           f"{'PASS' if not bad else 'FAIL'}", *(f"  - {b}" for b in bad),
           f"- no report.json (stopped before S8 or calibrate): {', '.join(stopped) or 'none'}", "",
           "Image: `1_findings_sheets.jpg`, each clip's findings_sheet.jpg under its clip id. Eye check (sheets.md): "
-          "each numbered arrow starts at its start border's hub and ends at the `@` frame; the value matches the list."]
+          "each numbered arrow starts at its start frame's hub (the attempt window start for net_x_cm/peak_rise_pct) "
+          "and ends at the `@` frame; the value matches the list."]
     path.write_text("\n".join(L) + "\n")
 
 

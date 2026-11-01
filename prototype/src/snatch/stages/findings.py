@@ -3,12 +3,13 @@
 Reads phases.json (S7 borders, phases, window), judgement.json (S8; one record per attempt, read so a verdict change
 reruns S9), plate.npz (hub track, px_per_m), facing.json (x sign) and the athlete's athlete.json (height_m).
 
-- findings.json: {attempts: [{attempt, findings: [] (no rules yet), metrics {name: {value, value_px, unit, frames,
+- findings.json: {attempts: [{attempt, findings, checked, skipped, metrics {name: {value, value_px, unit, frames,
   at, missing}}}]}. value null when a border is missing or the span has no found plate frame (missing names it), or (cm, %) when
   the window has no found plate frame to give px_per_m; value_px kept otherwise.
 - findings_sheet.jpg: a row per attempt; the liftoff frame cropped around the hub path, the hub trail over the
   window coloured by S7 phase, each metric as a labelled arrow (x metrics horizontal at the arrow-tip frame,
-  height metrics vertical) with its value; a text tile lists all 6 (or the missing borders).
+  height metrics vertical) with its value; a text tile lists all 8 (or the missing borders) and the fault tile
+  lists every fault found / ok / skipped with its value and threshold.
 """
 
 import json
@@ -29,12 +30,14 @@ FAULT_BGR = (0, 0, 255)  # red: a fault label
 PHASE_BGR = ((180, 180, 180), (225, 160, 60), (90, 200, 90), (60, 160, 250), (80, 80, 240), (200, 120, 200),
              (120, 220, 220), (240, 200, 160))
 ARROW_BGR = {"pull1_away_cm": (0, 255, 255), "pull2_toward_cm": (255, 0, 255), "loop_away_cm": (0, 128, 255),
-             "peak_height_pct": (0, 255, 0), "drop_under_cm": (255, 255, 0), "catch_x_cm": (255, 255, 255)}
+             "peak_height_pct": (0, 255, 0), "peak_rise_pct": (128, 255, 0), "drop_under_cm": (255, 255, 0),
+             "catch_x_cm": (255, 255, 255), "net_x_cm": (255, 128, 0)}
 
 
 def track_of(plate: dict) -> Track:
     return Track(np.asarray(plate["hub_x"], float), np.asarray(plate["hub_y"], float),
-                 np.asarray(plate["found"], bool), np.asarray(plate["px_per_m"], float))
+                 np.asarray(plate["found"], bool), np.asarray(plate["px_per_m"], float),
+                 float(plate["plate_diameter_m"]))
 
 
 def body_of(pose: dict, side: str) -> Body:
@@ -50,6 +53,17 @@ def fmt(m: dict) -> str:
     if m["value"] is None:
         return f"- (missing {','.join(m['missing'])})" if m["missing"] else f"- ({m['value_px']} px, no px_per_m in window)"
     return f"{m['value']:+.1f} {m['unit']}"
+
+
+def cmp_text(fault: str, threshold: float | list[float], found: bool = True) -> str:
+    """The rule's comparison, true for the row: found rows state the fault, ok rows its complement."""
+    if fault == "bad_start_back_angle":
+        assert isinstance(threshold, list)
+        return f"{'outside' if found else 'inside'} {threshold[0]:g}..{threshold[1]:g}"
+    t = threshold[0] if isinstance(threshold, list) else threshold
+    if fault == "shoulders_behind_bar":
+        return f"< {t:g}" if found else f">= {t:g}"
+    return f"> {t:g}" if found else f"<= {t:g}"
 
 
 def _put(img: np.ndarray, s: str, xy: tuple[int, int], col: tuple[int, int, int], sc: float = 0.6) -> None:
@@ -81,8 +95,8 @@ def _row(img: np.ndarray, rec: dict, o: dict, tr: Track, verdict: str) -> np.nda
             continue
         col, (fs, _) = ARROW_BGR[name], mt["frames"]
         at, unit = mt["at"], METRICS[name][0]
-        if name in ("peak_height_pct", "drop_under_cm"):
-            ax = int(tr.hub_x[at] - x0) + (60 if name == "peak_height_pct" else -60)
+        if name in ("peak_height_pct", "peak_rise_pct", "drop_under_cm"):
+            ax = int(tr.hub_x[at] - x0) + {"peak_height_pct": 60, "peak_rise_pct": 120, "drop_under_cm": -60}[name]
             a, b = (ax, int(tr.hub_y[fs] - y0)), (ax, int(tr.hub_y[at] - y0))
         else:
             ay = int(tr.hub_y[at] - y0)
@@ -120,7 +134,8 @@ def fault_tile(o: dict) -> np.ndarray:
             col = FAULT_BGR if c["found"] else (90, 200, 90)
             _put(t, f"{'FOUND' if c['found'] else 'ok'} {f}", (8, y), col, 0.6)
             ev_s = f" @f{','.join(map(str, ev[f]))}" if f in ev else ""
-            _put(t, f"   {c['value']:g} vs {c['threshold']} {c['unit']}{ev_s}", (8, y + 24), (230, 230, 230), 0.5)
+            _put(t, f"   {c['value']:g} {cmp_text(f, c['threshold'], c['found'])} {c['unit']}{ev_s}",
+                 (8, y + 24), (230, 230, 230), 0.5)
         else:
             _put(t, f"skipped {f}", (8, y), (150, 150, 150), 0.6)
             _put(t, f"   {sk[f]['reason']}"[:60], (8, y + 24), (150, 150, 150), 0.5)
@@ -163,14 +178,14 @@ def run(ctx: Context, tmp: Path) -> None:
 
 def write_video(ctx: Context, tmp: Path, recs: list[dict], out: list[dict], plate: dict) -> None:
     """9_findings.mp4: attempt windows, every 4th frame plus every evidence frame; plate + hub trail (overlay); each
-    finding's label from its first to its last evidence frame (+0.5 s), held big and red."""
+    finding's label in the frame's label lines from its first to its last evidence frame (+0.5 s)."""
     t = np.asarray(plate["t"], float)
     shows: list[tuple[int, int, str]] = []
     for o in out:
         for f in o["findings"]:
             a, z = min(f["evidence_frames"]), max(f["evidence_frames"])
             z = int(np.searchsorted(t, t[z] + 0.5))
-            shows.append((a, z, f"{f['fault']} {f['value']:g} (> {f['threshold']})"))
+            shows.append((a, z, f"{f['fault']} {f['value']:g} ({cmp_text(f['fault'], f['threshold'])})"))
     extra = sorted({e for o in out for f in o["findings"] for e in f["evidence_frames"]})
     win = {i: r["attempt"] for r in recs for i in range(r["window"][0], r["window"][1])}
     pose = dict(np.load(ctx.path("pose.npz")))
@@ -180,23 +195,15 @@ def write_video(ctx: Context, tmp: Path, recs: list[dict], out: list[dict], plat
         if a is None:
             return ["outside attempts"]
         o = next(x for x in out if x["attempt"] == a)
-        return [f"attempt {a}: {len(o['findings'])} fault(s), {len(o['skipped'])} skipped"]
-
-    def annotate(img: np.ndarray, i: int) -> None:
-        live = [s for a, z, s in shows if a <= i <= z]
-        for k, s in enumerate(live):
-            y = 160 + 90 * k
-            (tw, th), _ = cv2.getTextSize(s, cv2.FONT_HERSHEY_SIMPLEX, 2.0, 5)
-            x0 = max(10, int(np.nan_to_num(plate["hub_x"][i], nan=400.0)) - tw // 2)
-            cv2.rectangle(img, (x0 - 12, y - th - 14), (x0 + tw + 12, y + 14), FAULT_BGR, -1)
-            cv2.putText(img, s, (x0, y), cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 255, 255), 5)
+        live = [s for a0, z, s in shows if a0 <= i <= z]
+        return [f"attempt {a}: {len(o['findings'])} fault(s), {len(o['skipped'])} skipped", *live]
 
     (tmp / OVERLAY).parent.mkdir(parents=True, exist_ok=True)
     s0, e0 = min(r["window"][0] for r in recs), max(r["window"][1] for r in recs)
     overlay.render(str(ctx.clip), str(tmp / OVERLAY), poses=[{"keypoints": pose["keypoints"]}], plate=plate,
-                   start=s0, end=e0, step=4, zoom=True, extra=extra, frame_labels=labels_at, annotate=annotate,
+                   start=s0, end=e0, step=4, zoom=True, scale=1.0, extra=extra, frame_labels=labels_at,
                    dim=np.array([i not in win for i in range(len(t))]))
 
 
 STAGE = Stage("S9", (CLIP, "phases.json", "judgement.json", "plate.npz", "pose.npz", "facing.json", ATHLETE),
-              ("findings.json", "findings_sheet.jpg", OVERLAY), run, version=2)
+              ("findings.json", "findings_sheet.jpg", OVERLAY), run, version=3)
